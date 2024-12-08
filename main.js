@@ -12,7 +12,7 @@ const gameState = {
     food: 0,
   },
   buildings: [],
-  stickmen: [],
+  agents: [],
   selectedType : null // Tracks the currently selected type (e.g., "house", "farm")
 };
 
@@ -47,10 +47,17 @@ function drawRect(x, y, width, height, colour) {
   ctx.fillRect(x, y, width, height);
 }
 
+function getGridCoordinates(worldX, worldY) {
+  const gridX = Math.floor(worldX / GRID_SIZE) * GRID_SIZE;
+  const gridY = Math.floor(worldY / GRID_SIZE) * GRID_SIZE;
+  return [gridX,gridY]; // Return as a unique key for the cell
+}
+
+
 //#region  Building Class
 class Building {
   static types = {
-    house           : { colour: "brown", description: "Provides shelter for stickmen." },
+    house           : { colour: "brown", description: "Provides shelter for agents." },
     farm            : { colour: "green", description: "Produces food resources." },
     quarry          : { colour: "gray",  description: "Produces stone resources." },
     resource_Node   : { colour: "green", description: "Contains resources to be extracted." }
@@ -80,12 +87,71 @@ class Building {
   }
 }
 
-//#region Stickman Class
-class Stickman {
+function populateBuildingSelector() {
+  const buildingSelector = document.getElementById("buildingSelector");
+
+  // Clear existing options
+  buildingSelector.innerHTML = "";
+
+  // Add a default "Please select" option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Please select a building...";
+  buildingSelector.appendChild(defaultOption);
+
+  // Loop through Building types and add them as options
+  for (const buildingType in Building.types) {
+      const option = document.createElement("option");
+      option.value = buildingType;
+      option.textContent = buildingType.charAt(0).toUpperCase() + buildingType.slice(1); // Capitalize the first letter
+      buildingSelector.appendChild(option);
+  }
+}
+
+// Event handler when a building is selected from the dropdown
+function onBuildingSelect() {
+  const buildingSelector = document.getElementById("buildingSelector");
+  const selectedType = buildingSelector.value;
+
+  if (selectedType) {
+      selectType(selectedType);
+  }
+}
+
+// Call populateBuildingSelector to fill the dropdown when the game starts
+populateBuildingSelector();
+
+
+//#region Agent Class
+class Agent {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.job = "idle"; // Possible jobs: idle, gathering, building
+    this.job = "idle"; // Possible jobs: idle, gathering, depositing
+    this.target = null; // Current target (building or position)
+    this.carrying = 0; // Resources being carried
+    this.maxCarry = 5; // Max resources agent can carry
+    this.speed = 2; // Movement speed
+  }
+
+  update() {
+    switch (this.job) {
+      case "idle":
+        this.findResourceNode();
+        break;
+      case "gathering":
+        this.moveToTarget();
+        if (this.reachedTarget()) {
+          this.gatherResources();
+        }
+        break;
+      case "depositing":
+        this.moveToTarget();
+        if (this.reachedTarget()) {
+          this.depositResources();
+        }
+        break;
+    }
   }
 
   draw() {
@@ -100,7 +166,69 @@ class Stickman {
     );
     drawText(this.job, screenX - 10, screenY - 10);
   }
+
+  findResourceNode() {
+    const resourceNode = gameState.buildings.find(
+      (b) => b.type === "resource_Node"
+    );
+    if (resourceNode) {
+      this.job = "gathering";
+      this.target = resourceNode;
+    }
+  }
+
+  moveToTarget() {
+    if (!this.target) return;
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > this.speed) {
+      this.x += (dx / distance) * this.speed;
+      this.y += (dy / distance) * this.speed;
+    }
+  }
+
+  reachedTarget() {
+    if (!this.target) return false;
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    return Math.abs(dx) < 5 && Math.abs(dy) < 5;
+  }
+
+  gatherResources() {
+    if (this.carrying < this.maxCarry) {
+      this.carrying++;
+      console.log("Gathered 1 resource.");
+    }
+
+    if (this.carrying >= this.maxCarry) {
+      this.findHouse();
+    }
+  }
+
+  findHouse() {
+    const house = gameState.buildings.find((b) => b.type === "house");
+    if (house) {
+      this.job = "depositing";
+      this.target = house;
+    } else {
+      this.job = "idle"; // No house found, return to idle
+      this.target = null;
+    }
+  }
+
+  depositResources() {
+    if (this.carrying > 0) {
+      gameState.resources.wood += this.carrying;
+      console.log(`Deposited ${this.carrying} resources.`);
+      this.carrying = 0;
+    }
+    this.job = "idle"; // Return to idle after depositing
+    this.target = null;
+  }
 }
+
 
 //#region Questing
 // Quest Class
@@ -122,9 +250,9 @@ class Quest {
 
 // Quest Log
 const questLog = [
-  new Quest("Build a house", () => gameState.buildings.some(b => b.type === "house")),
   /*new Quest("Build a resource node", () => gameState.buildings.some(b => b.type === "resource_Node")),*/
-  new Quest("Collect 10 wood", () => gameState.resources.wood >= 10),
+  new Quest("Collect 10 resources", () => gameState.resources.wood >= 10),
+  new Quest("Build a house", () => gameState.buildings.some(b => b.type === "house")),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
@@ -183,8 +311,8 @@ function addBuilding(x, y, type) {
   gameState.buildings.push(new Building(x, y, type));
 }
 
-function addStickman(x, y) {
-  gameState.stickmen.push(new Stickman(x, y));
+function addAgent(x, y) {
+  gameState.agents.push(new Agent(x, y));
 }
 
 function drawGrid() {
@@ -317,18 +445,18 @@ function gameLoop() {
   drawGrid();
 
   // Draw resources
-  drawText(`Wood: ${gameState.resources.wood}`, canvas.width-canvas.width/10, 30, 20);
-  drawText(`Stone: ${gameState.resources.stone}`, canvas.width-canvas.width/10, 60, 20);
-  drawText(`Food: ${gameState.resources.food}`, canvas.width-canvas.width/10, 90, 20);
+  drawText(`Wood: ${gameState.resources.wood}`, 10, 30, 20);
+  drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
+  drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
-  // Draw buildings
-  gameState.buildings.forEach((building) => {
-    building.draw();
-    //calculate points
+  // Draw and update buildings
+  gameState.buildings.forEach((building) => building.draw());
+
+  // Draw and update agents
+  gameState.agents.forEach((agent) => {
+    agent.update();
+    agent.draw();
   });
-
-  // Draw stickmen
-  gameState.stickmen.forEach((stickman) => stickman.draw());
 
   // Draw quest log
   //drawQuestLog();
@@ -339,13 +467,23 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
+
 // Simulate Resource Collection Every Second
 //setInterval(collectResources, 1000);
 
 //#region   Start Game
-// Snap coordinates to the nearest grid cell
-const snappedX = Math.floor(canvas.width / 2 / GRID_SIZE) * GRID_SIZE;
-const snappedY = Math.floor(canvas.height / 2 / GRID_SIZE) * GRID_SIZE;
-addBuilding(snappedX, snappedY, "resource_Node" );
+// Add initial setup for testing
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+
+// Add a agent in the center
+addAgent(centerX, centerY);
+
+// Add a resource node and a house nearby
+var buildingCoords = getGridCoordinates(centerX - 100, centerY);
+addBuilding(buildingCoords[0], buildingCoords[1], "resource_Node");
+buildingCoords = getGridCoordinates(centerX + 100, centerY);
+addBuilding(buildingCoords[0], buildingCoords[1], "house");
+
 
 gameLoop();
