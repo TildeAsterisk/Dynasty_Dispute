@@ -24,7 +24,7 @@ const camera = {
   scale: 1,
 };
 
-//#region Common Functions
+//#region Utility Functions
 function drawText(text, x, y, size=11,  colour = "white", outlineColour="black") {
   ctx.font = size.toString()+"px Arial";
   // Capitalise Text
@@ -53,7 +53,7 @@ class Building {
     house           : { colour: "brown", description: "Provides shelter for stickmen." },
     farm            : { colour: "green", description: "Produces food resources." },
     quarry          : { colour: "gray",  description: "Produces stone resources." },
-    resource_Node : { colour: "green", description: "Contains resources to be extracted." }
+    resource_Node   : { colour: "green", description: "Contains resources to be extracted." }
   }
 
   constructor(x, y, type) {
@@ -123,11 +123,10 @@ class Quest {
 // Quest Log
 const questLog = [
   new Quest("Build a house", () => gameState.buildings.some(b => b.type === "house")),
-  new Quest("Build a resource node", () => gameState.buildings.some(b => b.type === "resource_Node")),
+  /*new Quest("Build a resource node", () => gameState.buildings.some(b => b.type === "resource_Node")),*/
   new Quest("Collect 10 wood", () => gameState.resources.wood >= 10),
 ];
-
-// Function to draw the quest log on the screen
+// Function to draw the quest log on the canvas screen
 function drawQuestLog() {
   drawText("Quests:", canvas.width - 200, 30, 16);
   questLog.forEach((quest, index) => {
@@ -136,10 +135,41 @@ function drawQuestLog() {
   });
 }
 
-// Check for quest completion in the game loop
+// Generate quests log as a HTML element
+function renderQuests() {
+  const questContainer = document.getElementById("questContainer");
+
+  // Clear existing quests
+  questContainer.innerHTML = "<h3>Quests:</h3>";
+
+  questLog.forEach((quest, index) => {
+      // Create a div for each quest
+      const questDiv = document.createElement("div");
+      questDiv.className = "quest-item";
+
+      // Set quest text
+      questDiv.textContent = `${index + 1}. ${quest.description} ${
+          quest.completed ? "(Completed)" : ""
+      }`;
+
+      // Optionally style completed quests
+      if (quest.completed) {
+          questDiv.style.color = "green";
+      }
+
+      questContainer.appendChild(questDiv);
+  });
+}
+
+// Update quest rendering whenever quests change
 function checkQuests() {
   questLog.forEach((quest) => quest.checkCompletion());
+  renderQuests(); // Re-render quests
 }
+
+// Call renderQuests initially to populate the list
+renderQuests();
+
 //#endregion
 
 //#region Game Functions
@@ -287,9 +317,9 @@ function gameLoop() {
   drawGrid();
 
   // Draw resources
-  drawText(`Wood: ${gameState.resources.wood}`, 10, 30, 20);
-  drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
-  drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
+  drawText(`Wood: ${gameState.resources.wood}`, canvas.width-canvas.width/10, 30, 20);
+  drawText(`Stone: ${gameState.resources.stone}`, canvas.width-canvas.width/10, 60, 20);
+  drawText(`Food: ${gameState.resources.food}`, canvas.width-canvas.width/10, 90, 20);
 
   // Draw buildings
   gameState.buildings.forEach((building) => {
@@ -301,7 +331,7 @@ function gameLoop() {
   gameState.stickmen.forEach((stickman) => stickman.draw());
 
   // Draw quest log
-  drawQuestLog();
+  //drawQuestLog();
 
   // Check quests
   checkQuests();
@@ -313,6 +343,9 @@ function gameLoop() {
 //setInterval(collectResources, 1000);
 
 //#region   Start Game
-addStickman(canvas.width/2, canvas.height/2);
+// Snap coordinates to the nearest grid cell
+const snappedX = Math.floor(canvas.width / 2 / GRID_SIZE) * GRID_SIZE;
+const snappedY = Math.floor(canvas.height / 2 / GRID_SIZE) * GRID_SIZE;
+addBuilding(snappedX, snappedY, "resource_Node" );
 
 gameLoop();
