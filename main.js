@@ -53,6 +53,68 @@ function getGridCoordinates(worldX, worldY) {
   return [gridX,gridY]; // Return as a unique key for the cell
 }
 
+// Utility function to check if a point is within a rectangle
+function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
+  return px >= rectX && px <= rectX + rectWidth &&
+         py >= rectY && py <= rectY + rectHeight;
+}
+
+// Event handler for selecting a unit
+canvas.addEventListener("click", (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
+  const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
+
+  const gameObjectsArray = gameState.buildings.concat(gameState.agents);
+
+  // Check for clicked building
+  for (const gameObject of gameObjectsArray) {
+    const buildingScreenX = (gameObject.x - camera.x) * camera.scale;
+    const buildingScreenY = (gameObject.y - camera.y) * camera.scale;
+    const buildingSize = GRID_SIZE * camera.scale;
+
+    if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
+      // Display gameObject info
+      updateUnitInfo(gameObject);
+      return;
+    }
+  }
+
+  // Clear unit info if no unit is clicked
+  updateUnitInfo(null);
+});
+
+// Function to update the #unitInfo div
+function updateUnitInfo(object=null) {
+  const unitInfoDiv = document.getElementById("unitInfo");
+  if (!object){
+    unitInfoDiv.innerHTML = `<h3>Unit Info:</h3><p>Click on a unit to view details.</p>`;
+    return;
+  }
+
+
+  // Create table element
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+  table.style.width = "100%";
+
+  // Add table header
+  /*const headerRow = table.insertRow();
+  headerRow.innerHTML = `<th style="border: 1px solid black; padding: 5px;">Attribute</th>
+                         <th style="border: 1px solid black; padding: 5px;">Value</th>`;*/
+
+  // Populate table rows with object's attributes
+  for (const [key, value] of Object.entries(object)) {
+    const row = table.insertRow();
+    row.innerHTML = `<td style="border: 1px solid black; padding: 5px;">${key}</td>
+                     <td style="border: 1px solid black; padding: 5px;">${value}</td>`;
+  }
+
+  // Set the inner HTML of the div and append the table
+  unitInfoDiv.innerHTML = `<h3>Unit Info:</h3>`;
+  unitInfoDiv.appendChild(table);
+}
+
 
 //#region  Building Class
 class Building {
@@ -95,7 +157,7 @@ function populateBuildingSelector() {
 
   // Add a default "Please select" option
   const defaultOption = document.createElement("option");
-  defaultOption.value = "";
+  defaultOption.value = null;
   defaultOption.textContent = "Please select a building...";
   buildingSelector.appendChild(defaultOption);
 
@@ -112,7 +174,7 @@ function populateBuildingSelector() {
 function onBuildingSelect() {
   const buildingSelector = document.getElementById("buildingSelector");
   const selectedType = buildingSelector.value;
-
+  
   if (selectedType) {
       selectType(selectedType);
   }
@@ -199,7 +261,7 @@ class Agent {
   gatherResources() {
     if (this.carrying < this.maxCarry) {
       this.carrying++;
-      console.log("Gathered 1 resource.");
+      //console.log("Gathered 1 resource.");
     }
 
     if (this.carrying >= this.maxCarry) {
@@ -221,7 +283,7 @@ class Agent {
   depositResources() {
     if (this.carrying > 0) {
       gameState.resources.wood += this.carrying;
-      console.log(`Deposited ${this.carrying} resources.`);
+      //console.log(`Deposited ${this.carrying} resources.`);
       this.carrying = 0;
     }
     this.job = "idle"; // Return to idle after depositing
@@ -251,7 +313,7 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.buildings.some(b => b.type === "resource_Node")),*/
-  new Quest("Collect 10 resources", () => gameState.resources.wood >= 10),
+  new Quest("Collect 200 resources", () => gameState.resources.wood >= 200),
   new Quest("Build a house", () => gameState.buildings.some(b => b.type === "house")),
 ];
 // Function to draw the quest log on the canvas screen
@@ -282,7 +344,7 @@ function renderQuests() {
 
       // Optionally style completed quests
       if (quest.completed) {
-          questDiv.style.color = "green";
+          questDiv.style.color = "lightgreen";
       }
 
       questContainer.appendChild(questDiv);
@@ -350,10 +412,14 @@ function isCellOccupied(x, y) {
 }
 
 function selectType(type) {
+  
   if (!Building.types[type]) {
-    console.error(`Invalid type selected: ${type}`);
+    gameState.selectedType = null;
+    //console.error(`Invalid type selected: ${type}`);
+    console.log(`Invalid building type selected: ${type}`);
     return;
   }
+  
   gameState.selectedType = type;
   console.log(`Selected type: ${type}`);
 }
@@ -417,22 +483,24 @@ canvas.addEventListener("click", (event) => {
   const snappedX = Math.floor(worldX / GRID_SIZE) * GRID_SIZE;
   const snappedY = Math.floor(worldY / GRID_SIZE) * GRID_SIZE;
 
-  // Check if the cell is already occupied
-  if (isCellOccupied(snappedX, snappedY)) {
-    console.log("Cannot place building: Cell is already occupied.");
-    alert("Cannot place building: Cell is already occupied.");
-    return;
-  }
 
   // Ensure a type is selected
-  if (!gameState.selectedType) {
-    alert("Please select a building type to place!");
-    return;
+  if (gameState.selectedType!=null) {
+    // Check if the cell is already occupied
+    if (isCellOccupied(snappedX, snappedY)) {
+      console.log("Cannot place building: Cell is already occupied.");
+      alert("Cannot place building: Cell is already occupied.");
+      return;
+    }
+    // Add the selected building to the game
+    addBuilding(snappedX, snappedY, gameState.selectedType);
+    addAgent(snappedX, snappedY);
+    console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
-
-  // Add the selected building to the game
-  addBuilding(snappedX, snappedY, gameState.selectedType);
-  console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
+  else{
+    // Selecting a unit?
+  }
+  
 });
 
 //#endregion
@@ -464,6 +532,8 @@ function gameLoop() {
   // Check quests
   checkQuests();
 
+  //console.log("Selected Building Type: "+gameState.selectedType);
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -484,6 +554,8 @@ var buildingCoords = getGridCoordinates(centerX - 100, centerY);
 addBuilding(buildingCoords[0], buildingCoords[1], "resource_Node");
 buildingCoords = getGridCoordinates(centerX + 100, centerY);
 addBuilding(buildingCoords[0], buildingCoords[1], "house");
+
+updateUnitInfo();
 
 
 gameLoop();
