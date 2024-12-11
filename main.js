@@ -11,7 +11,7 @@ const gameState = {
     stone: 0,
     food: 0,
   },
-  buildings: [],
+  nodes: [],
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0
@@ -67,13 +67,13 @@ canvas.addEventListener("click", (event) => {
   const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
   const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
 
-  const gameObjectsArray = gameState.buildings.concat(gameState.agents);
+  const gameObjectsArray = gameState.nodes.concat(gameState.agents);
 
-  // Check for clicked building
+  // Check for clicked node
   for (const gameObject of gameObjectsArray) {
-    const buildingScreenX = (gameObject.x - camera.x) * camera.scale;
-    const buildingScreenY = (gameObject.y - camera.y) * camera.scale;
-    const buildingSize = GRID_SIZE * camera.scale;
+    const nodeScreenX = (gameObject.x - camera.x) * camera.scale;
+    const nodeScreenY = (gameObject.y - camera.y) * camera.scale;
+    const nodeSize = GRID_SIZE * camera.scale;
 
     if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
       // Display gameObject info
@@ -118,8 +118,8 @@ function updateUnitInfo(object=null) {
 }
 
 
-//#region  Building Class
-class Building {
+//#region  Node Class
+class Node {
   static types = {
     storage_Node    : { key : "storage_Node", colour: "brown", description: "Provides shelter for agents." },
     farm            : { key : "farm", colour: "green", description: "Produces food resources." },
@@ -128,7 +128,7 @@ class Building {
   }
 
   constructor(x, y, type) {
-    this.id = "Building" + gameState.spawnedUnitsCount;
+    this.id = "Node" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
     this.type = type;
@@ -142,7 +142,7 @@ class Building {
       screenY,
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
-      Building.types[this.type].colour
+      Node.types[this.type].colour
     );
     drawText(
       this.type,
@@ -152,39 +152,39 @@ class Building {
   }
 }
 
-function populateBuildingSelector() {
-  const buildingSelector = document.getElementById("buildingSelector");
+function populateNodeSelector() {
+  const nodeSelector = document.getElementById("nodeSelector");
 
   // Clear existing options
-  buildingSelector.innerHTML = "";
+  nodeSelector.innerHTML = "";
 
   // Add a default "Please select" option
   const defaultOption = document.createElement("option");
   defaultOption.value = null;
-  defaultOption.textContent = "Please select a building...";
-  buildingSelector.appendChild(defaultOption);
+  defaultOption.textContent = "Please select a node...";
+  nodeSelector.appendChild(defaultOption);
 
-  // Loop through Building types and add them as options
-  for (const buildingType in Building.types) {
+  // Loop through Node types and add them as options
+  for (const nodeType in Node.types) {
       const option = document.createElement("option");
-      option.value = buildingType;
-      option.textContent = buildingType.charAt(0).toUpperCase() + buildingType.slice(1); // Capitalize the first letter
-      buildingSelector.appendChild(option);
+      option.value = nodeType;
+      option.textContent = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // Capitalize the first letter
+      nodeSelector.appendChild(option);
   }
 }
 
-// Event handler when a building is selected from the dropdown
-function onBuildingSelect() {
-  const buildingSelector = document.getElementById("buildingSelector");
-  const selectedType = buildingSelector.value;
+// Event handler when a node is selected from the dropdown
+function onNodeSelect() {
+  const nodeSelector = document.getElementById("nodeSelector");
+  const selectedType = nodeSelector.value;
   
   if (selectedType) {
       selectType(selectedType);
   }
 }
 
-// Call populateBuildingSelector to fill the dropdown when the game starts
-populateBuildingSelector();
+// Call populateNodeSelector to fill the dropdown when the game starts
+populateNodeSelector();
 
 
 //#region Agent Class
@@ -194,7 +194,7 @@ class Agent {
     this.x = x;
     this.y = y;
     this.job = "idle"; // Possible jobs: idle, gathering, depositing
-    this.target = null; // Current target (building or position)
+    this.target = null; // Current target (node or position)
     this.carrying = 0; // Resources being carried
     this.maxCarry = 5; // Max resources agent can carry
     this.speed = 2; // Movement speed
@@ -235,8 +235,8 @@ class Agent {
   }
 
   findResourceNode() {
-    const resourceNode = gameState.buildings.find(
-      (b) => b.type === Building.types.resource_Node.key
+    const resourceNode = gameState.nodes.find(
+      (b) => b.type === Node.types.resource_Node.key
     );
     if (resourceNode) {
       this.job = "gathering";
@@ -276,12 +276,12 @@ class Agent {
 
   findStorageNode() {
     var foundStorageNode = null;
-    if (this.home && this.home.type == Building.types.storage_Node.key) {
+    if (this.home && this.home.type == Node.types.storage_Node.key) {
       this.job = "depositing";
       this.target = this.home;
     }
     else {
-      foundStorageNode = gameState.buildings.find((b) => b.type === Building.types.storage_Node.key);
+      foundStorageNode = gameState.nodes.find((b) => b.type === Node.types.storage_Node.key);
       this.home = foundStorageNode;
 
       if (!foundStorageNode){
@@ -324,9 +324,9 @@ class Quest {
 
 // Quest Log
 const questLog = [
-  /*new Quest("Build a resource node", () => gameState.buildings.some(b => b.type === Building.types.resource_Node.key)),*/
+  /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
   new Quest("Collect 200 resources", () => gameState.resources.wood >= 200),
-  new Quest("Build a storage_Node", () => gameState.buildings.some(b => b.type === Building.types.storage_Node.key)),
+  new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type === Node.types.storage_Node.key)),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
@@ -381,11 +381,11 @@ function collectResources() {
   gameState.resources.food += 1;
 }
 
-function addBuilding(x, y, type) {
-  const newBuilding = new Building(x, y, type);
-  gameState.buildings.push(newBuilding);
+function addNode(x, y, type) {
+  const newNode = new Node(x, y, type);
+  gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
-  return newBuilding;
+  return newNode;
 }
 
 function addAgent(x, y) {
@@ -422,19 +422,19 @@ function drawGrid() {
   }
 }
 
-// Function to check if a building exists at the given position
+// Function to check if a node exists at the given position
 function isCellOccupied(x, y) {
-  return gameState.buildings.some((building) => {
-    return building.x === x && building.y === y;
+  return gameState.nodes.some((node) => {
+    return node.x === x && node.y === y;
   });
 }
 
 function selectType(type) {
   
-  if (!Building.types[type]) {
+  if (!Node.types[type]) {
     gameState.selectedType = null;
     //console.error(`Invalid type selected: ${type}`);
-    console.log(`Invalid building type selected: ${type}`);
+    console.log(`Invalid node type selected: ${type}`);
     return;
   }
   
@@ -489,7 +489,7 @@ canvas.addEventListener("wheel", (event) => {
   event.preventDefault();
 });
 
-// Mouse click event for adding buildings
+// Mouse click event for adding nodes
 canvas.addEventListener("click", (event) => {
   const rect = canvas.getBoundingClientRect();
 
@@ -506,14 +506,14 @@ canvas.addEventListener("click", (event) => {
   if (gameState.selectedType!=null) {
     // Check if the cell is already occupied
     if (isCellOccupied(snappedX, snappedY)) {
-      console.log("Cannot place building: Cell is already occupied.");
-      alert("Cannot place building: Cell is already occupied.");
+      console.log("Cannot place node: Cell is already occupied.");
+      alert("Cannot place node: Cell is already occupied.");
       return;
     }
-    // Add the selected building to the game
-    const builtBuilding = addBuilding(snappedX, snappedY, gameState.selectedType);
+    // Add the selected node to the game
+    const builtNode = addNode(snappedX, snappedY, gameState.selectedType);
     const builtAgent = addAgent(snappedX, snappedY);
-    builtAgent.home = builtBuilding;
+    builtAgent.home = builtNode;
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
   else{
@@ -536,8 +536,8 @@ function gameLoop() {
   drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
   drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
-  // Draw and update buildings
-  gameState.buildings.forEach((building) => building.draw());
+  // Draw and update nodes
+  gameState.nodes.forEach((node) => node.draw());
 
   // Draw and update agents
   gameState.agents.forEach((agent) => {
@@ -551,7 +551,7 @@ function gameLoop() {
   // Check quests
   checkQuests();
 
-  //console.log("Selected Building Type: "+gameState.selectedType);
+  //console.log("Selected Node Type: "+gameState.selectedType);
 
   requestAnimationFrame(gameLoop);
 }
@@ -569,10 +569,10 @@ const centerY = canvas.height / 2;
 addAgent(centerX, centerY);
 
 // Add a resource node and a storage_Node nearby
-var buildingCoords = getGridCoordinates(centerX/5, centerY);
-addBuilding(buildingCoords[0], buildingCoords[1], "resource_Node");
-buildingCoords = getGridCoordinates(centerX + 100, centerY);
-addBuilding(buildingCoords[0], buildingCoords[1], "storage_Node");
+var nodeCoords = getGridCoordinates(centerX/5, centerY);
+addNode(nodeCoords[0], nodeCoords[1], "resource_Node");
+nodeCoords = getGridCoordinates(centerX + 100, centerY);
+addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
 
 updateUnitInfo();
 
