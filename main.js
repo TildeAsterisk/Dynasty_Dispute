@@ -29,8 +29,9 @@ const camera = {
 function drawText(text, x, y, size=11,  colour = "white", outlineColour="black") {
   ctx.font = size.toString()+"px Arial";
   // Capitalise Text
-  text = text.split("_")[0]
+  text = text.split("_Node")[0]
   text=String(text).charAt(0).toUpperCase() + String(text).slice(1);
+  text = text.replace("_", " ");
 
   if(outlineColour!="None"){
     // Draw an outline
@@ -78,6 +79,7 @@ canvas.addEventListener("click", (event) => {
     if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
       // Display gameObject info
       updateUnitInfo(gameObject);
+      console.log(gameObject);
       return;
     }
   }
@@ -121,8 +123,8 @@ function updateUnitInfo(object=null) {
 //#region  Node Class
 class Node {
   static types = {
-    storage_Node    : { key : "storage_Node", colour: "brown", description: "Provides shelter for agents." },
-    farm            : { key : "farm", colour: "green", description: "Produces food resources." },
+    storage_Node    : { key : "storage_Node", colour: "brown", description: "A repository for resources." },
+    home            : { key : "home", colour: "blue", description: "Houses agents" },
     quarry          : { key : "quarry", colour: "gray",  description: "Produces stone resources." },
     resource_Node   : { key : "resource_Node", colour: "green", description: "Contains resources to be extracted." }
   }
@@ -132,6 +134,12 @@ class Node {
     this.x = x;
     this.y = y;
     this.type = type;
+    
+    switch (this.type){
+      case Node.types.storage_Node.key:
+        this.maxCapacity = 50;
+        this.currentCapacity = 0;
+    }
   }
 
   draw() {
@@ -189,11 +197,18 @@ populateNodeSelector();
 
 //#region Agent Class
 class Agent {
+  static jobTypes = {
+    idle        : { key : "idle", defaultTarget : null },
+    gathering   : { key : "gathering", defaultTarget : null },
+    depositing  : { key : "depositing", defaultTarget : null },
+    going_Home  : { key : "going_Home", defaultTarget : null }
+  }
+
   constructor(x, y) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
-    this.job = "idle"; // Possible jobs: idle, gathering, depositing
+    this.job = Agent.jobTypes.idle.key; // Possible jobs: idle, gathering, depositing
     this.target = null; // Current target (node or position)
     this.carrying = 0; // Resources being carried
     this.maxCarry = 5; // Max resources agent can carry
@@ -203,19 +218,36 @@ class Agent {
 
   update() {
     switch (this.job) {
-      case "idle":
+      case Agent.jobTypes.idle.key:
         this.findResourceNode();
         break;
-      case "gathering":
+      case Agent.jobTypes.gathering.key:
         this.moveToTarget();
         if (this.reachedTarget()) {
           this.gatherResources();
         }
         break;
-      case "depositing":
+      case Agent.jobTypes.depositing.key:
         this.moveToTarget();
         if (this.reachedTarget()) {
-          this.depositResources();
+          if(this.target.currentCapacity < this.target.maxCapacity){
+            this.depositResources();
+          }
+          else {
+            //Nodes storage is full!
+            console.log("Agent cannot deposit resources.");
+            //Go Home
+            this.job = Agent.jobTypes.going_Home.key;
+            this.target = this.home;
+          }
+        }
+        break;
+      case Agent.jobTypes.going_Home.key:
+        this.target = this.home;
+        this.moveToTarget();
+        if (this.reachedTarget()){
+          //Is at Home 
+          //console.log("Agent is at home");
         }
         break;
     }
@@ -275,31 +307,43 @@ class Agent {
   }
 
   findStorageNode() {
-    var foundStorageNode = null;
-    if (this.home && this.home.type == Node.types.storage_Node.key) {
-      this.job = "depositing";
+    const foundStorageNode = gameState.nodes.find((b) => b.type === Node.types.storage_Node.key);
+    this.target = foundStorageNode;
+    this.job = Agent.jobTypes.depositing.key;
+
+    if (!foundStorageNode){
+      this.agentBecomeIdle();
+    }
+  }
+
+  findHome(){
+    if (this.home) {
+      this.job = Agent.jobTypes.depositing.going_Home;
       this.target = this.home;
     }
     else {
-      foundStorageNode = gameState.nodes.find((b) => b.type === Node.types.storage_Node.key);
-      this.home = foundStorageNode;
+      const foundHome = gameState.nodes.find((b) => b.type === Node.types.home.key);
+      this.home = foundHome;
 
-      if (!foundStorageNode){
-        this.job = "idle"; // No storage_Node found, return to idle
-        this.target = null;
+      if (!foundHome){
+        this.agentBecomeIdle();
       }
-      
     }
+  }
+
+  agentBecomeIdle(){
+    this.job = Agent.jobTypes.idle.key; // No storage_Node found, return to idle
+    this.target = null;
   }
 
   depositResources() {
     if (this.carrying > 0) {
       gameState.resources.wood += this.carrying;
-      //console.log(`Deposited ${this.carrying} resources.`);
+      this.target.currentCapacity += this.carrying;
+      console.log(`Deposited ${this.carrying} resources.`);
       this.carrying = 0;
     }
-    this.job = "idle"; // Return to idle after depositing
-    this.target = null;
+    this.agentBecomeIdle();
   }
 }
 
@@ -385,6 +429,7 @@ function addNode(x, y, type) {
   const newNode = new Node(x, y, type);
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
+  console.log(`Spawned a new ${type} Node at ${x}, ${y}.`);
   return newNode;
 }
 
@@ -565,11 +610,16 @@ function gameLoop() {
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
+
+// First home
+var nodeCoords = getGridCoordinates(centerX, centerY-300);
+const firstHome = addNode(nodeCoords[0], nodeCoords[1], "home");
 // Add a agent in the center
-addAgent(centerX, centerY);
+const firstAgent = addAgent(centerX, centerY);
+firstAgent.home = firstHome;
 
 // Add a resource node and a storage_Node nearby
-var nodeCoords = getGridCoordinates(centerX/5, centerY);
+nodeCoords = getGridCoordinates(centerX/5, centerY);
 addNode(nodeCoords[0], nodeCoords[1], "resource_Node");
 nodeCoords = getGridCoordinates(centerX + 100, centerY);
 addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
