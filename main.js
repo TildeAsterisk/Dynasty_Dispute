@@ -137,7 +137,7 @@ class Node {
     
     switch (this.type){
       case Node.types.storage_Node.key:
-        this.maxCapacity = 50;
+        this.maxCapacity = 5;
         this.currentCapacity = 0;
     }
   }
@@ -197,18 +197,19 @@ populateNodeSelector();
 
 //#region Agent Class
 class Agent {
-  static jobTypes = {
-    idle        : { key : "idle", defaultTarget : null },
-    gathering   : { key : "gathering", defaultTarget : null },
-    depositing  : { key : "depositing", defaultTarget : null },
-    going_Home  : { key : "going_Home", defaultTarget : null }
+  static behaviourStateTypes = {
+    idle        : { key : "idle"        , defaultTargetType : null },
+    gathering   : { key : "gathering"   , defaultTargetType : Node.types.resource_Node.key },
+    depositing  : { key : "depositing"  , defaultTargetType : Node.types.storage_Node.key },
+    going_Home  : { key : "going_Home"  , defaultTargetType : Node.types.home.key },
+    at_Home  : { key : "at_Home"     , defaultTargetType : Node.types.home.key },
   }
 
   constructor(x, y) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
-    this.job = Agent.jobTypes.idle.key; // Possible jobs: idle, gathering, depositing
+    this.behaviourState = Agent.behaviourStateTypes.idle.key; // Possible behaviourStates: idle, gathering, depositing
     this.target = null; // Current target (node or position)
     this.carrying = 0; // Resources being carried
     this.maxCarry = 5; // Max resources agent can carry
@@ -217,17 +218,17 @@ class Agent {
   }
 
   update() {
-    switch (this.job) {
-      case Agent.jobTypes.idle.key:
+    switch (this.behaviourState) {
+      case Agent.behaviourStateTypes.idle.key:
         this.findResourceNode();
         break;
-      case Agent.jobTypes.gathering.key:
+      case Agent.behaviourStateTypes.gathering.key:
         this.moveToTarget();
         if (this.reachedTarget()) {
           this.gatherResources();
         }
         break;
-      case Agent.jobTypes.depositing.key:
+      case Agent.behaviourStateTypes.depositing.key:
         this.moveToTarget();
         if (this.reachedTarget()) {
           if(this.target.currentCapacity < this.target.maxCapacity){
@@ -237,19 +238,28 @@ class Agent {
             //Nodes storage is full!
             console.log("Agent cannot deposit resources.");
             //Go Home
-            this.job = Agent.jobTypes.going_Home.key;
+            this.behaviourState = Agent.behaviourStateTypes.going_Home.key;
             this.target = this.home;
           }
         }
         break;
-      case Agent.jobTypes.going_Home.key:
+      case Agent.behaviourStateTypes.going_Home.key:
         this.target = this.home;
         this.moveToTarget();
         if (this.reachedTarget()){
           //Is at Home 
           //console.log("Agent is at home");
+          this.behaviourState = Agent.behaviourStateTypes.at_Home.key;
         }
         break;
+      case Agent.behaviourStateTypes.at_Home.key:
+        if(this.target != this.home){
+          console.error("At home but target is not home.");
+        }
+        if (this.carrying > 0){ this.carrying -= 0.005; }
+        else {
+          this.behaviourState = Agent.behaviourStateTypes.idle.key;
+        }
     }
   }
 
@@ -263,7 +273,7 @@ class Agent {
       (GRID_SIZE / 5) * camera.scale,
       "black"
     );
-    drawText(this.job, screenX - 10, screenY - 10);
+    drawText(this.behaviourState, screenX - 10, screenY - 10);
   }
 
   findResourceNode() {
@@ -271,7 +281,7 @@ class Agent {
       (b) => b.type === Node.types.resource_Node.key
     );
     if (resourceNode) {
-      this.job = "gathering";
+      this.behaviourState = "gathering";
       this.target = resourceNode;
     }
   }
@@ -309,7 +319,7 @@ class Agent {
   findStorageNode() {
     const foundStorageNode = gameState.nodes.find((b) => b.type === Node.types.storage_Node.key);
     this.target = foundStorageNode;
-    this.job = Agent.jobTypes.depositing.key;
+    this.behaviourState = Agent.behaviourStateTypes.depositing.key;
 
     if (!foundStorageNode){
       this.agentBecomeIdle();
@@ -318,7 +328,7 @@ class Agent {
 
   findHome(){
     if (this.home) {
-      this.job = Agent.jobTypes.depositing.going_Home;
+      this.behaviourState = Agent.behaviourStateTypes.depositing.going_Home;
       this.target = this.home;
     }
     else {
@@ -332,7 +342,7 @@ class Agent {
   }
 
   agentBecomeIdle(){
-    this.job = Agent.jobTypes.idle.key; // No storage_Node found, return to idle
+    this.behaviourState = Agent.behaviourStateTypes.idle.key; // No storage_Node found, return to idle
     this.target = null;
   }
 
@@ -441,13 +451,17 @@ function addAgent(x, y) {
 }
 
 function drawGrid() {
+  // Fill the entire canvas with colour
+  ctx.fillStyle = "rgb(51, 51, 51)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Calculate the grid using camera
   const gridStartX = Math.floor(camera.x / GRID_SIZE) * GRID_SIZE;
   const gridStartY = Math.floor(camera.y / GRID_SIZE) * GRID_SIZE;
 
   const gridWidth = Math.ceil(canvas.width / (GRID_SIZE * camera.scale));
   const gridHeight = Math.ceil(canvas.height / (GRID_SIZE * camera.scale));
-
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
+  // Draw grid
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
   ctx.lineWidth = 1;
 
   for (let i = 0; i <= gridWidth; i++) {
