@@ -14,7 +14,8 @@ const gameState = {
   nodes: [],
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
-  spawnedUnitsCount : 0
+  spawnedUnitsCount : 0,
+  agentBirthChance : 600  //1 out of <agentBirthChance> chance to give birth
 };
 
 // Grid and Camera
@@ -28,6 +29,7 @@ const camera = {
 //#region Utility Functions
 function drawText(text, x, y, size=11,  colour = "white", outlineColour="black") {
   ctx.font = size.toString()+"px Arial";
+  if (typeof text != "string") { console.error("text is not a string"); return;}
   // Capitalise Text
   text = text.split("_Node")[0]
   text=String(text).charAt(0).toUpperCase() + String(text).slice(1);
@@ -61,6 +63,15 @@ function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
   return px >= rectX && px <= rectX + rectWidth &&
          py >= rectY && py <= rectY + rectHeight;
 }
+
+function getRandomPositionInRange(range) {
+  const randomX = this.x + Math.random() * range * 2 - range;
+  const randomY = this.y + Math.random() * range * 2 - range;
+  return { x: randomX, y: randomY };
+}
+
+
+
 
 // Event handler for selecting a unit
 canvas.addEventListener("click", (event) => {
@@ -119,6 +130,13 @@ function updateUnitInfo(object=null) {
   unitInfoDiv.appendChild(table);
 }
 
+// Helper function to calculate the distance between two positions
+function calculateDistance(pos1, pos2) {
+  const dx = pos2.x - pos1.x;
+  const dy = pos2.y - pos1.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 
 //#region  Node Class
 class Node {
@@ -130,15 +148,24 @@ class Node {
   }
 
   constructor(x, y, type) {
-    this.id = "Node" + gameState.spawnedUnitsCount;
+    this.id = type + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
     this.type = type;
-    
-    switch (this.type){
-      case Node.types.storage_Node.key:
-        this.maxCapacity = 5;
-        this.currentCapacity = 0;
+
+    this.maxCapacity = 50;
+    this.currentCapacity = 0;
+
+    this.agentCapacity = [];
+    this.maxAgentCapacity = 2;
+
+  }
+
+  update(){
+    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
+      //Random change to give birth to a new agent
+      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2));
+      console.log("New Agent Spawned!!!");
     }
   }
 
@@ -173,7 +200,9 @@ function populateNodeSelector() {
   nodeSelector.appendChild(defaultOption);
 
   // Loop through Node types and add them as options
-  for (const nodeType in Node.types) {
+  const buildTypes  = Node.types;
+  buildTypes.genericAgent = "genericAgent";
+  for (const nodeType in buildTypes) {
       const option = document.createElement("option");
       option.value = nodeType;
       option.textContent = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // Capitalize the first letter
@@ -197,6 +226,11 @@ populateNodeSelector();
 
 //#region Agent Class
 class Agent {
+  static types = {
+    generic : "genericAgent",
+    raider  : "raider"
+  }
+
   static behaviourStateTypes = {
     idle        : { key : "idle"        , defaultTargetType : null },
     gathering   : { key : "gathering"   , defaultTargetType : Node.types.resource_Node.key },
@@ -215,6 +249,7 @@ class Agent {
     this.maxCarry = 5; // Max resources agent can carry
     this.speed = 2; // Movement speed
     this.home = null;
+    this.type = Agent.types.generic;
   }
 
   update() {
@@ -233,23 +268,33 @@ class Agent {
         if (this.reachedTarget()) {
           if(this.target.currentCapacity < this.target.maxCapacity){
             this.depositResources();
+            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
           }
           else {
             //Nodes storage is full!
             console.log("Agent cannot deposit resources.");
             //Go Home
-            this.behaviourState = Agent.behaviourStateTypes.going_Home.key;
+            this.changeBehaviourState(Agent.behaviourStateTypes.going_Home.key);
             this.target = this.home;
           }
         }
         break;
       case Agent.behaviourStateTypes.going_Home.key:
+        this.home   = this.findHome();
+        //If no home then wander about
+        if (!this.home) {
+          // Set target, change state
+          this.target = getRandomPositionInRange(5*GRID_SIZE);
+          this.changeBehaviourState("walkabout"); 
+          break;
+        }
         this.target = this.home;
         this.moveToTarget();
         if (this.reachedTarget()){
           //Is at Home 
           //console.log("Agent is at home");
-          this.behaviourState = Agent.behaviourStateTypes.at_Home.key;
+          this.home.agentCapacity.push(this);
+          this.changeBehaviourState(Agent.behaviourStateTypes.at_Home.key);
         }
         break;
       case Agent.behaviourStateTypes.at_Home.key:
@@ -258,7 +303,22 @@ class Agent {
         }
         if (this.carrying > 0){ this.carrying -= 0.005; }
         else {
-          this.behaviourState = Agent.behaviourStateTypes.idle.key;
+          //leave home
+          this.home.agentCapacity.pop(this);
+          this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
+        }
+        break;
+      default:
+        if(this.target){
+          this.moveToTarget(this.target);
+          if (this.reachedTarget()){
+            console.log("set random target");
+            this.target = getRandomPositionInRange(GRID_SIZE * 5);
+          }
+          break;
+        }
+        else{
+          console.log("Not doing anything");
         }
     }
   }
@@ -277,17 +337,23 @@ class Agent {
   }
 
   findResourceNode() {
+    /*
+    Find a resource node and set it as the target 
+    */
     const resourceNode = gameState.nodes.find(
       (b) => b.type === Node.types.resource_Node.key
     );
     if (resourceNode) {
-      this.behaviourState = "gathering";
+      this.changeBehaviourState("gathering");
       this.target = resourceNode;
     }
   }
 
   moveToTarget() {
-    if (!this.target) return;
+    /*
+    Moves Agent towards target
+    */
+    if (!this.target){ console.error("Theres no target to move to"); return;}
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -299,7 +365,6 @@ class Agent {
   }
 
   reachedTarget() {
-    if (!this.target) return false;
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
     return Math.abs(dx) < 5 && Math.abs(dy) < 5;
@@ -312,39 +377,59 @@ class Agent {
     }
 
     if (this.carrying >= this.maxCarry) {
-      this.findStorageNode();
+      const storageFound = this.findStorageNode();
+      if (!storageFound) { this.changeBehaviourState(Agent.behaviourStateTypes.going_Home.key); }
     }
   }
 
   findStorageNode() {
-    const foundStorageNode = gameState.nodes.find((b) => b.type === Node.types.storage_Node.key);
-    this.target = foundStorageNode;
-    this.behaviourState = Agent.behaviourStateTypes.depositing.key;
+    // Returns True
+    let foundStorageNode = null;
+    let shortestDistance = Infinity;
 
-    if (!foundStorageNode){
-      this.agentBecomeIdle();
-    }
-  }
-
-  findHome(){
-    if (this.home) {
-      this.behaviourState = Agent.behaviourStateTypes.depositing.going_Home;
-      this.target = this.home;
-    }
-    else {
-      const foundHome = gameState.nodes.find((b) => b.type === Node.types.home.key);
-      this.home = foundHome;
-
-      if (!foundHome){
-        this.agentBecomeIdle();
+    gameState.nodes.forEach( (b) => {
+      if (b.type === Node.types.storage_Node.key && b.currentCapacity < b.maxCapacity){
+        const pos1 =  {x:this.x, y:this.y};
+        const pos2 =  {x:b.x, y:b.y};
+        const distance = calculateDistance(pos1, pos2);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          foundStorageNode = b;
+        }
       }
-    }
+    });
+
+    this.changeBehaviourState(Agent.behaviourStateTypes.depositing.key);
+    this.target = foundStorageNode;
+    return foundStorageNode;
   }
 
-  agentBecomeIdle(){
-    this.behaviourState = Agent.behaviourStateTypes.idle.key; // No storage_Node found, return to idle
-    this.target = null;
-  }
+  findHome() {
+    /*
+    Find the closest Node of type Home and set target.
+    Find the closest home that has capacity and go there.
+
+    Output: foundHome
+    */
+    let foundHome = null; // If no home is found, return null
+    let shortestDistance = Infinity;
+
+    // Iterate over all nodes to find the closest eligible home
+    gameState.nodes.forEach((b) => {
+      if (b.type === Node.types.home.key && b.agentCapacity.length < b.maxAgentCapacity) {
+        const pos1 =  {x:this.x, y:this.y};
+        const pos2 =  {x:b.x, y:b.y};
+        const distance = calculateDistance(pos1, pos2);
+        if (distance < shortestDistance) {
+            shortestDistance = distance;
+            foundHome = b;
+        }
+      }
+    });
+
+    this.target = foundHome;
+    return foundHome;
+}
 
   depositResources() {
     if (this.carrying > 0) {
@@ -353,8 +438,13 @@ class Agent {
       console.log(`Deposited ${this.carrying} resources.`);
       this.carrying = 0;
     }
-    this.agentBecomeIdle();
   }
+
+  changeBehaviourState(nextBehaviourState){
+    if (typeof nextBehaviourState != "string") {console.error("NextBehaviourState is incorrect type.");}
+    this.behaviourState= nextBehaviourState;
+  }
+
 }
 
 
@@ -569,10 +659,16 @@ canvas.addEventListener("click", (event) => {
       alert("Cannot place node: Cell is already occupied.");
       return;
     }
-    // Add the selected node to the game
-    const builtNode = addNode(snappedX, snappedY, gameState.selectedType);
-    const builtAgent = addAgent(snappedX, snappedY);
-    builtAgent.home = builtNode;
+    // Add the selected unit to the game
+    //let typeExistsInObject = Object.values(Agent.types).some(type => type.key === gameState.selectedType);
+    if(gameState.selectedType == Agent.types.generic){
+      addAgent(snappedX, snappedY);
+    }
+    else{
+      addNode(snappedX, snappedY, gameState.selectedType);
+    }
+    //const builtAgent = addAgent(snappedX, snappedY);
+    //builtAgent.home = builtNode;
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
   else{
@@ -596,7 +692,10 @@ function gameLoop() {
   drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
   // Draw and update nodes
-  gameState.nodes.forEach((node) => node.draw());
+  gameState.nodes.forEach((node) => {
+    node.update();
+    node.draw()
+  });
 
   // Draw and update agents
   gameState.agents.forEach((agent) => {
@@ -630,13 +729,15 @@ var nodeCoords = getGridCoordinates(centerX, centerY-300);
 const firstHome = addNode(nodeCoords[0], nodeCoords[1], "home");
 // Add a agent in the center
 const firstAgent = addAgent(centerX, centerY);
+const secondAgent = addAgent(centerX+100, centerY+100);
 firstAgent.home = firstHome;
+secondAgent.home = firstHome;
 
 // Add a resource node and a storage_Node nearby
 nodeCoords = getGridCoordinates(centerX/5, centerY);
 addNode(nodeCoords[0], nodeCoords[1], "resource_Node");
-nodeCoords = getGridCoordinates(centerX + 100, centerY);
-addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
+//nodeCoords = getGridCoordinates(centerX + 100, centerY);
+//addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
 
 updateUnitInfo();
 
