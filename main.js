@@ -29,9 +29,10 @@ const camera = {
 //#region Utility Functions
 function drawText(text, x, y, size=11,  colour = "white", outlineColour="black") {
   ctx.font = size.toString()+"px Arial";
-  if (typeof text != "string") { console.error("text is not a string"); return;}
+  if (typeof text != "string") { console.error("text is not a string"); console.log(text); return;}
   // Capitalise Text
-  text = text.split("_Node")[0]
+  text = text.split(/_Node|_State/)[0]  // Cut off the class identifier part
+  text = text.replace(/([a-z])([A-Z])/g, '$1 $2');
   text=String(text).charAt(0).toUpperCase() + String(text).slice(1);
   text = text.replace("_", " ");
 
@@ -138,41 +139,6 @@ function calculateDistance(pos1, pos2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-//#region State Class
-// Define a State base class (optional)
-class State {
-  enter(context) {
-      // Code executed when entering the state
-  }
-  execute(context) {
-      // Code executed on each update/tick
-  }
-  exit(context) {
-      // Code executed when leaving the state
-  }
-}
-
-class IdleState extends State {
-  enter(context) {
-    // Code executed when entering the state
-}
-execute(context) {
-    // Code executed on each update/tick
-}
-exit(context) {
-    // Code executed when leaving the state
-}
-}
-
-static behaviourStateTypes = {
-  idle        : { key : "idle"        , defaultTargetType : null },
-  gathering   : { key : "gathering"   , defaultTargetType : Node.types.resource_Node.key },
-  depositing  : { key : "depositing"  , defaultTargetType : Node.types.storage_Node.key },
-  going_Home  : { key : "going_Home"  , defaultTargetType : Node.types.home.key },
-  at_Home  : { key : "at_Home"     , defaultTargetType : Node.types.home.key },
-}
-//#endregion
-
 //#region  Node Class
 class Node {
   static types = {
@@ -259,6 +225,119 @@ function onNodeSelect() {
 populateNodeSelector();
 
 
+
+//#region State Class
+// Define a State base class (optional)
+class State {
+  enter(context) {
+    // Code executed when entering the state
+    console.log(`${context.id} enters ${this.constructor.name}.`);
+  }
+  execute(context) {
+    // Code executed on each update/tick
+    if(context.target){
+      context.moveToTarget();
+      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+        context.changeBehaviourState(new Idle_State());
+      }
+      if (context.reachedTarget()){
+        console.log("Wandering to random position.");
+        context.target = getRandomPositionInRange(context.target, GRID_SIZE*3);
+      }
+    }
+    else{
+      console.log("Not doing anything");
+    }
+  }
+  exit(context) {
+      // Code executed when leaving the state
+      console.log(`${context.id} stops  ${this.constructor.name}.`);
+  }
+}
+
+//#region Idle State
+class Idle_State extends State {
+  execute(context) {
+    context.target = context.findResourceNode();
+    if (context.target) { context.changeBehaviourState(new Gathering_State()); }
+  }
+}
+
+//#region Gathering State
+class Gathering_State extends State {
+  execute(context) {
+    context.moveToTarget();
+    if (context.reachedTarget()) {
+      context.gatherResources();
+    }
+  }
+}
+
+//#region Depositing State
+class Depositing_State extends State {
+  execute(context) {
+    //Execute
+    context.moveToTarget();
+    if (context.reachedTarget()) {
+      if(context.target.currentCapacity < context.target.maxCapacity){
+        context.depositResources();
+        context.changeBehaviourState(new Idle_State());
+      }
+      else {
+        //Nodes storage is full!
+        console.log("Agent cannot deposit resources.");
+        //Go Home
+        context.changeBehaviourState(new GoingHome_State());
+        context.target = context.home;
+      }
+    }
+  }
+}
+
+//#region Going Home State
+class GoingHome_State extends State {
+  execute(context) {
+    //execute
+    context.home   = context.findHome();
+    //If no home then wander about
+    if (!context.home) {
+      // Set target, change state
+      context.changeBehaviourState(new State()); 
+      context.target = getRandomPositionInRange(context, GRID_SIZE*3);
+    }
+    //context.target = context.home;
+    context.moveToTarget();
+    if (context.reachedTarget()){
+      //Is at Home 
+      //console.log("Agent is at home");
+      context.home.agentCapacity.push(context);
+      context.changeBehaviourState(new AtHome_State());
+    }
+  }
+}
+
+//#region At Home State
+class AtHome_State extends State {
+  execute(context) {
+    //execute
+    if(context.target != context.home){ console.error("At home but target is not home."); }
+    if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
+      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+        context.changeBehaviourState(new Idle_State());
+      }
+    }
+    else {
+      //leave home
+      context.home.agentCapacity.pop(context);
+      context.changeBehaviourState(new Idle_State());
+    }
+  }
+}
+
+//#endregion
+
+
+
 //#region Agent Class
 class Agent {
   static types = {
@@ -266,19 +345,11 @@ class Agent {
     raider  : "raider"
   }
 
-  static behaviourStateTypes = {
-    idle        : { key : "idle"        , defaultTargetType : null },
-    gathering   : { key : "gathering"   , defaultTargetType : Node.types.resource_Node.key },
-    depositing  : { key : "depositing"  , defaultTargetType : Node.types.storage_Node.key },
-    going_Home  : { key : "going_Home"  , defaultTargetType : Node.types.home.key },
-    at_Home  : { key : "at_Home"     , defaultTargetType : Node.types.home.key },
-  }
-
   constructor(x, y) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
-    this.behaviourState = Agent.behaviourStateTypes.idle.key; // Possible behaviourStates: idle, gathering, depositing
+    this.behaviourState = new Idle_State(); // Possible behaviourStates: idle, gathering, depositing
     this.target = null; // Current target (node or position)
     this.carrying = 0; // Resources being carried
     this.maxCarry = 5; // Max resources agent can carry
@@ -289,80 +360,10 @@ class Agent {
   }
 
   update() {
-    switch (this.behaviourState) {
-      case Agent.behaviourStateTypes.idle.key:
-        this.target = this.findResourceNode();
-        if (this.target) { this.changeBehaviourState(Agent.behaviourStateTypes.gathering.key); }
-        break;
-      case Agent.behaviourStateTypes.gathering.key:
-        this.moveToTarget();
-        if (this.reachedTarget()) {
-          this.gatherResources();
-        }
-        break;
-      case Agent.behaviourStateTypes.depositing.key:
-        this.moveToTarget();
-        if (this.reachedTarget()) {
-          if(this.target.currentCapacity < this.target.maxCapacity){
-            this.depositResources();
-            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
-          }
-          else {
-            //Nodes storage is full!
-            console.log("Agent cannot deposit resources.");
-            //Go Home
-            this.changeBehaviourState(Agent.behaviourStateTypes.going_Home.key);
-            this.target = this.home;
-          }
-        }
-        break;
-      case Agent.behaviourStateTypes.going_Home.key:
-        this.home   = this.findHome();
-        //If no home then wander about
-        if (!this.home) {
-          // Set target, change state
-          this.changeBehaviourState("walkabout"); 
-          this.target = getRandomPositionInRange(this, GRID_SIZE*3);
-          break;
-        }
-        this.target = this.home;
-        this.moveToTarget();
-        if (this.reachedTarget()){
-          //Is at Home 
-          //console.log("Agent is at home");
-          this.home.agentCapacity.push(this);
-          this.changeBehaviourState(Agent.behaviourStateTypes.at_Home.key);
-        }
-        break;
-      case Agent.behaviourStateTypes.at_Home.key:
-        if(this.target != this.home){ console.error("At home but target is not home."); }
-        if (this.carrying >= this.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
-          if (!this.consumeResources()) { //Consume resources, If cannot then change state to gathering
-            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
-          }
-        }
-        else {
-          //leave home
-          this.home.agentCapacity.pop(this);
-          this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
-        }
-        break;
-      default:
-        if(this.target){
-          this.moveToTarget();
-          if (!this.consumeResources()) { //Consume resources, If cannot then change state to gathering
-            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
-          }
-          if (this.reachedTarget()){
-            console.log("Wandering to random position.");
-            this.target = getRandomPositionInRange(this.target, GRID_SIZE*3);
-          }
-          break;
-        }
-        else{
-          console.log("Not doing anything");
-        }
+    if (this.behaviourState){
+      this.behaviourState.execute(this);
     }
+
   }
 
   draw() {
@@ -375,7 +376,7 @@ class Agent {
       (GRID_SIZE / 5) * camera.scale,
       "black"
     );
-    drawText(this.behaviourState, screenX - 10, screenY - 10);
+    drawText(this.behaviourState.constructor.name, screenX - 10, screenY - 10);
   }
 
   findResourceNode() {
@@ -422,7 +423,7 @@ class Agent {
 
     if (this.carrying >= this.maxCarry) {
       const storageFound = this.findStorageNode();
-      if (!storageFound) { this.changeBehaviourState(Agent.behaviourStateTypes.going_Home.key); }
+      if (!storageFound) { this.changeBehaviourState(new GoingHome_State()); }
     }
   }
 
@@ -443,7 +444,7 @@ class Agent {
       }
     });
 
-    this.changeBehaviourState(Agent.behaviourStateTypes.depositing.key);
+    this.changeBehaviourState(new Depositing_State());
     this.target = foundStorageNode;
     return foundStorageNode;
   }
@@ -484,10 +485,12 @@ class Agent {
     }
   }
 
-  changeBehaviourState(nextBehaviourState){
-    if (typeof nextBehaviourState != "string") {console.error("NextBehaviourState is incorrect type.");}
-    this.behaviourState= nextBehaviourState;
-    console.log(this.id+" is "+this.behaviourState);
+  changeBehaviourState(newState){
+    if (this.behaviourState) {
+      this.behaviourState.exit(this); // Exit the current state
+    }
+    this.behaviourState = newState;
+    this.behaviourState.enter(this); // Enter the new state
   }
 
   consumeResources(hunger=this.resourceHunger){
