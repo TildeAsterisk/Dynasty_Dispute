@@ -64,10 +64,11 @@ function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
          py >= rectY && py <= rectY + rectHeight;
 }
 
-function getRandomPositionInRange(range) {
-  const randomX = this.x + Math.random() * range * 2 - range;
-  const randomY = this.y + Math.random() * range * 2 - range;
-  return { x: randomX, y: randomY };
+function getRandomPositionInRange(obj, range) {
+  const randomX = obj.x + Math.random() * range * 2 - range;
+  const randomY = obj.y + Math.random() * range * 2 - range;
+  const randomPos = { x: randomX, y: randomY };
+  return randomPos;
 }
 
 
@@ -250,12 +251,14 @@ class Agent {
     this.speed = 2; // Movement speed
     this.home = null;
     this.type = Agent.types.generic;
+    this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
   }
 
   update() {
     switch (this.behaviourState) {
       case Agent.behaviourStateTypes.idle.key:
-        this.findResourceNode();
+        this.target = this.findResourceNode();
+        if (this.target) { this.changeBehaviourState(Agent.behaviourStateTypes.gathering.key); }
         break;
       case Agent.behaviourStateTypes.gathering.key:
         this.moveToTarget();
@@ -284,8 +287,8 @@ class Agent {
         //If no home then wander about
         if (!this.home) {
           // Set target, change state
-          this.target = getRandomPositionInRange(5*GRID_SIZE);
           this.changeBehaviourState("walkabout"); 
+          this.target = getRandomPositionInRange(this, GRID_SIZE*3);
           break;
         }
         this.target = this.home;
@@ -298,10 +301,10 @@ class Agent {
         }
         break;
       case Agent.behaviourStateTypes.at_Home.key:
-        if(this.target != this.home){
-          console.error("At home but target is not home.");
+        if(this.target != this.home){ console.error("At home but target is not home."); }
+        if (this.carrying >= this.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
+          this.consumeResources(); 
         }
-        if (this.carrying > 0){ this.carrying -= 0.005; }
         else {
           //leave home
           this.home.agentCapacity.pop(this);
@@ -310,10 +313,13 @@ class Agent {
         break;
       default:
         if(this.target){
-          this.moveToTarget(this.target);
+          this.moveToTarget();
+          if (!this.consumeResources()) { //Consume resources, If cannot then change state to gathering
+            //this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
+          }
           if (this.reachedTarget()){
             console.log("set random target");
-            this.target = getRandomPositionInRange(GRID_SIZE * 5);
+            this.target = getRandomPositionInRange(this.target, GRID_SIZE*3);
           }
           break;
         }
@@ -343,10 +349,7 @@ class Agent {
     const resourceNode = gameState.nodes.find(
       (b) => b.type === Node.types.resource_Node.key
     );
-    if (resourceNode) {
-      this.changeBehaviourState("gathering");
-      this.target = resourceNode;
-    }
+    return resourceNode;
   }
 
   moveToTarget() {
@@ -359,8 +362,13 @@ class Agent {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > this.speed) {
+      //console.log("Waking to target");
       this.x += (dx / distance) * this.speed;
       this.y += (dy / distance) * this.speed;
+    }
+    else{
+      //console.error(this.id+" Cannot walk to target "+this.target);
+      //console.log(this.target);
     }
   }
 
@@ -443,6 +451,28 @@ class Agent {
   changeBehaviourState(nextBehaviourState){
     if (typeof nextBehaviourState != "string") {console.error("NextBehaviourState is incorrect type.");}
     this.behaviourState= nextBehaviourState;
+    console.log(this.id+" is "+this.behaviourState);
+  }
+
+  consumeResources(hunger=this.resourceHunger){
+    if (this.carrying >= hunger){
+      this.carrying -= hunger;
+    }
+    else {  //Agent need to ead and cannot
+      console.log(this.id+" cannot eat.");
+      return false;
+      //this.die();
+      //console.log(this.id+" has died due to lack of resources.");
+    }
+  }
+
+  isHungry(){
+    return this.carrying < this.resourceHunger;
+  }
+
+  die(){
+    gameState.agents.pop(this);
+    delete this;
   }
 
 }
