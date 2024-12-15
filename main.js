@@ -163,11 +163,16 @@ class Node {
   }
 
   update(){
+    // Random chance to spawn agent
     if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
       //Random change to give birth to a new agent
       addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2));
       console.log("New Agent Spawned!!!");
     }
+
+    // Drain resources slowly from storage depo
+    if(this.type == Node.types.storage_Node.key && this.currentCapacity > 0)
+      this.currentCapacity -= 0.01;
   }
 
   draw() {
@@ -203,6 +208,7 @@ function populateNodeSelector() {
   // Loop through Node types and add them as options
   const buildTypes  = Node.types;
   buildTypes.genericAgent = "genericAgent";
+  buildTypes.raider = "raider";
   for (const nodeType in buildTypes) {
       const option = document.createElement("option");
       option.value = nodeType;
@@ -235,23 +241,24 @@ class State {
   }
   execute(context) {
     // Code executed on each update/tick
-    if(context.target){
-      context.moveToTarget();
-      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        context.changeBehaviourState(new Idle_State());
-      }
-      if (context.reachedTarget()){
-        console.log("Wandering to random position.");
-        context.target = getRandomPositionInRange(context.target, GRID_SIZE*3);
-      }
-    }
-    else{
-      console.log("Not doing anything");
-    }
+
+    /*
+    
+    */
   }
   exit(context) {
       // Code executed when leaving the state
       console.log(`${context.id} stops  ${this.constructor.name}.`);
+  }
+
+  checkForEnemy(context){
+    // Check for nearby enemies
+    const enemy = context.findEnemy();
+    if (enemy) {
+      console.log(`${context.id} found an enemy: ${enemy.id}`);
+      context.target = enemy;
+      context.changeBehaviourState(new Combat_State());
+    }
   }
 }
 
@@ -263,9 +270,40 @@ class Idle_State extends State {
   }
 }
 
+//#region Roaming State
+class Roaming_State extends State {
+  execute(context) {
+    this.checkForEnemy(context);
+    if(context.target){
+      context.moveToTarget();
+      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+        console.log(context.id+" ran out of resources while roaming.");
+        context.target = context.findResourceNode();
+        if (context.target) { // If resource found, gather
+          context.changeBehaviourState(new Gathering_State()); 
+        }
+        else{
+          //Die?
+          context.die;
+        }
+      }
+
+      if (context.reachedTarget()){
+        console.log("Wandering to random position.");
+        context.target = getRandomPositionInRange(context.target, GRID_SIZE*3);
+      }
+    }
+    else{
+      //  Roaming with no target. Set a new one? 
+      context.target = getRandomPositionInRange(context, GRID_SIZE*3);
+    }
+  }
+}
+
 //#region Gathering State
 class Gathering_State extends State {
   execute(context) {
+    this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
       context.gatherResources();
@@ -277,18 +315,19 @@ class Gathering_State extends State {
 class Depositing_State extends State {
   execute(context) {
     //Execute
+    this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
       if(context.target.currentCapacity < context.target.maxCapacity){
         context.depositResources();
-        context.changeBehaviourState(new Idle_State());
+        context.changeBehaviourState(new Roaming_State());
       }
       else {
         //Nodes storage is full!
         console.log("Agent cannot deposit resources.");
         //Go Home
-        context.changeBehaviourState(new GoingHome_State());
         context.target = context.home;
+        context.changeBehaviourState(new GoingHome_State());
       }
     }
   }
@@ -297,13 +336,14 @@ class Depositing_State extends State {
 //#region Going Home State
 class GoingHome_State extends State {
   execute(context) {
+    this.checkForEnemy(context);
     //execute
     context.home   = context.findHome();
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
-      context.changeBehaviourState(new State()); 
       context.target = getRandomPositionInRange(context, GRID_SIZE*3);
+      context.changeBehaviourState(new Roaming_State()); 
     }
     //context.target = context.home;
     context.moveToTarget();
@@ -323,16 +363,44 @@ class AtHome_State extends State {
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        context.changeBehaviourState(new Idle_State());
+        context.changeBehaviourState(new Roaming_State());
       }
     }
     else {
       //leave home
-      context.home.agentCapacity.pop(context);
-      context.changeBehaviourState(new Idle_State());
+      context.home.agentCapacity = context.home.agentCapacity.filter((agent) => agent !== context);
+      context.changeBehaviourState(new Roaming_State());
     }
   }
 }
+
+//#region Combat State
+class Combat_State extends State {
+  enter(agent) {
+    console.log(`${agent.id} is entering combat.`);
+  }
+
+  execute(agent) {
+    if (!agent.target || agent.target.health <= 0) {
+      console.log(`${agent.id} has no valid target.`);
+      agent.changeBehaviourState(new Roaming_State());
+      return;
+    }
+
+    const distance = calculateDistance(agent, agent.target);
+    if (distance > agent.attackRange) {
+      console.log(`${agent.id} is chasing ${agent.target.id}.`);
+      agent.moveToTarget(); // Move closer to the target
+    } else {
+      agent.attackTarget();
+    }
+  }
+
+  exit(agent) {
+    console.log(`${agent.id} is exiting combat.`);
+  }
+}
+
 
 //#endregion
 
@@ -345,7 +413,7 @@ class Agent {
     raider  : "raider"
   }
 
-  constructor(x, y) {
+  constructor(x, y, type = Agent.types.generic) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
@@ -355,8 +423,15 @@ class Agent {
     this.maxCarry = 5; // Max resources agent can carry
     this.speed = 2; // Movement speed
     this.home = null;
-    this.type = Agent.types.generic;
+    this.type = type;
     this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
+
+    // Combat properties
+    this.health = 100; // Agent's health
+    this.attackPower = 10; // Damage dealt by the agent
+    this.attackRange = 10; // Range of attack
+    this.attackCooldown = 1; // Seconds between attacks
+    this.lastAttackTime = 0; // Time of the last attack
   }
 
   update() {
@@ -443,9 +518,9 @@ class Agent {
         }
       }
     });
-
-    this.changeBehaviourState(new Depositing_State());
+    
     this.target = foundStorageNode;
+    this.changeBehaviourState(new Depositing_State());
     return foundStorageNode;
   }
 
@@ -511,9 +586,56 @@ class Agent {
   }
 
   die(){
-    gameState.agents.pop(this);
+    console.log(`${this.id} has died.`);
+    gameState.agents = gameState.agents.filter((agent) => agent !== this);
+    //gameState.agents.pop(this);
     delete this;
   }
+
+  findEnemy() {
+    /*
+    Finds an enemy and sets it as a target
+    */
+    let closestEnemy = null;
+    let shortestDistance = Infinity;
+
+    gameState.agents.forEach((agent) => {
+      if (agent.type !== this.type && agent.health > 0) { // Find enemies with health > 0
+        const distance = calculateDistance(this, agent);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          closestEnemy = agent;
+        }
+      }
+    });
+
+    //this.target = closestEnemy;
+    return closestEnemy;
+  }
+
+
+  attackTarget() {
+    const now = performance.now();
+    if (now - this.lastAttackTime >= this.attackCooldown * 1000) {
+      if (this.target && this.target.health > 0) {
+        console.log(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
+        this.target.health -= this.attackPower;
+
+        if (this.target.health <= 0) {
+          console.log(`${this.target.id} has been defeated.`);
+          this.target.die();
+          this.target = null; // Reset target after defeat
+          this.changeBehaviourState(new Roaming_State());
+        }
+
+        this.lastAttackTime = now;
+      } else {
+        console.log(`${this.id} has no valid target to attack.`);
+        this.changeBehaviourState(new Roaming_State());
+      }
+    }
+  }
+
 
 }
 
@@ -603,8 +725,9 @@ function addNode(x, y, type) {
   return newNode;
 }
 
-function addAgent(x, y) {
+function addAgent(x, y, type  = null) {
   const newAgent = new Agent(x, y);
+  newAgent.type = type ? type : newAgent.type;  // if type is given set type if not then leave default
   gameState.agents.push(newAgent);
   gameState.spawnedUnitsCount += 1;
   return newAgent;
@@ -730,9 +853,10 @@ canvas.addEventListener("click", (event) => {
       return;
     }
     // Add the selected unit to the game
-    //let typeExistsInObject = Object.values(Agent.types).some(type => type.key === gameState.selectedType);
-    if(gameState.selectedType == Agent.types.generic){
-      addAgent(snappedX, snappedY);
+    //let typeExists = Object.values(Agent.types).some(type => type.key === gameState.selectedType);
+    let typeExists = Object.values(Agent.types).includes(gameState.selectedType);
+    if(typeExists){
+      addAgent(snappedX, snappedY, gameState.selectedType);
     }
     else{
       addNode(snappedX, snappedY, gameState.selectedType);
