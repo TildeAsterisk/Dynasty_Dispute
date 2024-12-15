@@ -15,7 +15,7 @@ const gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 600  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 3000  //1 out of <agentBirthChance> chance to give birth
 };
 
 // Grid and Camera
@@ -138,6 +138,40 @@ function calculateDistance(pos1, pos2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+//#region State Class
+// Define a State base class (optional)
+class State {
+  enter(context) {
+      // Code executed when entering the state
+  }
+  execute(context) {
+      // Code executed on each update/tick
+  }
+  exit(context) {
+      // Code executed when leaving the state
+  }
+}
+
+class IdleState extends State {
+  enter(context) {
+    // Code executed when entering the state
+}
+execute(context) {
+    // Code executed on each update/tick
+}
+exit(context) {
+    // Code executed when leaving the state
+}
+}
+
+static behaviourStateTypes = {
+  idle        : { key : "idle"        , defaultTargetType : null },
+  gathering   : { key : "gathering"   , defaultTargetType : Node.types.resource_Node.key },
+  depositing  : { key : "depositing"  , defaultTargetType : Node.types.storage_Node.key },
+  going_Home  : { key : "going_Home"  , defaultTargetType : Node.types.home.key },
+  at_Home  : { key : "at_Home"     , defaultTargetType : Node.types.home.key },
+}
+//#endregion
 
 //#region  Node Class
 class Node {
@@ -303,7 +337,9 @@ class Agent {
       case Agent.behaviourStateTypes.at_Home.key:
         if(this.target != this.home){ console.error("At home but target is not home."); }
         if (this.carrying >= this.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
-          this.consumeResources(); 
+          if (!this.consumeResources()) { //Consume resources, If cannot then change state to gathering
+            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
+          }
         }
         else {
           //leave home
@@ -315,10 +351,10 @@ class Agent {
         if(this.target){
           this.moveToTarget();
           if (!this.consumeResources()) { //Consume resources, If cannot then change state to gathering
-            //this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
+            this.changeBehaviourState(Agent.behaviourStateTypes.idle.key);
           }
           if (this.reachedTarget()){
-            console.log("set random target");
+            console.log("Wandering to random position.");
             this.target = getRandomPositionInRange(this.target, GRID_SIZE*3);
           }
           break;
@@ -457,9 +493,10 @@ class Agent {
   consumeResources(hunger=this.resourceHunger){
     if (this.carrying >= hunger){
       this.carrying -= hunger;
+      return true;
     }
     else {  //Agent need to ead and cannot
-      console.log(this.id+" cannot eat.");
+      //console.log(this.id+" cannot eat.");
       return false;
       //this.die();
       //console.log(this.id+" has died due to lack of resources.");
