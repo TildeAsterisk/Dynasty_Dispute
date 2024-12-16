@@ -247,13 +247,13 @@ class State {
     */
   }
   exit(context) {
-      // Code executed when leaving the state
-      console.log(`${context.id} stops  ${this.constructor.name}.`);
+    // Code executed when leaving the state
+    //console.log(`${context.id} stops  ${this.constructor.name}.`);
   }
 
   checkForEnemy(context){
     // Check for nearby enemies
-    const enemy = context.findEnemy();
+    const enemy = context.findEnemy(GRID_SIZE*5);
     if (enemy) {
       console.log(`${context.id} found an enemy: ${enemy.id}`);
       context.target = enemy;
@@ -389,7 +389,7 @@ class Combat_State extends State {
 
     const distance = calculateDistance(agent, agent.target);
     if (distance > agent.attackRange) {
-      console.log(`${agent.id} is chasing ${agent.target.id}.`);
+      //console.log(`${agent.id} is chasing ${agent.target.id}.`);
       agent.moveToTarget(); // Move closer to the target
     } else {
       agent.attackTarget();
@@ -458,10 +458,18 @@ class Agent {
     /*
     Find a resource node and set it as the target 
     */
-    const resourceNode = gameState.nodes.find(
-      (b) => b.type === Node.types.resource_Node.key
-    );
-    return resourceNode;
+   let closestResourceNode = null;
+    let shortestDistance = Infinity;
+    gameState.nodes.find( (b) => {
+      if(b.type === Node.types.resource_Node.key){
+        const distance = calculateDistance(this, b);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          closestResourceNode = b;
+        }
+      }
+    });
+    return closestResourceNode;
   }
 
   moveToTarget() {
@@ -592,12 +600,12 @@ class Agent {
     delete this;
   }
 
-  findEnemy() {
+  findEnemy(range = Infinity) {
     /*
     Finds an enemy and sets it as a target
     */
     let closestEnemy = null;
-    let shortestDistance = Infinity;
+    let shortestDistance = range;
 
     gameState.agents.forEach((agent) => {
       if (agent.type !== this.type && agent.health > 0) { // Find enemies with health > 0
