@@ -253,7 +253,7 @@ class State {
 
   checkForEnemy(context){
     // Check for nearby enemies
-    const enemy = context.findEnemy(GRID_SIZE*5);
+    const enemy = context.findEnemy(context.findRange);
     if (enemy) {
       console.log(`${context.id} found an enemy: ${enemy.id}`);
       context.target = enemy;
@@ -425,6 +425,7 @@ class Agent {
     this.home = null;
     this.type = type;
     this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
+    this.findRange = GRID_SIZE * 5;
 
     // Combat properties
     this.health = 100; // Agent's health
@@ -454,12 +455,12 @@ class Agent {
     drawText(this.behaviourState.constructor.name, screenX - 10, screenY - 10);
   }
 
-  findResourceNode() {
+  findResourceNode(range = Infinity) {
     /*
     Find a resource node and set it as the target 
     */
    let closestResourceNode = null;
-    let shortestDistance = Infinity;
+    let shortestDistance = range;
     gameState.nodes.find( (b) => {
       if(b.type === Node.types.resource_Node.key){
         const distance = calculateDistance(this, b);
@@ -510,10 +511,10 @@ class Agent {
     }
   }
 
-  findStorageNode() {
+  findStorageNode(range = Infinity) {
     // Returns True
     let foundStorageNode = null;
-    let shortestDistance = Infinity;
+    let shortestDistance = range;
 
     gameState.nodes.forEach( (b) => {
       if (b.type === Node.types.storage_Node.key && b.currentCapacity < b.maxCapacity){
