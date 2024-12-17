@@ -166,7 +166,8 @@ class Node {
     // Random chance to spawn agent
     if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
       //Random change to give birth to a new agent
-      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2));
+      const newBorn = addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2));
+      newBorn.type = this.agentCapacity[0].type;
       console.log("New Agent Spawned!!!");
     }
 
@@ -338,7 +339,7 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    context.home   = context.findHome();
+    context.home   = context.findHome(context.findRange*3);
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
@@ -506,7 +507,7 @@ class Agent {
     }
 
     if (this.carrying >= this.maxCarry) {
-      const storageFound = this.findStorageNode();
+      const storageFound = this.findStorageNode(this.findRange*3);
       if (!storageFound) { this.changeBehaviourState(new GoingHome_State()); }
     }
   }
@@ -533,7 +534,7 @@ class Agent {
     return foundStorageNode;
   }
 
-  findHome() {
+  findHome(range) {
     /*
     Find the closest Node of type Home and set target.
     Find the closest home that has capacity and go there.
@@ -541,7 +542,7 @@ class Agent {
     Output: foundHome
     */
     let foundHome = null; // If no home is found, return null
-    let shortestDistance = Infinity;
+    let shortestDistance = range;
 
     // Iterate over all nodes to find the closest eligible home
     gameState.nodes.forEach((b) => {
