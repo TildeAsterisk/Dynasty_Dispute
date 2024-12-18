@@ -962,23 +962,14 @@ function gameLoop() {
 }
 
 
-// Simulate Resource Collection Every Second
-//setInterval(collectResources, 1000);
-
 //#region   Start Game
 // Add initial setup for testing
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
-
-// First home
-//var nodeCoords = getGridCoordinates(centerX, centerY-300);
-//const firstHome = addNode(nodeCoords[0], nodeCoords[1], "home");
 // Add a agent in the center
 const firstAgent = addAgent(centerX, centerY);
 const secondAgent = addAgent(centerX+100, centerY+100);
-//firstAgent.home = firstHome;
-//secondAgent.home = firstHome;
 
 // Add a resource node and a storage_Node nearby
 nodeCoords = getGridCoordinates(centerX, centerY);
