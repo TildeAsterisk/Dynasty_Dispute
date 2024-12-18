@@ -160,7 +160,7 @@ class Node {
     this.y = y;
     this.type = type;
 
-    this.maxCapacity = 50;
+    this.maxCapacity = 100;
     this.currentCapacity = 0;
 
     this.agentCapacity = [];
@@ -356,8 +356,10 @@ class GoingHome_State extends State {
     if (context.reachedTarget()){
       //Is at Home 
       //console.log("Agent is at home");
-      context.home.agentCapacity.push(context);
-      context.changeBehaviourState(new AtHome_State());
+      if(context.home){
+        context.home.agentCapacity.push(context);
+        context.changeBehaviourState(new AtHome_State());
+      }
     }
   }
 }
@@ -667,11 +669,11 @@ class Agent {
   setRandomRoamPosition(){
     let focus;
     const roamingRange = GRID_SIZE*10;  // Sets a roaming range of 10 blocks by default
-    if (this.target.id) {   // If target has ID (not random position)
+    if (this.target && this.target.id) {   // If target has ID (not random position)
       console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
     }
-    else if(!this.target.id && this.previousUnitTarget){  // Target doesnt have ID
+    else if( this.previousUnitTarget){  // Target doesnt have ID
       focus = this.previousUnitTarget;
     }
     else{
@@ -708,7 +710,7 @@ class Quest {
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
   new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type === Node.types.storage_Node.key)),
-  new Quest("Collect 200 resources", () => gameState.resources.wood >= 200),
+  new Quest("Collect 100 resources", () => gameState.resources.wood >= 100),
   new Quest("Build a Home", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
   new Quest("Build a Head Quarters", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
   new Quest("Collect 1000 resources", () => gameState.resources.wood >= 1000),
