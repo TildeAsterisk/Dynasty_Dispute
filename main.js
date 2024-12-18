@@ -15,7 +15,8 @@ const gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 3000  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
+  selectedUnit : null
 };
 
 // Grid and Camera
@@ -92,6 +93,7 @@ canvas.addEventListener("click", (event) => {
     if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
       // Display gameObject info
       updateUnitInfo(gameObject);
+      gameState.selectedUnit = gameObject;
       console.log(gameObject);
       return;
     }
@@ -99,6 +101,7 @@ canvas.addEventListener("click", (event) => {
 
   // Clear unit info if no unit is clicked
   updateUnitInfo(null);
+  gameState.selectedUnit = null;
 });
 
 // Function to update the #unitInfo div
@@ -122,9 +125,12 @@ function updateUnitInfo(object=null) {
 
   // Populate table rows with object's attributes
   for (const [key, value] of Object.entries(object)) {
+    let roundedValue = value;
+    if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round
+    
     const row = table.insertRow();
     row.innerHTML = `<td style="border: 1px solid black; padding: 5px;">${key}</td>
-                     <td style="border: 1px solid black; padding: 5px;">${value}</td>`;
+                     <td style="border: 1px solid black; padding: 5px;">${roundedValue}</td>`;
   }
 
   // Set the inner HTML of the div and append the table
@@ -257,7 +263,7 @@ class State {
     const enemy = context.findEnemy(context.findRange);
     if (enemy) {
       console.log(`${context.id} found an enemy: ${enemy.id}`);
-      context.target = enemy;
+      context.setNewTarget(enemy);
       context.changeBehaviourState(new Combat_State());
     }
   }
@@ -266,7 +272,7 @@ class State {
 //#region Idle State
 class Idle_State extends State {
   execute(context) {
-    context.target = context.findResourceNode();
+    context.setNewTarget(context.findResourceNode());
     if (context.target) { context.changeBehaviourState(new Gathering_State()); }
   }
 }
@@ -279,24 +285,23 @@ class Roaming_State extends State {
       context.moveToTarget();
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
         console.log(context.id+" ran out of resources while roaming.");
-        context.target = context.findResourceNode();
+        context.setNewTarget(context.findResourceNode());
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
         }
         else{
           //Die?
-          context.die;
+          context.die();
         }
       }
 
       if (context.reachedTarget()){
-        console.log("Wandering to random position.");
-        context.target = getRandomPositionInRange(context.target, GRID_SIZE*3);
+        context.setRandomRoamPosition()
       }
     }
     else{
       //  Roaming with no target. Set a new one? 
-      context.target = getRandomPositionInRange(context, GRID_SIZE*3);
+      context.setRandomRoamPosition()
     }
   }
 }
@@ -327,7 +332,7 @@ class Depositing_State extends State {
         //Nodes storage is full!
         console.log("Agent cannot deposit resources.");
         //Go Home
-        context.target = context.home;
+        context.setNewTarget(context.home);
         context.changeBehaviourState(new GoingHome_State());
       }
     }
@@ -343,10 +348,10 @@ class GoingHome_State extends State {
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
-      context.target = getRandomPositionInRange(context, GRID_SIZE*3);
+      context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE*3));
       context.changeBehaviourState(new Roaming_State()); 
     }
-    //context.target = context.home;
+    //context.setNewTarget(context.home;
     context.moveToTarget();
     if (context.reachedTarget()){
       //Is at Home 
@@ -420,6 +425,7 @@ class Agent {
     this.y = y;
     this.behaviourState = new Idle_State(); // Possible behaviourStates: idle, gathering, depositing
     this.target = null; // Current target (node or position)
+    this.previousUnitTarget = this.target;  //Stores the previous valid target (non position)
     this.carrying = 0; // Resources being carried
     this.maxCarry = 5; // Max resources agent can carry
     this.speed = 2; // Movement speed
@@ -529,7 +535,7 @@ class Agent {
       }
     });
     
-    this.target = foundStorageNode;
+    this.setNewTarget(foundStorageNode);
     this.changeBehaviourState(new Depositing_State());
     return foundStorageNode;
   }
@@ -557,7 +563,7 @@ class Agent {
       }
     });
 
-    this.target = foundHome;
+    this.setNewTarget(foundHome);
     return foundHome;
 }
 
@@ -619,7 +625,7 @@ class Agent {
       }
     });
 
-    //this.target = closestEnemy;
+    //this.setNewTarget(closestEnemy);
     return closestEnemy;
   }
 
@@ -634,7 +640,7 @@ class Agent {
         if (this.target.health <= 0) {
           console.log(`${this.target.id} has been defeated.`);
           this.target.die();
-          this.target = null; // Reset target after defeat
+          this.setNewTarget(null); // Reset target after defeat
           this.changeBehaviourState(new Roaming_State());
         }
 
@@ -644,6 +650,36 @@ class Agent {
         this.changeBehaviourState(new Roaming_State());
       }
     }
+  }
+
+  setNewTarget(newTarget){
+    /*
+    Set a new target for the Agent.
+    If the previoustarget is a unit with a valid ID then set previous target
+    */
+    if (this.target){
+      this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
+    }
+
+    this.target = newTarget;
+  }
+
+  setRandomRoamPosition(){
+    let focus;
+    const roamingRange = GRID_SIZE*10;  // Sets a roaming range of 10 blocks by default
+    if (this.target.id) {   // If target has ID (not random position)
+      console.log("TARGET HAS ID");
+      focus = this.target;  // Set focus for random position range
+    }
+    else if(!this.target.id && this.previousUnitTarget){  // Target doesnt have ID
+      focus = this.previousUnitTarget;
+    }
+    else{
+      console.log("no target or id or prev");
+      focus = this;
+    }
+
+    this.setNewTarget( getRandomPositionInRange(focus, roamingRange) );  // sets a random position within the range of the object
   }
 
 
@@ -671,8 +707,11 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
-  new Quest("Collect 200 resources", () => gameState.resources.wood >= 200),
   new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type === Node.types.storage_Node.key)),
+  new Quest("Collect 200 resources", () => gameState.resources.wood >= 200),
+  new Quest("Build a Home", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
+  new Quest("Build a Head Quarters", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
+  new Quest("Collect 1000 resources", () => gameState.resources.wood >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
@@ -891,7 +930,7 @@ function gameLoop() {
   drawGrid();
 
   // Draw resources
-  drawText(`Wood: ${gameState.resources.wood}`, 10, 30, 20);
+  drawText(`Wood: ${Math.round(gameState.resources.wood)}`, 10, 30, 20);
   drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
   drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
@@ -913,6 +952,8 @@ function gameLoop() {
   // Check quests
   checkQuests();
 
+  updateUnitInfo(gameState.selectedUnit);
+
   //console.log("Selected Node Type: "+gameState.selectedType);
 
   requestAnimationFrame(gameLoop);
@@ -929,16 +970,16 @@ const centerY = canvas.height / 2;
 
 
 // First home
-var nodeCoords = getGridCoordinates(centerX, centerY-300);
-const firstHome = addNode(nodeCoords[0], nodeCoords[1], "home");
+//var nodeCoords = getGridCoordinates(centerX, centerY-300);
+//const firstHome = addNode(nodeCoords[0], nodeCoords[1], "home");
 // Add a agent in the center
 const firstAgent = addAgent(centerX, centerY);
 const secondAgent = addAgent(centerX+100, centerY+100);
-firstAgent.home = firstHome;
-secondAgent.home = firstHome;
+//firstAgent.home = firstHome;
+//secondAgent.home = firstHome;
 
 // Add a resource node and a storage_Node nearby
-nodeCoords = getGridCoordinates(centerX/5, centerY);
+nodeCoords = getGridCoordinates(centerX, centerY);
 addNode(nodeCoords[0], nodeCoords[1], "resource_Node");
 //nodeCoords = getGridCoordinates(centerX + 100, centerY);
 //addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
