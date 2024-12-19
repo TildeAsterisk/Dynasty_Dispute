@@ -179,7 +179,7 @@ class Node {
 
     // Drain resources slowly from storage depo
     if(this.type == Node.types.storage_Node.key && this.currentCapacity > 0)
-      this.currentCapacity -= 0.01;
+      this.currentCapacity -= 0.005; // RESOURCE DECAY
   }
 
   draw() {
@@ -313,8 +313,9 @@ class Gathering_State extends State {
 
     context.moveToTarget(); // Advance towards target
     if (context.reachedTarget()) {  // Reached Resource?
-      if(context.gatherResources()) { // If Target reached and cannot carry anymore.
-        
+      if(context.gatherResources()) { // If Target reached and resources gathered
+        // carry on gathering
+        return;
       }
       else{ // If cannot gather anymore
         const storageFound = context.findStorageNode(context.findRange*3);
@@ -576,7 +577,7 @@ class Agent {
         }
       }
     });
-    if(!foundStorageNode){console.error("Canot find storage node");}
+    if(!foundStorageNode){console.log("Canot find storage node");}
     return foundStorageNode;
   }
 
@@ -618,7 +619,7 @@ class Agent {
       return true;
     }
     else{
-      console.log("Cannot deposit resources ",this.target.currentCapacity);
+      //console.log("Cannot deposit resources ",this.target.currentCapacity);
       return false;
     }
   }
@@ -890,6 +891,10 @@ function calculateStoredResources(){
   return storedResources;
 }
 
+function calculateTotalLiveAgents(){
+  return gameState.agents.length;
+}
+
 
 
 //#endregion
@@ -1011,8 +1016,9 @@ function gameLoop() {
 
   // Draw resources
   const totalStoredResources = calculateStoredResources();
+  const totalLiveAgents = calculateTotalLiveAgents();
   drawText(`🜨 ${Math.round(totalStoredResources)}`, 10, 30, 20);
-  //drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
+  drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
   //drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
   // Draw and update nodes
