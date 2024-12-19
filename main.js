@@ -309,10 +309,40 @@ class Roaming_State extends State {
 //#region Gathering State
 class Gathering_State extends State {
   execute(context) {
-    this.checkForEnemy(context);
-    context.moveToTarget();
-    if (context.reachedTarget()) {
-      context.gatherResources();
+    this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
+
+    context.moveToTarget(); // Advance towards target
+    if (context.reachedTarget()) {  // Reached Resource?
+      if(context.gatherResources()) { // If Target reached and cannot carry anymore.
+        
+      }
+      else{ // If cannot gather anymore
+        const storageFound = context.findStorageNode(context.findRange*3);
+        if(storageFound) {
+          context.setNewTarget(storageFound);  // Find new storage
+          context.changeBehaviourState(new Depositing_State());
+        }
+        else{ // Finished gathering and no storage found
+          context.changeBehaviourState(new GoingHome_State());
+        }
+      }
+      
+
+      /*
+      if(context.gatherResources()){  // If Target reached and cannot carry anymore.
+        context.changeBehaviourState( new GoingHome_State() ); // Go home
+      }
+      else{ // Reached Target but resources cannot be deposited
+        const storageFound = context.findStorageNode(context.findRange*3);
+        if (storageFound){
+          context.setNewTarget(storageFound);  // Find new storage
+          context.changeBehaviourState(new Depositing_State());
+        }
+        else{
+          context.changeBehaviourState(new Depositing_State());  // If reached target, cannot deposit resources and no storage found then go roaming
+        }
+      }
+      */
     }
   }
 }
@@ -324,8 +354,8 @@ class Depositing_State extends State {
     this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
-      if(context.depositResources()){
-        context.changeBehaviourState(new Roaming_State());
+      if(context.depositResources()){ // If can deposit
+        context.changeBehaviourState(new Roaming_State());  // Go roaming
       }
       else {
         //Nodes storage is full!
@@ -511,24 +541,24 @@ class Agent {
   }
 
   gatherResources() {
-    if (this.carrying < this.maxCarry) {
-      this.carrying++;
-      //console.log("Gathered 1 resource.");
-    }
+    /* Gather resources and return bool if successful */
 
-    if (this.carrying >= this.maxCarry) {
-      this.carrying = this.maxCarry;
-      const storageFound = this.findStorageNode(this.findRange*3);
-      if (!storageFound) { this.changeBehaviourState(new GoingHome_State()); }
-      else{ this.changeBehaviourState(new Depositing_State())}
+    if (this.carrying >= this.maxCarry) { // If there is NO space to carry
+      //this.carrying = this.maxCarry;  //Limit carry
+      return false;
+    }
+    else{ // There is space to carry
+      this.carrying++;
+      return true;
     }
 
   }
 
   findStorageNode(range = Infinity) {
-    // Returns True
+    /* Find the closes storage node with the lowest capacity */
     let foundStorageNode = null;
     let shortestDistance = range;
+    let lowestCapacity = Infinity;
 
     gameState.nodes.forEach( (b) => {
       if (b.type === Node.types.storage_Node.key && b.currentCapacity < b.maxCapacity){
@@ -539,11 +569,14 @@ class Agent {
           shortestDistance = distance;
           foundStorageNode = b;
         }
+
+        if(b.currentCapacity < lowestCapacity){
+          lowestCapacity = b.currentCapacity;
+          foundStorageNode = b;
+        }
       }
     });
-    
-    this.setNewTarget(foundStorageNode);
-    this.changeBehaviourState(new Depositing_State());
+    if(!foundStorageNode){console.error("Canot find storage node");}
     return foundStorageNode;
   }
 
@@ -576,8 +609,8 @@ class Agent {
 
   depositResources() {
     // if has resources to deposit and storage is not going to overflow
-    //const wouldOverflow = (this.target.currentCapacity + this.carrying) > this.target.maxCapacity;
-    if (this.target.currentCapacity < this.target.maxCapacity) {
+    const wouldOverflow = (this.target.currentCapacity + this.carrying) > this.target.maxCapacity;
+    if (!wouldOverflow) {
       //gameState.resources.wood += this.carrying;  // DELETE THIS
       console.log(`Deposited ${this.carrying} resources.`);
       this.target.currentCapacity += this.carrying;
