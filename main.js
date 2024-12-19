@@ -284,7 +284,7 @@ class Roaming_State extends State {
     if(context.target){
       context.moveToTarget();
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        console.log(context.id+" ran out of resources while roaming.");
+        //console.log(context.id+" ran out of resources while roaming.");
         context.setNewTarget(context.findResourceNode());
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
@@ -324,8 +324,7 @@ class Depositing_State extends State {
     this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
-      if(context.target.currentCapacity < context.target.maxCapacity){
-        context.depositResources();
+      if(context.depositResources()){
         context.changeBehaviourState(new Roaming_State());
       }
       else {
@@ -371,7 +370,10 @@ class AtHome_State extends State {
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        context.changeBehaviourState(new Roaming_State());
+        context.changeBehaviourState(new Gathering_State());
+      }
+      else{
+        //Just ate, stay at home and chill
       }
     }
     else {
@@ -515,9 +517,12 @@ class Agent {
     }
 
     if (this.carrying >= this.maxCarry) {
+      this.carrying = this.maxCarry;
       const storageFound = this.findStorageNode(this.findRange*3);
       if (!storageFound) { this.changeBehaviourState(new GoingHome_State()); }
+      else{ this.changeBehaviourState(new Depositing_State())}
     }
+
   }
 
   findStorageNode(range = Infinity) {
@@ -570,11 +575,18 @@ class Agent {
 }
 
   depositResources() {
-    if (this.carrying > 0) {
-      gameState.resources.wood += this.carrying;
-      this.target.currentCapacity += this.carrying;
+    // if has resources to deposit and storage is not going to overflow
+    //const wouldOverflow = (this.target.currentCapacity + this.carrying) > this.target.maxCapacity;
+    if (this.target.currentCapacity < this.target.maxCapacity) {
+      //gameState.resources.wood += this.carrying;  // DELETE THIS
       console.log(`Deposited ${this.carrying} resources.`);
+      this.target.currentCapacity += this.carrying;
       this.carrying = 0;
+      return true;
+    }
+    else{
+      console.log("Cannot deposit resources ",this.target.currentCapacity);
+      return false;
     }
   }
 
@@ -834,7 +846,24 @@ function selectType(type) {
   gameState.selectedType = type;
   console.log(`Selected type: ${type}`);
 }
+
+function calculateStoredResources(){
+  let storedResources = 0;
+  gameState.nodes.forEach(node => {
+    if (node.type == Node.types.storage_Node.key){
+      storedResources += node.currentCapacity;
+    }
+  });
+  return storedResources;
+}
+
+
+
 //#endregion
+
+
+
+
 
 //#region   Mouse Event Handlers
 let isDragging = false;
@@ -881,6 +910,22 @@ canvas.addEventListener("wheel", (event) => {
   // Prevent default browser scrolling behavior
   event.preventDefault();
 });
+
+// Prevent right-click context menu
+document.addEventListener('contextmenu', function(event) {
+  event.preventDefault();
+});
+
+// Prevent text selection
+document.addEventListener('selectstart', function(event) {
+  event.preventDefault();
+});
+
+// Prevent text dragging
+document.addEventListener('dragstart', function(event) {
+  event.preventDefault();
+});
+
 
 // Mouse click event for adding nodes
 canvas.addEventListener("click", (event) => {
@@ -932,9 +977,10 @@ function gameLoop() {
   drawGrid();
 
   // Draw resources
-  drawText(`Wood: ${Math.round(gameState.resources.wood)}`, 10, 30, 20);
-  drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
-  drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
+  const totalStoredResources = calculateStoredResources();
+  drawText(`🜨 ${Math.round(totalStoredResources)}`, 10, 30, 20);
+  //drawText(`Stone: ${gameState.resources.stone}`, 10, 60, 20);
+  //drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
   // Draw and update nodes
   gameState.nodes.forEach((node) => {
