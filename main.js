@@ -318,7 +318,7 @@ class Gathering_State extends State {
         return;
       }
       else{ // If cannot gather anymore
-        const storageFound = context.findStorageNode(context.findRange*3);
+        const storageFound = context.findStorageNode(context.findRange);
         if(storageFound) {
           context.setNewTarget(storageFound);  // Find new storage
           context.changeBehaviourState(new Depositing_State());
@@ -374,7 +374,7 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    context.home   = context.findHome(context.findRange*3);
+    context.home   = context.findHome(context.findRange);
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
@@ -566,13 +566,8 @@ class Agent {
         const pos1 =  {x:this.x, y:this.y};
         const pos2 =  {x:b.x, y:b.y};
         const distance = calculateDistance(pos1, pos2);
-        if (distance < shortestDistance) {
+        if (distance < shortestDistance && b.currentCapacity < lowestCapacity) {
           shortestDistance = distance;
-          foundStorageNode = b;
-        }
-
-        if(b.currentCapacity < lowestCapacity){
-          lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
         }
       }
@@ -613,7 +608,7 @@ class Agent {
     const wouldOverflow = (this.target.currentCapacity + this.carrying) > this.target.maxCapacity;
     if (!wouldOverflow) {
       //gameState.resources.wood += this.carrying;  // DELETE THIS
-      console.log(`Deposited ${this.carrying} resources.`);
+      //console.log(`Deposited ${this.carrying} resources.`);
       this.target.currentCapacity += this.carrying;
       this.carrying = 0;
       return true;
@@ -714,7 +709,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = GRID_SIZE*10;  // Sets a roaming range of 10 blocks by default
+    const roamingRange = this.findRange*1.5;  // Sets a roaming range of 10 blocks by default
     if (this.target && this.target.id) {   // If target has ID (not random position)
       console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
