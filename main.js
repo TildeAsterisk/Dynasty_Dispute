@@ -316,16 +316,21 @@ class Roaming_State extends State {
     if(context.target){
 
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2));
+        context.setNewTarget(context.findResourceNode(context.searchRadius*2)); // try to find resource node
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
           return;
         }
-        else{ // Cannot consume resources, and has no target
-          //Die?
-          console.log(context.id+" ran out of resources while roaming.");
-          context.die();
-          return;
+        else{ // Cannot consume resources, and cannot find resource node
+          context.setNewTarget(context.findStorageNode(context.searchRadius*2)); // try to find storage node
+          if(context.target){
+            // STORAGE NODE FOUND, GET ITEMS
+          }
+          else{
+            console.log(context.id+" ran out of resources while roaming.");
+            context.die();
+            return;
+          }
         }
       }
 
@@ -822,7 +827,7 @@ const questLog = [
   new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type.key === Node.types.storage_Node.key)),
   new Quest("Collect 50 resources", () => gameState.totalStoredResources >= 50),
   new Quest("Build a Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Upgrade Home -> Head Quarters", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  new Quest("Upgrade Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Collect 1000 resources", () => gameState.totalStoredResources >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
@@ -1211,7 +1216,7 @@ const secondAgent = addAgent(centerX+100, centerY+100);
 // Add a resource node and a storage_Node nearby
 nodeCoords = getGridCoordinates(centerX, centerY);
 addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
-addNode(nodeCoords[0], nodeCoords[1]-(GRID_SIZE*6), Node.types.storage_Node.key);
+addNode(nodeCoords[0], nodeCoords[1]-(GRID_SIZE*2), Node.types.storage_Node.key);
 //nodeCoords = getGridCoordinates(centerX + 100, centerY);
 //addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
 

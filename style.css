@@ -41,7 +41,7 @@ canvas {
     left: 50%; 
     transform: translateX(-50%);
     bottom: 0px;
-    width:40%;  /* Width of Panel */
+    width:50%;  /* Width of Panel */
     margin-top: auto;
     background-color: #f8f8f866;
     border-top: 5px solid #ffffff6d;
