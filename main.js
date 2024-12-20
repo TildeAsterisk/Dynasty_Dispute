@@ -140,10 +140,11 @@ class Node {
   }
 
   constructor(x, y, type) {
+    this.type = type; // If type object is given, inherit initial  from type object dict.
+
     this.id = type + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
-    this.type = type;
 
     this.maxCapacity = 100;
     this.currentCapacity = Node.types.resource_Node.key == type ? this.maxCapacity: 0;
@@ -189,7 +190,7 @@ class Node {
       screenY,
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
-      Node.types[this.type].colour
+      this.type.colour
     );
     drawText(
       this.type,
@@ -446,13 +447,13 @@ class Combat_State extends State {
 //#region Agent Class
 class Agent {
   static types = {
-    generic : {name: "Generic Agent",
+    generic_Agent : {name: "Generic Agent",
       description: "A general-purpose agent.",},
-    raider  : {name: "Raider",
+    raider_Agent  : {name: "Raider",
       description: "An aggressive agent.",}
   }
 
-  constructor(x, y, type = Agent.types.generic) {
+  constructor(x, y, type = Agent.types.generic_Agent) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
@@ -864,19 +865,6 @@ function isCellOccupied(x, y) {
   });
 }
 
-function selectType(type) {
-  
-  if (!Node.types[type]) {
-    gameState.selectedType = null;
-    //console.error(`Invalid type selected: ${type}`);
-    console.log(`Invalid node type selected: ${type}`);
-    return;
-  }
-  
-  gameState.selectedType = type;
-  console.log(`Selected type: ${type}`);
-}
-
 function calculateStoredResources(){
   let storedResources = 0;
   gameState.nodes.forEach(node => {
@@ -891,51 +879,38 @@ function calculateTotalLiveAgents(){
   return gameState.agents.length;
 }
 
-function populateNodeSelector() { // TODO: UPDATE THIS TO GENERATE BUILD MENU BTNS
-  const nodeSelector = document.getElementById("nodeSelector");
+//#region BUILD MENU
+const buildTypes  = Node.types;
+buildTypes.generic_Agent = Agent.types.generic_Agent;
+buildTypes.raider_Agent = Agent.types.raider_Agent;
 
-  // Clear existing options
-  nodeSelector.innerHTML = "";
-
-  // Add a default "Please select" option
-  const defaultOption = document.createElement("option");
-  defaultOption.value = null;
-  defaultOption.textContent = "Please select a node...";
-  nodeSelector.appendChild(defaultOption);
-
-  // Loop through Node types and add them as options
-  const buildTypes  = Node.types;
-  buildTypes.genericAgent = Agent.types.generic.key;
-  buildTypes.raider = Agent.types.raider.key;
-  for (const nodeType in buildTypes) {
-      const option = document.createElement("option");
-      option.value = nodeType;
-      option.textContent = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // Capitalize the first letter
-      nodeSelector.appendChild(option);
-  }
-}
-
-// Event handler when a node is selected from the dropdown
-function onNodeSelect() {
-  const nodeSelector = document.getElementById("nodeSelector");
-  const selectedType = nodeSelector.value;
+function selectType(typeKey) {
   
-  if (selectedType) {
-      selectType(selectedType);
+  if (buildTypes[typeKey]) {
+    gameState.selectedType = buildTypes[typeKey];
+    console.log(`Selected type: ${typeKey}`);
+  }
+  else{
+    gameState.selectedType = null;
+    //console.error(`Invalid type selected: ${type}`);
+    console.log(`Invalid node type selected: ${typeKey}`);
+    return;
   }
 }
-
 
 // Display details of selected object
-function displayDetails(object) {
+function displayDetails(buildTypeKey) {
+  // get build type from list
+  buildType = buildTypes[buildTypeKey];
+  if(!buildType){return;}
+
   const details = document.getElementById("selectedBuildItemInfo");
   if(details){
-    details.innerHTML = `<p style="margin:0;"><b>${object.name}</b><br><i>${object.description}</i></p>`;
+    details.innerHTML = `<p style="margin:0;"><b>${buildType.name}</b><br><i>${buildType.description}</i></p>`;
   }
   
 }
 
-// BUILD MENU
 function togglePanel() {
   const panel = document.getElementById('gridPanel');
   panel.classList.toggle('hidden');
@@ -946,9 +921,9 @@ document.querySelectorAll('.grid-item').forEach(item => {
       document.querySelectorAll('.grid-item').forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
       // Find node type by name
-      displayDetails(Node.types.home);
+      displayDetails(item.dataset.value);
 
-      //gameLoop.selectType();
+      selectType(item.dataset.value);
   });
 });
 
@@ -1069,9 +1044,15 @@ canvas.addEventListener("click", (event) => {
       //alert("/!\\ Cannot place node: Cell is already occupied. /!\\");
       return;
     }
+
     // Add the selected unit to the game
+    // Spawn selected type depending on classType
+    
+
+
     //let typeExists = Object.values(Agent.types).some(type => type.key === gameState.selectedType);
     let typeExists = Object.values(Agent.types).includes(gameState.selectedType);
+
     if(typeExists){
       addAgent(snappedX, snappedY, gameState.selectedType);
     }
@@ -1134,9 +1115,6 @@ function gameLoop() {
 
 //#region   Start Game
 
-// Call populateNodeSelector to fill the dropdown when the game starts
-populateNodeSelector();
-
 // Add initial setup for testing
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -1147,7 +1125,7 @@ const secondAgent = addAgent(centerX+100, centerY+100);
 
 // Add a resource node and a storage_Node nearby
 nodeCoords = getGridCoordinates(centerX, centerY);
-addNode(nodeCoords[0], nodeCoords[1], "resource_Node");
+addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
 //nodeCoords = getGridCoordinates(centerX + 100, centerY);
 //addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
 

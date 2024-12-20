@@ -41,12 +41,13 @@ canvas {
     left: 50%; 
     transform: translateX(-50%);
     bottom: 0px;
-    width:80%;
+    width:40%;  /* Width of Panel */
     margin-top: auto;
-    background-color: #f8f8f8;
-    border-top: 1px solid #ccc;
+    background-color: #f8f8f866;
+    border-top: 5px solid #ffffff6d;
     padding: 10px;
     margin: 10px;
+    border-radius: 10px;
     
     transition: transform 0.3s ease;
 }
@@ -55,15 +56,27 @@ canvas {
 }
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10vw, 1fr));
-    gap: 10px;
-}
-.grid-item {
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(10vh, 1fr)); /* Each column will be 1% of the viewport height */
+    grid-template-rows: repeat(auto-fill, minmax(10vh, 1fr)); /* Each row will be 1% of the viewport height */
+    gap: 10px; /* Gap between the grid items */
+    /*justify-content: center;*/
+    padding: 10px;
     text-align: center;
+}
+
+.grid-item {
+    /*background-color: #f0f0f06a;*/
+    border: 1px solid #cccccc6d;
+    border-radius: 10%;
     cursor: pointer;
+    aspect-ratio: 1 / 1; /* This makes the grid items square */
+    height: 100%; /* This sets the height to 10% of the viewport height */
+    width : 100%;
+
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: calc(10vh - 20px); /* Adjust the font size to fill the div */
 }
 .grid-item.selected {
     background-color: #a0d1ff;
@@ -79,7 +92,7 @@ canvas {
 }
 .toggle-button {
     position: fixed;
-    bottom: 10px;
+    top: -30px;
     right: 10px;
     z-index: 1000;
 }
