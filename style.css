@@ -36,28 +36,50 @@ canvas {
 }
 
 /* Build Menu Grid */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .grid-item {
-    border: 1px solid #ccc;
+.grid-panel {
+    position: absolute;
+    left: 50%; 
+    transform: translateX(-50%);
+    bottom: 0px;
+    width:80%;
+    margin-top: auto;
+    background-color: #f8f8f8;
+    border-top: 1px solid #ccc;
     padding: 10px;
+    margin: 10px;
+    
+    transition: transform 0.3s ease;
+}
+.grid-panel.hidden {
+    transform: translate(-50%, 100%);
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10vw, 1fr));
+    gap: 10px;
+}
+.grid-item {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 20px;
     text-align: center;
     cursor: pointer;
-    background-color: #f9f9f9;
-  }
-
-  .grid-item:hover {
-    background-color: #e0e0e0;
-  }
-
-  .details {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    background-color: #f4f4f4;
-  }
+}
+.grid-item.selected {
+    background-color: #a0d1ff;
+    border-color: #007bff;
+}
+.controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+.controls button {
+    margin-left: 5px;
+}
+.toggle-button {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
+}

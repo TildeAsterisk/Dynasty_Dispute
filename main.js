@@ -891,7 +891,7 @@ function calculateTotalLiveAgents(){
   return gameState.agents.length;
 }
 
-function populateNodeSelector() {
+function populateNodeSelector() { // TODO: UPDATE THIS TO GENERATE BUILD MENU BTNS
   const nodeSelector = document.getElementById("nodeSelector");
 
   // Clear existing options
@@ -925,34 +925,32 @@ function onNodeSelect() {
   }
 }
 
-function generateBuildMenu(){
-  // Generate grid items
-const grid = document.getElementById("objectGrid");
-objectData.forEach((object) => {
-  const gridItem = document.createElement("div");
-  gridItem.className = "grid-item";
-  gridItem.textContent = object.name;
-  gridItem.dataset.type = object.type; // Store type for identification
-
-  gridItem.addEventListener("click", () => {
-    displayDetails(object);
-  });
-
-  grid.appendChild(gridItem);
-});
-}
 
 // Display details of selected object
 function displayDetails(object) {
-  const details = document.getElementById("details");
-  const description = document.getElementById("description");
-  const stats = document.getElementById("stats");
-
-  details.querySelector("h3").textContent = object.name;
-  description.textContent = object.description;
-  stats.textContent = object.stats;
+  const details = document.getElementById("selectedBuildItemInfo");
+  if(details){
+    details.innerHTML = `<p style="margin:0;"><b>${object.name}</b><br><i>${object.description}</i></p>`;
+  }
+  
 }
 
+// BUILD MENU
+function togglePanel() {
+  const panel = document.getElementById('gridPanel');
+  panel.classList.toggle('hidden');
+}
+
+document.querySelectorAll('.grid-item').forEach(item => {
+  item.addEventListener('click', () => {
+      document.querySelectorAll('.grid-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      // Find node type by name
+      displayDetails(Node.types.home);
+
+      //gameLoop.selectType();
+  });
+});
 
 //#endregion
 
