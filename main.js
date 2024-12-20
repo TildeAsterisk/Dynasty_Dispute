@@ -84,37 +84,6 @@ function getRandomPositionInRange(obj, range) {
   return randomPos;
 }
 
-
-
-
-// Event handler for selecting a unit
-canvas.addEventListener("click", (event) => {
-  const rect = canvas.getBoundingClientRect();
-  const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
-  const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
-
-  const gameObjectsArray = gameState.nodes.concat(gameState.agents);
-
-  // Check for clicked node
-  for (const gameObject of gameObjectsArray) {
-    const nodeScreenX = (gameObject.x - camera.x) * camera.scale;
-    const nodeScreenY = (gameObject.y - camera.y) * camera.scale;
-    const nodeSize = GRID_SIZE * camera.scale;
-
-    if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
-      // Display gameObject info
-      updateUnitInfo(gameObject);
-      gameState.selectedUnit = gameObject;
-      console.log(gameObject);
-      return;
-    }
-  }
-
-  // Clear unit info if no unit is clicked
-  updateUnitInfo(null);
-  gameState.selectedUnit = null;
-});
-
 // Function to update the #unitInfo div
 function updateUnitInfo(object=null) {
   const unitInfoDiv = document.getElementById("unitInfo");
@@ -156,13 +125,18 @@ function calculateDistance(pos1, pos2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+
+
 //#region  Node Class
 class Node {
   static types = {
-    storage_Node    : { key : "storage_Node", colour: "brown", description: "A repository for resources." },
-    home            : { key : "home", colour: "blue", description: "Houses agents" },
+    storage_Node    : { key : "storage_Node",name: "Storage Node",
+      description: "A node for storing resources.", colour: "brown", description: "A repository for resources." },
+    home            : { key : "home",name: "Home",
+      description: "A central hub for agents.", colour: "blue", description: "Houses agents" },
     quarry          : { key : "quarry", colour: "gray",  description: "Produces stone resources." },
-    resource_Node   : { key : "resource_Node", colour: "green", description: "Contains resources to be extracted." }
+    resource_Node   : { key : "resource_Node",name: "Resource Node",
+      description: "A node that provides basic resources.", colour: "green", description: "Contains resources to be extracted." }
   }
 
   constructor(x, y, type) {
@@ -236,60 +210,6 @@ class Node {
       return false;
     }
   }
-}
-
-function populateNodeSelector() {
-  const nodeSelector = document.getElementById("nodeSelector");
-
-  // Clear existing options
-  nodeSelector.innerHTML = "";
-
-  // Add a default "Please select" option
-  const defaultOption = document.createElement("option");
-  defaultOption.value = null;
-  defaultOption.textContent = "Please select a node...";
-  nodeSelector.appendChild(defaultOption);
-
-  // Loop through Node types and add them as options
-  const buildTypes  = Node.types;
-  buildTypes.genericAgent = "genericAgent";
-  buildTypes.raider = "raider";
-  for (const nodeType in buildTypes) {
-      const option = document.createElement("option");
-      option.value = nodeType;
-      option.textContent = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // Capitalize the first letter
-      nodeSelector.appendChild(option);
-  }
-}
-
-// Event handler when a node is selected from the dropdown
-function onNodeSelect() {
-  const nodeSelector = document.getElementById("nodeSelector");
-  const selectedType = nodeSelector.value;
-  
-  if (selectedType) {
-      selectType(selectedType);
-  }
-}
-
-// Call populateNodeSelector to fill the dropdown when the game starts
-populateNodeSelector();
-
-function generateBuildMenu(){
-  // Generate grid items
-const grid = document.getElementById("objectGrid");
-objectData.forEach((object) => {
-  const gridItem = document.createElement("div");
-  gridItem.className = "grid-item";
-  gridItem.textContent = object.name;
-  gridItem.dataset.type = object.type; // Store type for identification
-
-  gridItem.addEventListener("click", () => {
-    displayDetails(object);
-  });
-
-  grid.appendChild(gridItem);
-});
 }
 
 
@@ -526,8 +446,10 @@ class Combat_State extends State {
 //#region Agent Class
 class Agent {
   static types = {
-    generic : "genericAgent",
-    raider  : "raider"
+    generic : {name: "Generic Agent",
+      description: "A general-purpose agent.",},
+    raider  : {name: "Raider",
+      description: "An aggressive agent.",}
   }
 
   constructor(x, y, type = Agent.types.generic) {
@@ -969,6 +891,67 @@ function calculateTotalLiveAgents(){
   return gameState.agents.length;
 }
 
+function populateNodeSelector() {
+  const nodeSelector = document.getElementById("nodeSelector");
+
+  // Clear existing options
+  nodeSelector.innerHTML = "";
+
+  // Add a default "Please select" option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = null;
+  defaultOption.textContent = "Please select a node...";
+  nodeSelector.appendChild(defaultOption);
+
+  // Loop through Node types and add them as options
+  const buildTypes  = Node.types;
+  buildTypes.genericAgent = Agent.types.generic.key;
+  buildTypes.raider = Agent.types.raider.key;
+  for (const nodeType in buildTypes) {
+      const option = document.createElement("option");
+      option.value = nodeType;
+      option.textContent = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // Capitalize the first letter
+      nodeSelector.appendChild(option);
+  }
+}
+
+// Event handler when a node is selected from the dropdown
+function onNodeSelect() {
+  const nodeSelector = document.getElementById("nodeSelector");
+  const selectedType = nodeSelector.value;
+  
+  if (selectedType) {
+      selectType(selectedType);
+  }
+}
+
+function generateBuildMenu(){
+  // Generate grid items
+const grid = document.getElementById("objectGrid");
+objectData.forEach((object) => {
+  const gridItem = document.createElement("div");
+  gridItem.className = "grid-item";
+  gridItem.textContent = object.name;
+  gridItem.dataset.type = object.type; // Store type for identification
+
+  gridItem.addEventListener("click", () => {
+    displayDetails(object);
+  });
+
+  grid.appendChild(gridItem);
+});
+}
+
+// Display details of selected object
+function displayDetails(object) {
+  const details = document.getElementById("details");
+  const description = document.getElementById("description");
+  const stats = document.getElementById("stats");
+
+  details.querySelector("h3").textContent = object.name;
+  description.textContent = object.description;
+  stats.textContent = object.stats;
+}
 
 
 //#endregion
@@ -977,7 +960,35 @@ function calculateTotalLiveAgents(){
 
 
 
-//#region   Mouse Event Handlers
+//#region   Event Listeners
+// Event handler for selecting a unit
+canvas.addEventListener("click", (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
+  const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
+
+  const gameObjectsArray = gameState.nodes.concat(gameState.agents);
+
+  // Check for clicked node
+  for (const gameObject of gameObjectsArray) {
+    const nodeScreenX = (gameObject.x - camera.x) * camera.scale;
+    const nodeScreenY = (gameObject.y - camera.y) * camera.scale;
+    const nodeSize = GRID_SIZE * camera.scale;
+
+    if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
+      // Display gameObject info
+      updateUnitInfo(gameObject);
+      gameState.selectedUnit = gameObject;
+      console.log(gameObject);
+      return;
+    }
+  }
+
+  // Clear unit info if no unit is clicked
+  updateUnitInfo(null);
+  gameState.selectedUnit = null;
+});
+
 let isDragging = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
@@ -1124,6 +1135,10 @@ function gameLoop() {
 
 
 //#region   Start Game
+
+// Call populateNodeSelector to fill the dropdown when the game starts
+populateNodeSelector();
+
 // Add initial setup for testing
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
