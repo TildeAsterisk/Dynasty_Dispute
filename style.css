@@ -12,8 +12,8 @@ canvas {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
+    background-color: #f8f8f866;
+    /*color: black;*/
     padding: 10px;
     border-radius: 5px;
     z-index: 1000;

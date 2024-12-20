@@ -88,7 +88,7 @@ function getRandomPositionInRange(obj, range) {
 function updateUnitInfo(object=null) {
   const unitInfoDiv = document.getElementById("unitInfo");
   if (!object){
-    unitInfoDiv.innerHTML = `<h3>Unit Info:</h3><p>Click on a unit to view details.</p>`;
+    unitInfoDiv.innerHTML = ``;
     return;
   }
 
@@ -96,7 +96,9 @@ function updateUnitInfo(object=null) {
   // Create table element
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
+  table.style.borderSpacing = 0;
   table.style.width = "100%";
+  //table.style = "border-collapse = collapse; border-spacing: 0;";
 
   // Add table header
   /*const headerRow = table.insertRow();
@@ -110,13 +112,15 @@ function updateUnitInfo(object=null) {
     if(key == 'type'){roundedValue = value.name;}
 
     const row = table.insertRow();
-    row.innerHTML = `<td style="border: 1px solid black; padding: 5px;">${key}</td>
-                     <td style="border: 1px solid black; padding: 5px;">${roundedValue}</td>`;
+    row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
+    row.innerHTML = `<td style="border: none; ">${key}</td>
+                     <td style="border: none;">: ${roundedValue}</td>`;
   }
 
   // Set the inner HTML of the div and append the table
-  unitInfoDiv.innerHTML = `<h3>Unit Info:</h3>`;
+  unitInfoDiv.innerHTML = `<b>Unit Info:</b>`;
   unitInfoDiv.appendChild(table);
+  unitInfoDiv.innerHTML += `<br>`;
 }
 
 // Helper function to calculate the distance between two positions
@@ -141,11 +145,10 @@ class Node {
   }
 
   constructor(x, y, typeKey) {
-    this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
-
     this.id = typeKey + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
+    this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
     this.colour = this.type.colour;
 
     this.maxCapacity = 100;
@@ -163,8 +166,8 @@ class Node {
     // Random chance to spawn agent
     if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
       //Random change to give birth to a new agent
-      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type);
-      console.log("New Agent Spawned!!!");
+      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type.key);
+      console.log("New Agent Spawned!!!"); //newborn
     }
 
     
@@ -257,7 +260,7 @@ class Idle_State extends State {
 
     }*/
 
-    context.setNewTarget(context.findResourceNode(context.searchRadius));
+    context.setNewTarget(context.findResourceNode(context.searchRadius*2));
     if (context.target) { context.changeBehaviourState(new Gathering_State()); }
     else{
       context.setNewTarget(context.findStorageNode(context.searchRadius));
@@ -277,7 +280,7 @@ class Roaming_State extends State {
     if(context.target){
 
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        context.setNewTarget(context.findResourceNode(context.searchRadius));
+        context.setNewTarget(context.findResourceNode(context.searchRadius*2));
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
           return;
@@ -376,7 +379,7 @@ class GoingHome_State extends State {
       //console.log("Agent is at home");
       // If agent reached home and its not full
       if(context.home && context.home.agentCapacity.length < context.home.maxAgentCapacity){
-        context.home.agentCapacity.push(context);
+        context.enterTargetNode();
         context.changeBehaviourState(new AtHome_State());
       }
     }
@@ -390,12 +393,13 @@ class AtHome_State extends State {
   }
 
   execute(context) {
+    //this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
         //leave home
-        context.home.agentCapacity = context.home.agentCapacity.filter((agent) => agent !== context);
+        context.exitNode();
         context.changeBehaviourState(new Gathering_State());
       }
       else{
@@ -404,7 +408,7 @@ class AtHome_State extends State {
     }
     else {
       //leave home
-      context.home.agentCapacity = context.home.agentCapacity.filter((agent) => agent !== context);
+      context.exitNode();
       context.changeBehaviourState(new Roaming_State());
     }
   }
@@ -558,21 +562,21 @@ class Agent {
 
   }
 
-  findStorageNode() {
+  findStorageNode(range = this.searchRadius) {
     /* Find the closes storage node with the lowest capacity */
     let foundStorageNode = null;
-    let shortestDistance = this.searchRadius;
+    let shortestDistance = range;
     let lowestCapacity = Infinity;
 
     gameState.nodes.forEach( (b) => {
       if (b.type.key === Node.types.storage_Node.key && calculateDistance(this, b) < this.searchRadius){
         const distance = calculateDistance(this, b);
 
-        if(distance < shortestDistance){  // if node is within shortest distance
+        if (distance < shortestDistance){  // if node is within shortest distance
           shortestDistance = distance;
           foundStorageNode = b;
         }
-        else if (b.currentCapacity < lowestCapacity) { //if node is within shortest distance AND has lower capacity
+        if (b.currentCapacity < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
           lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
         }
@@ -654,7 +658,9 @@ class Agent {
   die(){
     console.log(`${this.id} has died.`);
     gameState.agents = gameState.agents.filter((agent) => agent !== this);
-    //gameState.agents.pop(this);
+    /*if (this.state.constructor.name  = "AtHome_State"){
+      this.home = this.home.filter((agent) => agent !== this);
+    }*/
     delete this;
   }
 
@@ -732,6 +738,16 @@ class Agent {
     this.setNewTarget( getRandomPositionInRange(focus, roamingRange) );  // sets a random position within the range of the object
   }
 
+  enterTargetNode(){
+    this.target.agentCapacity.push(this);
+    console.log(this.id," is entering node ", this.home.id);
+  }
+
+  exitNode(){
+    this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
+    console.log(this.id," is leaving node ", this.home.id);
+  }
+
 
 }
 
@@ -777,11 +793,12 @@ function renderQuests() {
   const questContainer = document.getElementById("questContainer");
 
   // Clear existing quests
-  questContainer.innerHTML = "<h3>Quests:</h3>";
+  questContainer.innerHTML = "<b>Quests:</b>";
 
   questLog.forEach((quest, index) => {
       // Create a div for each quest
       const questDiv = document.createElement("div");
+      questDiv.style.fontStyle = "italic";
       questDiv.className = "quest-item";
 
       // Set quest text
@@ -870,7 +887,7 @@ function isCellOccupied(x, y) {
 function calculateStoredResources(){
   let storedResources = 0;
   gameState.nodes.forEach(node => {
-    if (node.type == Node.types.storage_Node.key){
+    if (node.type.key == Node.types.storage_Node.key){
       storedResources += node.currentCapacity;
     }
   });
