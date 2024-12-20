@@ -16,7 +16,8 @@ const gameState = {
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
   agentBirthChance : 1500,  //1 out of <agentBirthChance> chance to give birth
-  selectedUnit : null
+  selectedUnit : null,
+  totalStoredResources : 0
 };
 
 // Grid and Camera
@@ -60,10 +61,25 @@ function drawText(text, x, y, size=11,  colour = "white", outlineColour="black",
   ctx.fillText(text, x, y);
 }
 
-function drawRect(x, y, width, height, colour) {
+function drawRect(x, y, width, height, colour, fillPercent) {
+  // Draw the outline
+  if (fillPercent != undefined) {
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x, y, width, height);
+  }
+  else{
+    fillPercent=100;
+  }
+
+  // Calculate the height of the filled portion
+  const filledHeight = height * (fillPercent / 100);
+
+  // Draw the filled portion
   ctx.fillStyle = colour;
-  ctx.fillRect(x, y, width, height);
+  ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
 }
+
 
 function getGridCoordinates(worldX, worldY) {
   const gridX = Math.floor(worldX / GRID_SIZE) * GRID_SIZE;
@@ -135,13 +151,32 @@ function calculateDistance(pos1, pos2) {
 //#region  Node Class
 class Node {
   static types = {
-    storage_Node    : { key : "storage_Node",name: "Storage Node",
-      description: "A node for storing resources.", colour: "brown", description: "A repository for resources." },
-    home            : { key : "home",name: "Home",
-      description: "A central hub for agents.", colour: "blue", description: "Houses agents" },
-    quarry          : { key : "quarry", colour: "gray",  description: "Produces stone resources." },
-    resource_Node   : { key : "resource_Node",name: "Resource Node",
-      description: "A node that provides basic resources.", colour: "green", description: "Contains resources to be extracted." }
+    storage_Node : 
+    { 
+      key : "storage_Node",
+      name: "Storage Node",
+      colour: "brown", 
+      description: "A repository for resources.",
+      cost : 50
+    },
+    home : 
+    { 
+      key : "home",
+      name: "Home",
+      description: "A central hub for agents.", 
+      colour: "black", 
+      description: "Houses agents",
+      cost : 50 
+    },
+    resource_Node : 
+    { 
+      key : "resource_Node",
+      name: "Resource Node",
+      description: "A node that provides basic resources.", 
+      colour: "green", 
+      description: "Contains resources to be extracted.",
+      cost : 50 
+    }
   }
 
   constructor(x, y, typeKey) {
@@ -194,13 +229,14 @@ class Node {
       screenY,
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
-      this.type.colour
+      this.type.colour,
+      (this.currentCapacity/this.maxCapacity)*100
     );
-    drawText(
+    /*drawText(
       this.type.key,
       screenX + 5,
       screenY + GRID_SIZE * camera.scale / 2
-    );
+    );*/
   }
 
   checkCooldownRegen() {
@@ -452,10 +488,20 @@ class Combat_State extends State {
 //#region Agent Class
 class Agent {
   static types = {
-    generic_Agent : {key:"generic_Agent",name: "Generic Agent",
-      description: "A general-purpose agent.",colour:"black"},
-    raider_Agent  : {key:"raider_Agent", name: "Raider",
-      description: "An aggressive agent.",colour:"red"}
+    generic_Agent : {
+    key:"generic_Agent",
+    name: "Generic Agent",
+    description: "A general-purpose agent.",
+    colour:"black",
+    cost : 100
+    },
+    raider_Agent  : {
+    key:"raider_Agent", 
+    name: "Raider",
+    description: "An aggressive agent.",
+    colour:"red",
+    cost : 100
+    }
   }
 
   constructor(x, y, type = Agent.types.generic_Agent) {
@@ -472,7 +518,7 @@ class Agent {
     this.home = null;
     this.type = type;
     this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
-    this.searchRadius = GRID_SIZE * 5;
+    this.searchRadius = GRID_SIZE * 7
 
     // Combat properties
     this.health = 100; // Agent's health
@@ -498,7 +544,8 @@ class Agent {
       screenY,
       agentScreenSize,
       agentScreenSize,
-      this.colour
+      this.colour,
+      undefined
     );
     drawText(this.behaviourState.textSymbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
   }
@@ -563,15 +610,15 @@ class Agent {
   }
 
   findStorageNode(range = this.searchRadius) {
-    /* Find the closes storage node with the lowest capacity */
+    /* Find the closes storage node with the (lowest capacity OR shortest distance) */
     let foundStorageNode = null;
     let shortestDistance = range;
     let lowestCapacity = Infinity;
 
     gameState.nodes.forEach( (b) => {
-      if (b.type.key === Node.types.storage_Node.key && calculateDistance(this, b) < this.searchRadius){
-        const distance = calculateDistance(this, b);
-
+      const distance = calculateDistance(this, b);
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius){
+        // Found storage node within search radius
         if (distance < shortestDistance){  // if node is within shortest distance
           shortestDistance = distance;
           foundStorageNode = b;
@@ -580,7 +627,6 @@ class Agent {
           lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
         }
-
       }
     });
     if(!foundStorageNode){console.log("Canot find storage node");}
@@ -774,10 +820,10 @@ class Quest {
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
   new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type.key === Node.types.storage_Node.key)),
-  new Quest("Collect 100 resources", () => gameState.resources.wood >= 100),
+  new Quest("Collect 50 resources", () => gameState.totalStoredResources >= 50),
   new Quest("Build a Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Head Quarters", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Collect 1000 resources", () => gameState.resources.wood >= 1000),
+  new Quest("Upgrade Home -> Head Quarters", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  new Quest("Collect 1000 resources", () => gameState.totalStoredResources >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
@@ -891,8 +937,32 @@ function calculateStoredResources(){
       storedResources += node.currentCapacity;
     }
   });
+  gameState.totalStoredResources = storedResources;
   return storedResources;
 }
+
+function subtractFromStoredResources(resCost) {
+  if (calculateStoredResources() < resCost) { console.log("YOU CANT BUY THAT"); return;}
+
+  gameState.nodes.forEach(node => {
+    if (node.type.key == Node.types.storage_Node.key && resCost > 0) { // Is storage node and can still subtract
+      let availableCapacity = node.currentCapacity;
+      if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
+        node.currentCapacity -= resCost;
+        resCost = 0;
+      } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
+        resCost -= availableCapacity;
+        node.currentCapacity = 0;
+      }
+
+      //storedResources += node.currentCapacity;  // calculate stored resources
+    }
+  });
+
+  // check if all resources were subtracted
+  return resCost <= 0;
+}
+
 
 function calculateTotalLiveAgents(){
   return gameState.agents.length;
@@ -907,7 +977,7 @@ function selectType(typeKey) {
   
   if (buildTypes[typeKey]) {
     gameState.selectedType = buildTypes[typeKey];
-    console.log(`Selected type: ${typeKey}`);
+    console.log(`Selected type: ${buildTypes[typeKey].key}`);
   }
   else{
     gameState.selectedType = null;
@@ -921,9 +991,8 @@ function selectType(typeKey) {
 function displayDetails(buildTypeKey) {
   // get build type from list
   buildType = buildTypes[buildTypeKey];
-  if(!buildType){return;}
-
   const details = document.getElementById("selectedBuildItemInfo");
+  if(!buildType){ details.innerHTML=""; return; }  // buildType = {name:"Inspection Mode", description:"Click on a unit to view its information."
   if(details){
     details.innerHTML = `<p style="margin:0;"><b>${buildType.name}</b><br><i>${buildType.description}</i></p>`;
   }
@@ -1064,22 +1133,19 @@ canvas.addEventListener("click", (event) => {
       return;
     }
 
-    // Add the selected unit to the game
-    // Spawn selected type depending on classType
-    
+    // Subtract resources if can
+    if(!subtractFromStoredResources(gameState.selectedType.cost)){
+      console.log("cannot build unit");
+      return;
+    }
 
-
-    //let typeExists = Object.values(Agent.types).some(type => type.key === gameState.selectedType);
-    let typeExists = Object.values(Agent.types).includes(gameState.selectedType);
-
-    if(typeExists){
+    let buildTypeIsAgent = Object.values(Agent.types).includes(gameState.selectedType);
+    if(buildTypeIsAgent){
       addAgent(snappedX, snappedY, gameState.selectedType.key);
     }
     else{
       addNode(snappedX, snappedY, gameState.selectedType.key);
     }
-    //const builtAgent = addAgent(snappedX, snappedY);
-    //builtAgent.home = builtNode;
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
   else{
@@ -1097,7 +1163,7 @@ function gameLoop() {
   ctx.fillStyle = "rgb(51, 51, 51)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
   // Draw grid
-  drawGrid();
+  //drawGrid();
 
   // Draw resources
   const totalStoredResources = calculateStoredResources();
@@ -1145,6 +1211,7 @@ const secondAgent = addAgent(centerX+100, centerY+100);
 // Add a resource node and a storage_Node nearby
 nodeCoords = getGridCoordinates(centerX, centerY);
 addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
+addNode(nodeCoords[0], nodeCoords[1]-(GRID_SIZE*6), Node.types.storage_Node.key);
 //nodeCoords = getGridCoordinates(centerX + 100, centerY);
 //addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
 
