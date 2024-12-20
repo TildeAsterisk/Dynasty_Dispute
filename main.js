@@ -15,7 +15,7 @@ const gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 1500,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit : null
 };
 
@@ -28,14 +28,25 @@ const camera = {
 };
 
 //#region Utility Functions
-function drawText(text, x, y, size=11,  colour = "white", outlineColour="black") {
-  ctx.font = size.toString()+"px Arial";
+function drawText(text, x, y, size=11,  colour = "white", outlineColour="black", textAlign = null) {
   if (typeof text != "string") { console.error("text is not a string"); console.log(text); return;}
-  // Capitalise Text
-  text = text.split(/_Node|_State/)[0]  // Cut off the class identifier part
+
+  ctx.font = size.toString()+"px Arial";
+  if (textAlign=="center"){
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+  }
+  else{ 
+    //Default values
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // Process Text
+  /*text = text.split(/_Node|_State/)[0]  // Cut off the class identifier part
   text = text.replace(/([a-z])([A-Z])/g, '$1 $2');
   text=String(text).charAt(0).toUpperCase() + String(text).slice(1);
-  text = text.replace("_", " ");
+  text = text.replace("_", " ");*/
 
   if(outlineColour!="None"){
     // Draw an outline
@@ -161,10 +172,13 @@ class Node {
     this.type = type;
 
     this.maxCapacity = 100;
-    this.currentCapacity = 0;
+    this.currentCapacity = Node.types.resource_Node.key == type ? this.maxCapacity: 0;
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
+
+    this.regenCooldown = 20; // Seconds between regen
+    this.lastRegenTime = 0; // Time of the regen
 
   }
 
@@ -177,9 +191,20 @@ class Node {
       console.log("New Agent Spawned!!!");
     }
 
-    // Drain resources slowly from storage depo
-    if(this.type == Node.types.storage_Node.key && this.currentCapacity > 0)
-      this.currentCapacity -= 0.005; // RESOURCE DECAY
+    
+
+    switch (this.type){
+      case Node.types.storage_Node.key:
+        // Drain resources slowly from storage depo
+        if(this.currentCapacity > 0){
+          this.currentCapacity -= 0.005; // RESOURCE DECAY
+        }
+        break;
+      case Node.types.resource_Node.key:
+        this.checkCooldownRegen();
+        break;
+    }
+
   }
 
   draw() {
@@ -197,6 +222,19 @@ class Node {
       screenX + 5,
       screenY + GRID_SIZE * camera.scale / 2
     );
+  }
+
+  checkCooldownRegen() {
+    const now = performance.now();
+    if (now - this.lastRegenTime >= this.regenCooldown * 1000) {  // Check if regen cooldown finished
+      //regen resources
+      this.currentCapacity = this.maxCapacity;
+      this.lastRegenTime = now;
+      return true;
+    }
+    else{
+      return false;
+    }
   }
 }
 
@@ -237,11 +275,31 @@ function onNodeSelect() {
 // Call populateNodeSelector to fill the dropdown when the game starts
 populateNodeSelector();
 
+function generateBuildMenu(){
+  // Generate grid items
+const grid = document.getElementById("objectGrid");
+objectData.forEach((object) => {
+  const gridItem = document.createElement("div");
+  gridItem.className = "grid-item";
+  gridItem.textContent = object.name;
+  gridItem.dataset.type = object.type; // Store type for identification
+
+  gridItem.addEventListener("click", () => {
+    displayDetails(object);
+  });
+
+  grid.appendChild(gridItem);
+});
+}
 
 
 //#region State Class
 // Define a State base class (optional)
 class State {
+  constructor(){
+    this.textSymbol = "💭";
+  }
+
   enter(context) {
     // Code executed when entering the state
     console.log(`${context.id} enters ${this.constructor.name}.`);
@@ -260,7 +318,7 @@ class State {
 
   checkForEnemy(context){
     // Check for nearby enemies
-    const enemy = context.findEnemy(context.findRange);
+    const enemy = context.findEnemy(context.searchRadius);
     if (enemy) {
       console.log(`${context.id} found an enemy: ${enemy.id}`);
       context.setNewTarget(enemy);
@@ -272,29 +330,45 @@ class State {
 //#region Idle State
 class Idle_State extends State {
   execute(context) {
-    context.setNewTarget(context.findResourceNode());
+    /*context.moveToTarget();
+    if (context.reachedTarget()){
+
+    }*/
+
+    context.setNewTarget(context.findResourceNode(context.searchRadius));
     if (context.target) { context.changeBehaviourState(new Gathering_State()); }
+    else{
+      context.setNewTarget(context.findStorageNode(context.searchRadius));
+      context.changeBehaviourState(new Roaming_State());
+    }
   }
 }
 
 //#region Roaming State
 class Roaming_State extends State {
+  constructor(){
+    super(); this.textSymbol = "";//"🧭";
+  }
+
   execute(context) {
     this.checkForEnemy(context);
     if(context.target){
-      context.moveToTarget();
+
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
-        //console.log(context.id+" ran out of resources while roaming.");
-        context.setNewTarget(context.findResourceNode());
+        context.setNewTarget(context.findResourceNode(context.searchRadius));
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
+          return;
         }
-        else{
+        else{ // Cannot consume resources, and has no target
           //Die?
+          console.log(context.id+" ran out of resources while roaming.");
           context.die();
+          return;
         }
       }
 
+      context.moveToTarget();
       if (context.reachedTarget()){
         context.setRandomRoamPosition()
       }
@@ -308,6 +382,9 @@ class Roaming_State extends State {
 
 //#region Gathering State
 class Gathering_State extends State {
+  constructor(){
+    super(); this.textSymbol = "⚙"; //📥?
+  }
   execute(context) {
     this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
 
@@ -318,7 +395,7 @@ class Gathering_State extends State {
         return;
       }
       else{ // If cannot gather anymore
-        const storageFound = context.findStorageNode(context.findRange);
+        const storageFound = context.findStorageNode(context.searchRadius);
         if(storageFound) {
           context.setNewTarget(storageFound);  // Find new storage
           context.changeBehaviourState(new Depositing_State());
@@ -327,29 +404,15 @@ class Gathering_State extends State {
           context.changeBehaviourState(new GoingHome_State());
         }
       }
-      
-
-      /*
-      if(context.gatherResources()){  // If Target reached and cannot carry anymore.
-        context.changeBehaviourState( new GoingHome_State() ); // Go home
-      }
-      else{ // Reached Target but resources cannot be deposited
-        const storageFound = context.findStorageNode(context.findRange*3);
-        if (storageFound){
-          context.setNewTarget(storageFound);  // Find new storage
-          context.changeBehaviourState(new Depositing_State());
-        }
-        else{
-          context.changeBehaviourState(new Depositing_State());  // If reached target, cannot deposit resources and no storage found then go roaming
-        }
-      }
-      */
     }
   }
 }
 
 //#region Depositing State
 class Depositing_State extends State {
+  constructor(){
+    super(); this.textSymbol = "📦"; //📤?
+  }
   execute(context) {
     //Execute
     this.checkForEnemy(context);
@@ -371,10 +434,13 @@ class Depositing_State extends State {
 
 //#region Going Home State
 class GoingHome_State extends State {
+  constructor(){
+    super(); this.textSymbol = "🏠";
+  }
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    context.home   = context.findHome(context.findRange);
+    context.home   = context.findHome(context.searchRadius);
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
@@ -386,7 +452,8 @@ class GoingHome_State extends State {
     if (context.reachedTarget()){
       //Is at Home 
       //console.log("Agent is at home");
-      if(context.home){
+      // If agent reached home and its not full
+      if(context.home && context.home.agentCapacity.length < context.home.maxAgentCapacity){
         context.home.agentCapacity.push(context);
         context.changeBehaviourState(new AtHome_State());
       }
@@ -396,11 +463,17 @@ class GoingHome_State extends State {
 
 //#region At Home State
 class AtHome_State extends State {
+  constructor(){
+    super(); this.textSymbol = "💤";
+  }
+
   execute(context) {
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+        //leave home
+        context.home.agentCapacity = context.home.agentCapacity.filter((agent) => agent !== context);
         context.changeBehaviourState(new Gathering_State());
       }
       else{
@@ -417,6 +490,9 @@ class AtHome_State extends State {
 
 //#region Combat State
 class Combat_State extends State {
+  constructor(){
+    super(); this.textSymbol = "⚔";
+  }
   enter(agent) {
     console.log(`${agent.id} is entering combat.`);
   }
@@ -467,7 +543,7 @@ class Agent {
     this.home = null;
     this.type = type;
     this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
-    this.findRange = GRID_SIZE * 5;
+    this.searchRadius = GRID_SIZE * 5;
 
     // Combat properties
     this.health = 100; // Agent's health
@@ -487,14 +563,15 @@ class Agent {
   draw() {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
+    const agentScreenSize = (GRID_SIZE / 5) * camera.scale;
     drawRect(
       screenX,
       screenY,
-      (GRID_SIZE / 5) * camera.scale,
-      (GRID_SIZE / 5) * camera.scale,
+      agentScreenSize,
+      agentScreenSize,
       "black"
     );
-    drawText(this.behaviourState.constructor.name, screenX - 10, screenY - 10);
+    drawText(this.behaviourState.textSymbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
   }
 
   findResourceNode(range = Infinity) {
@@ -504,7 +581,7 @@ class Agent {
    let closestResourceNode = null;
     let shortestDistance = range;
     gameState.nodes.find( (b) => {
-      if(b.type === Node.types.resource_Node.key){
+      if(b.type === Node.types.resource_Node.key && b.currentCapacity > 0){
         const distance = calculateDistance(this, b);
         if (distance < shortestDistance) {
           shortestDistance = distance;
@@ -548,28 +625,33 @@ class Agent {
       //this.carrying = this.maxCarry;  //Limit carry
       return false;
     }
-    else{ // There is space to carry
+    else{ // There is space to carry, take from target capacity
       this.carrying++;
+      this.target.currentCapacity--;
       return true;
     }
 
   }
 
-  findStorageNode(range = Infinity) {
+  findStorageNode() {
     /* Find the closes storage node with the lowest capacity */
     let foundStorageNode = null;
-    let shortestDistance = range;
+    let shortestDistance = this.searchRadius;
     let lowestCapacity = Infinity;
 
     gameState.nodes.forEach( (b) => {
-      if (b.type === Node.types.storage_Node.key && b.currentCapacity < b.maxCapacity){
-        const pos1 =  {x:this.x, y:this.y};
-        const pos2 =  {x:b.x, y:b.y};
-        const distance = calculateDistance(pos1, pos2);
-        if (distance < shortestDistance && b.currentCapacity < lowestCapacity) {
+      if (b.type === Node.types.storage_Node.key && calculateDistance(this, b) < this.searchRadius){
+        const distance = calculateDistance(this, b);
+
+        if(distance < shortestDistance){  // if node is within shortest distance
           shortestDistance = distance;
           foundStorageNode = b;
         }
+        else if (b.currentCapacity < lowestCapacity) { //if node is within shortest distance AND has lower capacity
+          lowestCapacity = b.currentCapacity;
+          foundStorageNode = b;
+        }
+
       }
     });
     if(!foundStorageNode){console.log("Canot find storage node");}
@@ -709,7 +791,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = this.findRange*1.5;  // Sets a roaming range of 10 blocks by default
+    const roamingRange = this.searchRadius*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
@@ -826,9 +908,6 @@ function addAgent(x, y, type  = null) {
 }
 
 function drawGrid() {
-  // Fill the entire canvas with colour
-  ctx.fillStyle = "rgb(51, 51, 51)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
   // Calculate the grid using camera
   const gridStartX = Math.floor(camera.x / GRID_SIZE) * GRID_SIZE;
   const gridStartY = Math.floor(camera.y / GRID_SIZE) * GRID_SIZE;
@@ -836,7 +915,7 @@ function drawGrid() {
   const gridWidth = Math.ceil(canvas.width / (GRID_SIZE * camera.scale));
   const gridHeight = Math.ceil(canvas.height / (GRID_SIZE * camera.scale));
   // Draw grid
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
   ctx.lineWidth = 1;
 
   for (let i = 0; i <= gridWidth; i++) {
@@ -978,7 +1057,7 @@ canvas.addEventListener("click", (event) => {
     // Check if the cell is already occupied
     if (isCellOccupied(snappedX, snappedY)) {
       console.log("Cannot place node: Cell is already occupied.");
-      alert("Cannot place node: Cell is already occupied.");
+      //alert("/!\\ Cannot place node: Cell is already occupied. /!\\");
       return;
     }
     // Add the selected unit to the game
@@ -1005,7 +1084,9 @@ canvas.addEventListener("click", (event) => {
 //#region  Game Loop
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  // Fill the entire canvas with colour
+  ctx.fillStyle = "rgb(51, 51, 51)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
   // Draw grid
   drawGrid();
 
