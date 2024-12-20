@@ -107,7 +107,8 @@ function updateUnitInfo(object=null) {
   for (const [key, value] of Object.entries(object)) {
     let roundedValue = value;
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round
-    
+    if(key == 'type'){roundedValue = value.name;}
+
     const row = table.insertRow();
     row.innerHTML = `<td style="border: 1px solid black; padding: 5px;">${key}</td>
                      <td style="border: 1px solid black; padding: 5px;">${roundedValue}</td>`;
@@ -162,14 +163,13 @@ class Node {
     // Random chance to spawn agent
     if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
       //Random change to give birth to a new agent
-      const newBorn = addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2));
-      newBorn.type = this.agentCapacity[0].type;
+      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type);
       console.log("New Agent Spawned!!!");
     }
 
     
 
-    switch (this.type){
+    switch (this.type.key){
       case Node.types.storage_Node.key:
         // Drain resources slowly from storage depo
         if(this.currentCapacity > 0){
@@ -448,16 +448,17 @@ class Combat_State extends State {
 //#region Agent Class
 class Agent {
   static types = {
-    generic_Agent : {name: "Generic Agent",
-      description: "A general-purpose agent.",},
-    raider_Agent  : {name: "Raider",
-      description: "An aggressive agent.",}
+    generic_Agent : {key:"generic_Agent",name: "Generic Agent",
+      description: "A general-purpose agent.",colour:"black"},
+    raider_Agent  : {key:"raider_Agent", name: "Raider",
+      description: "An aggressive agent.",colour:"red"}
   }
 
   constructor(x, y, type = Agent.types.generic_Agent) {
     this.id = "Agent" + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
+    this.colour = type.colour;
     this.behaviourState = new Idle_State(); // Possible behaviourStates: idle, gathering, depositing
     this.target = null; // Current target (node or position)
     this.previousUnitTarget = this.target;  //Stores the previous valid target (non position)
@@ -493,7 +494,7 @@ class Agent {
       screenY,
       agentScreenSize,
       agentScreenSize,
-      "black"
+      this.colour
     );
     drawText(this.behaviourState.textSymbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
   }
@@ -665,7 +666,7 @@ class Agent {
     let shortestDistance = range;
 
     gameState.agents.forEach((agent) => {
-      if (agent.type !== this.type && agent.health > 0) { // Find enemies with health > 0
+      if (agent.type.key !== this.type.key && agent.health > 0) { // Find enemies with health > 0
         const distance = calculateDistance(this, agent);
         if (distance < shortestDistance) {
           shortestDistance = distance;
@@ -823,9 +824,9 @@ function addNode(x, y, type) {
   return newNode;
 }
 
-function addAgent(x, y, type  = null) {
-  const newAgent = new Agent(x, y);
-  newAgent.type = type ? type : newAgent.type;  // if type is given set type if not then leave default
+function addAgent(x, y, typeKey  = Agent.types.generic_Agent.key) {
+  const newAgent = new Agent(x, y, Agent.types[typeKey]);
+  //newAgent.type = ;  // if type is given set type if not then leave default
   gameState.agents.push(newAgent);
   gameState.spawnedUnitsCount += 1;
   return newAgent;
