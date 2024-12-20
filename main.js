@@ -139,15 +139,16 @@ class Node {
       description: "A node that provides basic resources.", colour: "green", description: "Contains resources to be extracted." }
   }
 
-  constructor(x, y, type) {
-    this.type = type; // If type object is given, inherit initial  from type object dict.
+  constructor(x, y, typeKey) {
+    this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
 
-    this.id = type + gameState.spawnedUnitsCount;
+    this.id = typeKey + gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
+    this.colour = this.type.colour;
 
     this.maxCapacity = 100;
-    this.currentCapacity = Node.types.resource_Node.key == type ? this.maxCapacity: 0;
+    this.currentCapacity = Node.types.resource_Node.key == typeKey ? this.maxCapacity: 0;
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
@@ -193,7 +194,7 @@ class Node {
       this.type.colour
     );
     drawText(
-      this.type,
+      this.type.key,
       screenX + 5,
       screenY + GRID_SIZE * camera.scale / 2
     );
@@ -504,7 +505,7 @@ class Agent {
    let closestResourceNode = null;
     let shortestDistance = range;
     gameState.nodes.find( (b) => {
-      if(b.type === Node.types.resource_Node.key && b.currentCapacity > 0){
+      if(b.type.key === Node.types.resource_Node.key && b.currentCapacity > 0){
         const distance = calculateDistance(this, b);
         if (distance < shortestDistance) {
           shortestDistance = distance;
@@ -563,7 +564,7 @@ class Agent {
     let lowestCapacity = Infinity;
 
     gameState.nodes.forEach( (b) => {
-      if (b.type === Node.types.storage_Node.key && calculateDistance(this, b) < this.searchRadius){
+      if (b.type.key === Node.types.storage_Node.key && calculateDistance(this, b) < this.searchRadius){
         const distance = calculateDistance(this, b);
 
         if(distance < shortestDistance){  // if node is within shortest distance
@@ -593,7 +594,7 @@ class Agent {
 
     // Iterate over all nodes to find the closest eligible home
     gameState.nodes.forEach((b) => {
-      if (b.type === Node.types.home.key && b.agentCapacity.length < b.maxAgentCapacity) {
+      if (b.type.key === Node.types.home.key && b.agentCapacity.length < b.maxAgentCapacity) {
         const pos1 =  {x:this.x, y:this.y};
         const pos2 =  {x:b.x, y:b.y};
         const distance = calculateDistance(pos1, pos2);
@@ -755,10 +756,10 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
-  new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type === Node.types.storage_Node.key)),
+  new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type.key === Node.types.storage_Node.key)),
   new Quest("Collect 100 resources", () => gameState.resources.wood >= 100),
-  new Quest("Build a Home", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
-  new Quest("Build a Head Quarters", () => gameState.nodes.some(b => b.type === Node.types.home.key)),
+  new Quest("Build a Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  new Quest("Build a Head Quarters", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Collect 1000 resources", () => gameState.resources.wood >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
@@ -1054,10 +1055,10 @@ canvas.addEventListener("click", (event) => {
     let typeExists = Object.values(Agent.types).includes(gameState.selectedType);
 
     if(typeExists){
-      addAgent(snappedX, snappedY, gameState.selectedType);
+      addAgent(snappedX, snappedY, gameState.selectedType.key);
     }
     else{
-      addNode(snappedX, snappedY, gameState.selectedType);
+      addNode(snappedX, snappedY, gameState.selectedType.key);
     }
     //const builtAgent = addAgent(snappedX, snappedY);
     //builtAgent.home = builtNode;
