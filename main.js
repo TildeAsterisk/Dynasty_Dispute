@@ -192,7 +192,7 @@ class Node {
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
 
-    this.regenCooldown = 20; // Seconds between regen
+    this.regenCooldown = 30; // Seconds between regen (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
@@ -299,7 +299,7 @@ class Idle_State extends State {
     context.setNewTarget(context.findResourceNode(context.searchRadius*2));
     if (context.target) { context.changeBehaviourState(new Gathering_State()); }
     else{
-      context.setNewTarget(context.findStorageNode(context.searchRadius));
+      context.setNewTarget(context.findStorageNode_LowestInRange(context.searchRadius));
       context.changeBehaviourState(new Roaming_State());
     }
   }
@@ -322,13 +322,13 @@ class Roaming_State extends State {
           return;
         }
         else{ // Cannot consume resources, and cannot find resource node
-          context.setRandomRoamPosition() // JIGGLE, Replace with take resources from storage nodes
+          //context.setRandomRoamPosition() // JIGGLE, Replace with take resources from storage nodes
           
-          context.setNewTarget(context.findStorageNode(context.searchRadius*2)); // try to find storage node
+          context.setNewTarget(context.findStorageNode_NotEmptyInRange(context.searchRadius*2)); // try to find storage node to take from
           if(context.target){
             // STORAGE NODE FOUND, GET ITEMS
             
-            console.log(context.id, "Moving to ", context.target);
+            console.log(context.id, " MOVING TO STORAGE NODE ", context.target);
             context.changeBehaviourState(new Gathering_State());
           }
           else{
@@ -359,7 +359,7 @@ class Gathering_State extends State {
   }
   execute(context) {
     this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
-    context.moveToTarget(); // Advance towards target
+    
 
     if (context.reachedTarget()) {  // Reached Resource?
       if(context.gatherResources()) { // If Target reached and resources gathered
@@ -370,8 +370,7 @@ class Gathering_State extends State {
         // iff gathered from resource, then store it. If gathered from stroage then go home
         //console.log(context.target);
         if(context.target.id && context.target.type.key == Node.types.resource_Node.key){
-          console.log("Farmed from resource node, go to store it");
-          const storageFound = context.findStorageNode(context.searchRadius); // go and store gatheres resources
+          const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
           if(storageFound) {
             context.setNewTarget(storageFound);  // Find new storage
             context.changeBehaviourState(new Depositing_State());
@@ -382,11 +381,14 @@ class Gathering_State extends State {
             return;
           }
         }
-        else {
+        else {  // Gathering from a storage node
           context.changeBehaviourState(new GoingHome_State());
         }
 
       }
+    }
+    else{
+      context.moveToTarget(); // Advance towards target
     }
   }
 }
@@ -523,7 +525,7 @@ class Agent {
     name: "Raider",
     description: "An aggressive agent.",
     colour:"red",
-    cost : 100
+    cost : 0
     }
   }
 
@@ -621,7 +623,7 @@ class Agent {
   gatherResources() {
     /* Gather resources and return bool if successful */
 
-    if (this.carrying >= this.maxCarry) { // If there is NO space to carry
+    if (this.carrying >= this.maxCarry || (this.target.currentCapacity <= 0) ) { // If there is NO space to carry //  if target is empty
       //this.carrying = this.maxCarry;  //Limit carry
       return false;
     }
@@ -633,7 +635,7 @@ class Agent {
 
   }
 
-  findStorageNode(range = this.searchRadius) {
+  findStorageNode_LowestInRange(range = this.searchRadius) {
     /* Find the closes storage node with the (lowest capacity OR shortest distance) */
     let foundStorageNode = null;
     let shortestDistance = range;
@@ -641,7 +643,7 @@ class Agent {
 
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
-      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius){
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius ){
         // Found storage node within search radius
         if (distance < shortestDistance){  // if node is within shortest distance
           shortestDistance = distance;
@@ -651,6 +653,21 @@ class Agent {
           lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
         }
+      }
+    });
+    if(!foundStorageNode){console.log("Canot find storage node");}
+    return foundStorageNode;
+  }
+
+  findStorageNode_NotEmptyInRange(range = this.searchRadius) {
+    /* Find the closes storage node with the (lowest capacity OR shortest distance) */
+    let foundStorageNode = null;
+
+    gameState.nodes.forEach( (b) => {
+      const distance = calculateDistance(this, b);
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && b.currentCapacity > 0 ){
+        // Found empty storage node within search radius
+        foundStorageNode = b;
       }
     });
     if(!foundStorageNode){console.log("Canot find storage node");}
@@ -845,11 +862,13 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
-  new Quest("Build a storage_Node", () => gameState.nodes.some(b => b.type.key === Node.types.storage_Node.key)),
-  new Quest("Collect 50 resources", () => gameState.totalStoredResources >= 50),
-  new Quest("Build a Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Upgrade Home", () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Collect 1000 resources", () => gameState.totalStoredResources >= 1000),
+  new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
+  new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  new Quest("Build a Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length > 2) ),
+  //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length > 2) ),
+  new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
+  new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
