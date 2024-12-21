@@ -41,7 +41,7 @@ canvas {
     left: 50%; 
     transform: translateX(-50%);
     bottom: 0px;
-    width:50%;  /* Width of Panel */
+    width:20%;  /* Width of Panel */
     margin-top: auto;
     background-color: #f8f8f866;
     border-top: 5px solid #ffffff6d;
@@ -56,8 +56,8 @@ canvas {
 }
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(10vh, 1fr)); /* Each column will be 1% of the viewport height */
-    grid-template-rows: repeat(auto-fill, minmax(10vh, 1fr)); /* Each row will be 1% of the viewport height */
+    grid-template-columns: repeat(auto-fill, minmax(5vh, 1fr)); /* Each column will be 1% of the viewport height */
+    grid-template-rows: repeat(auto-fill, minmax(5vh, 1fr)); /* Each row will be 1% of the viewport height */
     gap: 10px; /* Gap between the grid items */
     /*justify-content: center;*/
     padding: 10px;
@@ -76,7 +76,7 @@ canvas {
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    font-size: calc(10vh - 20px); /* Adjust the font size to fill the div */
+    font-size: calc(5vh - 10px); /* Adjust the font size to fill the div */
 }
 .grid-item.selected {
     background-color: #a0d1ff;

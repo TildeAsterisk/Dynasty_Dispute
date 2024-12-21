@@ -322,20 +322,26 @@ class Roaming_State extends State {
           return;
         }
         else{ // Cannot consume resources, and cannot find resource node
+          context.setRandomRoamPosition() // JIGGLE, Replace with take resources from storage nodes
+          
           context.setNewTarget(context.findStorageNode(context.searchRadius*2)); // try to find storage node
           if(context.target){
             // STORAGE NODE FOUND, GET ITEMS
+            
+            console.log(context.id, "Moving to ", context.target);
+            context.changeBehaviourState(new Gathering_State());
           }
           else{
             console.log(context.id+" ran out of resources while roaming.");
             context.die();
             return;
           }
+            
         }
       }
 
       context.moveToTarget();
-      if (context.reachedTarget()){
+      if (context.reachedTarget()){ // Has target, can consume resources, reached target
         context.setRandomRoamPosition()
       }
     }
@@ -353,22 +359,33 @@ class Gathering_State extends State {
   }
   execute(context) {
     this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
-
     context.moveToTarget(); // Advance towards target
+
     if (context.reachedTarget()) {  // Reached Resource?
       if(context.gatherResources()) { // If Target reached and resources gathered
-        // carry on gathering
+        //console.log(context.id, "Gathering resources ",context.target.id);
         return;
       }
       else{ // If cannot gather anymore
-        const storageFound = context.findStorageNode(context.searchRadius);
-        if(storageFound) {
-          context.setNewTarget(storageFound);  // Find new storage
-          context.changeBehaviourState(new Depositing_State());
+        // iff gathered from resource, then store it. If gathered from stroage then go home
+        //console.log(context.target);
+        if(context.target.id && context.target.type.key == Node.types.resource_Node.key){
+          console.log("Farmed from resource node, go to store it");
+          const storageFound = context.findStorageNode(context.searchRadius); // go and store gatheres resources
+          if(storageFound) {
+            context.setNewTarget(storageFound);  // Find new storage
+            context.changeBehaviourState(new Depositing_State());
+            return;
+          }
+          else{ // Finished gathering and no storage found
+            context.changeBehaviourState(new GoingHome_State());
+            return;
+          }
         }
-        else{ // Finished gathering and no storage found
+        else {
           context.changeBehaviourState(new GoingHome_State());
         }
+
       }
     }
   }
@@ -406,7 +423,8 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    context.home   = context.findHome(context.searchRadius);
+    context.home = context.findHome(context.searchRadius);
+    context.setNewTarget(context.home);
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
@@ -498,7 +516,7 @@ class Agent {
     name: "Generic Agent",
     description: "A general-purpose agent.",
     colour:"black",
-    cost : 100
+    cost : 0
     },
     raider_Agent  : {
     key:"raider_Agent", 
@@ -578,6 +596,7 @@ class Agent {
     Moves Agent towards target
     */
     if (!this.target){ console.error("Theres no target to move to"); return;}
+
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -661,7 +680,6 @@ class Agent {
       }
     });
 
-    this.setNewTarget(foundHome);
     return foundHome;
 }
 
@@ -709,9 +727,12 @@ class Agent {
   die(){
     console.log(`${this.id} has died.`);
     gameState.agents = gameState.agents.filter((agent) => agent !== this);
-    /*if (this.state.constructor.name  = "AtHome_State"){
-      this.home = this.home.filter((agent) => agent !== this);
-    }*/
+    
+    //if is at home then remove from home capacity
+    if (this.behaviourState.constructor.name  == AtHome_State.constructor.name && this.home.agentCapacity.length > 0){
+      this.home = this.home.agentCapacity.filter((agent) => agent !== this);
+    }
+
     delete this;
   }
 
@@ -775,7 +796,7 @@ class Agent {
     let focus;
     const roamingRange = this.searchRadius*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
-      console.log("TARGET HAS ID");
+      //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
     }
     else if( this.previousUnitTarget){  // Target doesnt have ID
