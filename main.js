@@ -62,11 +62,12 @@ function drawText(text, x, y, size=11,  colour = "white", outlineColour="black",
 }
 
 function drawRect(x, y, width, height, colour, fillPercent) {
+  const lineWidth = 5;
   // Draw the outline
   if (fillPercent != undefined) {
     ctx.strokeStyle = colour;
-    ctx.lineWidth = 5;
-    ctx.strokeRect(x, y, width, height);
+    ctx.lineWidth = lineWidth;
+    ctx.strokeRect(x + lineWidth / 2, y + lineWidth / 2, width - lineWidth, height - lineWidth);
   }
   else{
     fillPercent=100;
@@ -157,7 +158,7 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources.",
-      cost : 50
+      cost : 0
     },
     home : 
     { 
@@ -166,7 +167,7 @@ class Node {
       description: "A central hub for agents.", 
       colour: "black", 
       description: "Houses agents",
-      cost : 50 
+      cost : 0 
     },
     resource_Node : 
     { 
@@ -175,7 +176,7 @@ class Node {
       description: "A node that provides basic resources.", 
       colour: "green", 
       description: "Contains resources to be extracted.",
-      cost : 50 
+      cost : 0 
     }
   }
 
@@ -577,7 +578,7 @@ class Agent {
 
   findResourceNode(range = Infinity) {
     /*
-    Find a resource node and set it as the target 
+    Find the closes resource node within range and set it as the target 
     */
    let closestResourceNode = null;
     let shortestDistance = range;
@@ -811,7 +812,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = this.searchRadius*1.5;  // Sets a roaming range 1 and a half times default range
+    const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
@@ -864,9 +865,9 @@ const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
   new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
   new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length > 2) ),
+  new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 2) ),
   //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length > 2) ),
+  new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
   new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
   new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
 ];
