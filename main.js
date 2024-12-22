@@ -193,6 +193,8 @@ class Node {
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
 
+    this.agentTypeAllianceKey = 0;
+
     this.regenCooldown = 30; // Seconds between regen (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
@@ -365,6 +367,8 @@ class Gathering_State extends State {
     if (context.reachedTarget()) {  // Reached Resource?
       if(context.gatherResources()) { // If Target reached and resources gathered
         //console.log(context.id, "Gathering resources ",context.target.id);
+        // Set Node typealliance 
+        context.target.agentTypeAllianceKey = context.type.key;
         return;
       }
       else{ // If cannot gather anymore
@@ -405,6 +409,7 @@ class Depositing_State extends State {
     context.moveToTarget();
     if (context.reachedTarget()) {
       if(context.depositResources()){ // If can deposit
+        context.target.agentTypeAllianceKey = context.type.key; // Change Node alliance key
         context.changeBehaviourState(new Roaming_State());  // Go roaming
       }
       else {
@@ -829,12 +834,18 @@ class Agent {
   }
 
   enterTargetNode(){
+    if (this.target.agentCapacity.length == 0){
+      this.target.agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
+    }
     this.target.agentCapacity.push(this);
     console.log(this.id," is entering node ", this.home.id);
   }
 
   exitNode(){
     this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
+    if (this.target.agentCapacity.length == 0){
+      this.target.agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
+    }
     console.log(this.id," is leaving node ", this.home.id);
   }
 
@@ -976,10 +987,13 @@ function isCellOccupied(x, y) {
   });
 }
 
-function calculateStoredResources(){
+function calculateStoredResources(agentTypeKey = null){
   let storedResources = 0;
   gameState.nodes.forEach(node => {
-    if (node.type.key == Node.types.storage_Node.key){
+    if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){
+      storedResources += node.currentCapacity;
+    }
+    else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) {
       storedResources += node.currentCapacity;
     }
   });
@@ -987,7 +1001,7 @@ function calculateStoredResources(){
   return storedResources;
 }
 
-function subtractFromStoredResources(resCost) {
+function subtractFromStoredResources(resCost, agentTypeKey) {
   if (calculateStoredResources() < resCost) { console.log("YOU CANT BUY THAT"); return;}
 
   gameState.nodes.forEach(node => {
@@ -1212,7 +1226,7 @@ function gameLoop() {
   //drawGrid();
 
   // Draw resources
-  const totalStoredResources = calculateStoredResources();
+  const totalStoredResources = calculateStoredResources(Node.types.generic_Agent.key);
   const totalLiveAgents = calculateTotalLiveAgents();
   drawText(`🜨 ${Math.round(totalStoredResources)}`, 10, 30, 20);
   drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
