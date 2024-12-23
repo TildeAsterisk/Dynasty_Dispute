@@ -196,7 +196,7 @@ class Node {
 
     this.agentTypeAllianceKey = 0;
 
-    this.regenCooldown = 30; // Seconds between regen (20 is good and short)
+    this.regenCooldown = 30; // gameTicks between regen (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
@@ -245,7 +245,7 @@ class Node {
 
   checkCooldownRegen() {
     const now = gameState.gameTick;
-    if (now - this.lastRegenTime >= this.regenCooldown * 1000) {  // Check if regen cooldown finished
+    if (now - this.lastRegenTime >= this.regenCooldown * 60) {  // Check if regen cooldown finished
       //regen resources
       this.currentCapacity = this.maxCapacity;
       this.lastRegenTime = now;
@@ -347,7 +347,7 @@ class Roaming_State extends State {
       context.moveToTarget();
       if (context.reachedTarget()){ // Has target, can consume resources, reached target
         //check if at storage node
-        if (context.target.type.key == Node.types.storage_Node.key){  // at storage node, stay and gather
+        if (context.target.type && context.target.type.key == Node.types.storage_Node.key){  // at storage node, stay and gather
           // Just hanging out at the storage
         }
         else{ //reached target roaming, go again
@@ -793,7 +793,7 @@ class Agent {
 
   attackTarget() {
     const now = gameState.gameTick;
-    if (now - this.lastAttackTime >= this.attackCooldown * 1000) {
+    if (now - this.lastAttackTime >= this.attackCooldown * 60) {
       if (this.target && this.target.health > 0) {
         console.log(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
         this.target.health -= this.attackPower;
