@@ -158,25 +158,23 @@ class Node {
       key : "storage_Node",
       name: "Storage Node",
       colour: "brown", 
-      description: "A repository for resources.",
+      description: "A repository for resources. Cost: 50",
       cost : 50
     },
     home : 
     { 
       key : "home",
       name: "Home",
-      description: "A central hub for agents.", 
+      description: "A central hub for agents. Cost: 50", 
       colour: "black", 
-      description: "Houses agents",
       cost : 50 
     },
     resource_Node : 
     { 
       key : "resource_Node",
       name: "Resource Node",
-      description: "A node that provides basic resources.", 
       colour: "green", 
-      description: "Contains resources to be extracted.",
+      description: "Contains resources to be extracted.  Cost: 50",
       cost : 50 
     }
   }
@@ -532,7 +530,7 @@ class Agent {
     generic_Agent : {
     key:"generic_Agent",
     name: "Generic Agent",
-    description: "A general-purpose agent.",
+    description: "A general-purpose agent. Cost: 100",
     colour:"black",
     cost : 100
     },
@@ -541,7 +539,7 @@ class Agent {
     name: "Raider",
     description: "An aggressive agent.",
     colour:"red",
-    cost : 100
+    cost : 0
     }
   }
 
