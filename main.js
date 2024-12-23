@@ -17,7 +17,8 @@ const gameState = {
   spawnedUnitsCount : 0,
   agentBirthChance : 1500,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit : null,
-  totalStoredResources : 0
+  totalStoredResources : 0,
+  gameTick : 0
 };
 
 // Grid and Camera
@@ -240,7 +241,7 @@ class Node {
   }
 
   checkCooldownRegen() {
-    const now = performance.now();
+    const now = gameState.gameTick;
     if (now - this.lastRegenTime >= this.regenCooldown * 1000) {  // Check if regen cooldown finished
       //regen resources
       this.currentCapacity = this.maxCapacity;
@@ -776,7 +777,7 @@ class Agent {
 
 
   attackTarget() {
-    const now = performance.now();
+    const now = gameState.gameTick;
     if (now - this.lastAttackTime >= this.attackCooldown * 1000) {
       if (this.target && this.target.health > 0) {
         console.log(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
@@ -1239,6 +1240,7 @@ function gameLoop() {
 
   //console.log("Selected Node Type: "+gameState.selectedType);
 
+  gameState.gameTick += 1;
   requestAnimationFrame(gameLoop);
 }
 
