@@ -646,6 +646,7 @@ class Agent {
     else{ // There is space to carry, take from target capacity
       this.carrying++;
       this.target.currentCapacity--;
+      console.log(this.id," gathering from ",this.target.id);
       return true;
     }
 
