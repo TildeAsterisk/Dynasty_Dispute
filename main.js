@@ -159,7 +159,7 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources.",
-      cost : 0
+      cost : 50
     },
     home : 
     { 
@@ -168,7 +168,7 @@ class Node {
       description: "A central hub for agents.", 
       colour: "black", 
       description: "Houses agents",
-      cost : 0 
+      cost : 50 
     },
     resource_Node : 
     { 
@@ -177,7 +177,7 @@ class Node {
       description: "A node that provides basic resources.", 
       colour: "green", 
       description: "Contains resources to be extracted.",
-      cost : 0 
+      cost : 50 
     }
   }
 
@@ -346,7 +346,13 @@ class Roaming_State extends State {
 
       context.moveToTarget();
       if (context.reachedTarget()){ // Has target, can consume resources, reached target
-        context.setRandomRoamPosition()
+        //check if at storage node
+        if (context.target.type.key == Node.types.storage_Node.key){  // at storage node, stay and gather
+          // Just hanging out at the storage
+        }
+        else{ //reached target roaming, go again
+          context.setRandomRoamPosition()
+        }
       }
     }
     else{
@@ -387,8 +393,11 @@ class Gathering_State extends State {
             return;
           }
         }
-        else {  // Gathering from a storage node
+        else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {  // Gathering from a storage node
           context.changeBehaviourState(new GoingHome_State());
+        }
+        else{
+          //target is something else??
         }
 
       }
@@ -525,14 +534,14 @@ class Agent {
     name: "Generic Agent",
     description: "A general-purpose agent.",
     colour:"black",
-    cost : 0
+    cost : 100
     },
     raider_Agent  : {
     key:"raider_Agent", 
     name: "Raider",
     description: "An aggressive agent.",
     colour:"red",
-    cost : 0
+    cost : 100
     }
   }
 
