@@ -174,8 +174,8 @@ class Node {
       key : "resource_Node",
       name: "Resource Node",
       colour: "green", 
-      description: "Contains resources to be extracted.  Cost: 50",
-      cost : 50 
+      description: "Contains resources to be extracted.  Cost: 400",
+      cost : 400 
     }
   }
 
