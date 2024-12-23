@@ -826,7 +826,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
+    const roamingRange = this.searchRadius *1.5;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
