@@ -127,7 +127,8 @@ function updateUnitInfo(object=null) {
   for (const [key, value] of Object.entries(object)) {
     let roundedValue = value;
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round
-    if(key == 'type'){roundedValue = value.name;}
+    if (typeof value == 'object') { roundedValue = value.id ? value.id : value.constructor.name;}
+    if (key == "type") { roundedValue = value.name; }
 
     const row = table.insertRow();
     row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
