@@ -177,6 +177,14 @@ class Node {
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 200",
       cost : 200 
+    },
+    barracks_Node : 
+    { 
+      key : "barracks_Node",
+      name: "Barracks Node",
+      colour: "orange", 
+      description: "Houses and trains Agents for defence.  Cost: 150",
+      cost : 150 
     }
   }
 
@@ -888,13 +896,16 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
-  new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
+  new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 1) ),
   new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 2) ),
+  new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
   //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   //new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
-  new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
-  new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
+  //new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
+  //new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
+  new Quest("Build Barracks", () => gameState.nodes.some(b => b.type.key === Node.types.barracks_Node.key)),
+  new Quest("Train Defences", () => gameState.totalStoredResources >= 10000),
+  new Quest("Scout Another Base", () => gameState.totalStoredResources >= 10000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
