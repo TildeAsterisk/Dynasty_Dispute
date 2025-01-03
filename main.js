@@ -473,7 +473,7 @@ class AtHome_State extends State {
   }
 
   execute(context) {
-    //this.checkForEnemy(context);
+    this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
