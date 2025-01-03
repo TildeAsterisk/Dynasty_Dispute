@@ -194,14 +194,18 @@ class Node {
 
     this.agentTypeAllianceKey = 0;
 
-    this.regenCooldown = 30; // gameTicks between regen (20 is good and short)
+    this.regenCooldown = 20; // gameTicks between regen (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
 
   update(){
     // Random chance to spawn agent
-    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
+    // check if number of homes is enough for new agent
+    let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+    let numAgents = calculateTotalLiveAgents();
+    const enoughHomes = ( numAgents < (numHomes*2)+1 );
+    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 && enoughHomes ){
       //Random change to give birth to a new agent
       addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type.key);
       console.log("New Agent Spawned!!!"); //newborn
@@ -211,10 +215,10 @@ class Node {
 
     switch (this.type.key){
       case Node.types.storage_Node.key:
-        // Drain resources slowly from storage depo
+        /* Drain resources slowly from storage depo
         if(this.currentCapacity > 0){
           this.currentCapacity -= 0.005; // RESOURCE DECAY
-        }
+        }*/
         break;
       case Node.types.resource_Node.key:
         this.checkCooldownRegen();
@@ -660,13 +664,13 @@ class Agent {
       const distance = calculateDistance(this, b);
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius ){
         // Found storage node within search radius
-        if (distance < shortestDistance){  // if node is within shortest distance
-          shortestDistance = distance;
-          foundStorageNode = b;
-        }
         if (b.currentCapacity < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
           lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
+
+          /*if (distance < shortestDistance){ // if node is within shortest distance
+            shortestDistance = distance;
+          }*/
         }
       }
     });
@@ -887,7 +891,7 @@ const questLog = [
   new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 2) ),
   //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
+  //new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
   new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
   new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
 ];
@@ -1282,8 +1286,8 @@ const secondAgent = addAgent(centerX+100, centerY+100);
 nodeCoords = getGridCoordinates(centerX, centerY);
 addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
 addNode(nodeCoords[0], nodeCoords[1]-(GRID_SIZE*2), Node.types.storage_Node.key);
-//nodeCoords = getGridCoordinates(centerX + 100, centerY);
-//addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
+nodeCoords = getGridCoordinates(centerX + 100, centerY);
+addNode(nodeCoords[0], nodeCoords[1], "home");
 
 updateUnitInfo();
 
