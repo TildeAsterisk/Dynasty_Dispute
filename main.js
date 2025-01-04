@@ -15,7 +15,7 @@ const gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 1500,  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit : null,
   totalStoredResources : 0,
   gameTick : 0
@@ -159,15 +159,15 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources. Cost: 50",
-      cost : 50
+      cost : 0
     },
     home : 
     { 
       key : "home",
       name: "Home",
-      description: "A central hub for agents. Cost: 50", 
+      description: "A central hub for agents. Cost: 100", 
       colour: "black", 
-      cost : 50 
+      cost : 0 
     },
     resource_Node : 
     { 
@@ -175,7 +175,7 @@ class Node {
       name: "Resource Node",
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 200",
-      cost : 200 
+      cost : 0 
     }
   }
 
@@ -211,10 +211,10 @@ class Node {
 
     switch (this.type.key){
       case Node.types.storage_Node.key:
-        // Drain resources slowly from storage depo
+        /* Drain resources slowly from storage depo
         if(this.currentCapacity > 0){
           this.currentCapacity -= 0.005; // RESOURCE DECAY
-        }
+        }*/
         break;
       case Node.types.resource_Node.key:
         this.checkCooldownRegen();
@@ -826,7 +826,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = this.searchRadius *1.5;//*1.5;  // Sets a roaming range 1 and a half times default range
+    const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
@@ -884,12 +884,12 @@ class Quest {
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
   new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
-  new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
+  //new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 2) ),
   //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
-  new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
-  new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
+  //new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
+  new Quest("Build 9 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 9) ),
+  new Quest("Upgrade Defences. (Barracks, Walls)", () => gameState.totalStoredResources >= 1000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
