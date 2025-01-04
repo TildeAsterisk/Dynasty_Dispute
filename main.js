@@ -160,7 +160,7 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources. Cost: 50",
-      cost : 0
+      cost : 50
     },
     home : 
     { 
@@ -168,7 +168,7 @@ class Node {
       name: "Home",
       description: "A central hub for agents. Cost: 100", 
       colour: "black", 
-      cost : 0 
+      cost : 50 
     },
     resource_Node : 
     { 
