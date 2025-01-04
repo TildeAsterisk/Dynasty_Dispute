@@ -15,7 +15,7 @@ const gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 1500,  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit : null,
   totalStoredResources : 0,
   gameTick : 0
@@ -194,15 +194,15 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources. Cost: 50",
-      cost : 50
+      cost : 0
     },
     home : 
     { 
       key : "home",
       name: "Home",
-      description: "A central hub for agents. Cost: 50", 
+      description: "A central hub for agents. Cost: 100", 
       colour: "black", 
-      cost : 50 
+      cost : 0 
     },
     resource_Node : 
     { 
@@ -872,7 +872,7 @@ class Agent {
 
   setRandomRoamPosition(){
     let focus;
-    const roamingRange = this.searchRadius *1.5;//*1.5;  // Sets a roaming range 1 and a half times default range
+    const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range

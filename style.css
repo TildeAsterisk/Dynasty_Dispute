@@ -82,6 +82,20 @@ canvas {
     background-color: #a0d1ff;
     border-color: #007bff;
 }
+.grid-item-locked {
+    background-color: #0000001c;
+    border: 1px solid #cccccc6d;
+    border-radius: 10%;
+    cursor: pointer;
+    aspect-ratio: 1 / 1; /* This makes the grid items square */
+    height: 100%; /* This sets the height to 10% of the viewport height */
+    width : 100%;
+
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: calc(5vh - 10px); /* Adjust the font size to fill the div */
+}
 .controls {
     display: flex;
     justify-content: flex-end;
