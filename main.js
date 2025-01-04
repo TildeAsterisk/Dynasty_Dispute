@@ -149,6 +149,40 @@ function calculateDistance(pos1, pos2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+function displaySelectedUnitMenu(object = null){
+  const unitInfoDiv = document.getElementById("unitActionsMenu");
+  if (!object){
+    unitInfoDiv.innerHTML = ``;
+    return;
+  }
+
+  // Create table element
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+  table.style.borderSpacing = 0;
+  table.style.width = "100%";
+
+  // Add input field and button to train agents
+  const buttonRow = table.insertRow();
+  buttonRow.innerHTML = `<td style="padding: 5px;"><input type="number" id="agentNumber" min="1" style="width: 100%;"></td>
+                         <td style="padding: 5px;"><button onclick="trainAgents()">Train Agents</button></td>`;
+
+  unitInfoDiv.innerHTML = `<b>${object.id}</b>`;
+  unitInfoDiv.appendChild(table);
+}
+
+// Function to train agents
+function trainAgents() {
+  const numberOfAgents = document.getElementById("agentNumber").value;
+  if (numberOfAgents) {
+    console.log(`Training ${numberOfAgents} agents...`);
+    // Add your logic here to train the agents
+  } else {
+    console.log("Please enter the number of agents.");
+  }
+}
+
+
 
 
 //#region  Node Class
@@ -342,8 +376,7 @@ class Roaming_State extends State {
           context.setNewTarget(context.findStorageNode_NotEmptyInRange(context.searchRadius*2)); // try to find storage node to take from
           if(context.target){
             // STORAGE NODE FOUND, GET ITEMS
-            
-            console.log(context.id, " MOVING TO STORAGE NODE ", context.target);
+            //console.log(context.id, " MOVING TO STORAGE NODE ", context.target);
             context.changeBehaviourState(new Gathering_State());
           }
           else{
@@ -435,7 +468,7 @@ class Depositing_State extends State {
       }
       else {
         //Nodes storage is full!
-        console.log("Agent cannot deposit resources.");
+        console.log(context.id," cannot deposit resources.");
         //Go Home
         context.setNewTarget(context.home);
         context.changeBehaviourState(new GoingHome_State());
@@ -1126,12 +1159,17 @@ canvas.addEventListener("click", (event) => {
       updateUnitInfo(gameObject);
       gameState.selectedUnit = gameObject;
       console.log(gameObject);
+      // IF SELECTED BARRACKS, OPEN MENU TO TRAIN AGENTS
+      if (gameObject.type == Node.types.barracks_Node) {
+        displaySelectedUnitMenu(gameObject);
+      }
       return;
     }
   }
 
   // Clear unit info if no unit is clicked
   updateUnitInfo(null);
+  displaySelectedUnitMenu(null);
   gameState.selectedUnit = null;
 });
 
