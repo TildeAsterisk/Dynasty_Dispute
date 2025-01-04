@@ -127,7 +127,8 @@ function updateUnitInfo(object=null) {
   for (const [key, value] of Object.entries(object)) {
     let roundedValue = value;
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round
-    if(key == 'type'){roundedValue = value.name;}
+    if (typeof value == 'object') { roundedValue = value.id ? value.id : value.constructor.name;}
+    if (key == "type") { roundedValue = value.name; }
 
     const row = table.insertRow();
     row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
@@ -175,7 +176,15 @@ class Node {
       name: "Resource Node",
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 200",
-      cost : 0 
+      cost : 200 
+    },
+    barracks_Node : 
+    { 
+      key : "barracks_Node",
+      name: "Barracks Node",
+      colour: "orange", 
+      description: "Houses and trains Agents for defence.  Cost: 150",
+      cost : 150 
     }
   }
 
@@ -194,14 +203,18 @@ class Node {
 
     this.agentTypeAllianceKey = 0;
 
-    this.regenCooldown = 30; // gameTicks between regen (20 is good and short)
+    this.regenCooldown = 20; // gameTicks between regen (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
 
   update(){
     // Random chance to spawn agent
-    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 ){
+    // check if number of homes is enough for new agent
+    let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+    let numAgents = calculateTotalLiveAgents();
+    const enoughHomes = ( numAgents < (numHomes*2)+1 );
+    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 && enoughHomes ){
       //Random change to give birth to a new agent
       addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type.key);
       console.log("New Agent Spawned!!!"); //newborn
@@ -468,7 +481,7 @@ class AtHome_State extends State {
   }
 
   execute(context) {
-    //this.checkForEnemy(context);
+    this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
     if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
@@ -660,13 +673,13 @@ class Agent {
       const distance = calculateDistance(this, b);
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius ){
         // Found storage node within search radius
-        if (distance < shortestDistance){  // if node is within shortest distance
-          shortestDistance = distance;
-          foundStorageNode = b;
-        }
         if (b.currentCapacity < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
           lowestCapacity = b.currentCapacity;
           foundStorageNode = b;
+
+          /*if (distance < shortestDistance){ // if node is within shortest distance
+            shortestDistance = distance;
+          }*/
         }
       }
     });
@@ -883,13 +896,16 @@ class Quest {
 // Quest Log
 const questLog = [
   /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
+  new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 1) ),
+  new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
-  //new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
-  new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 2) ),
   //new Quest("Upgrade Home",         () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   //new Quest("Build a Resource Node.",  () => (gameState.nodes.filter(b => b.type.key === Node.types.resource_Node.key).length >= 2) ),
-  new Quest("Build 9 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 9) ),
-  new Quest("Upgrade Defences. (Barracks, Walls)", () => gameState.totalStoredResources >= 1000),
+  //new Quest("Build 10 Storage Nodes.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 10) ),
+  //new Quest("Collect 1000 resources.", () => gameState.totalStoredResources >= 1000),
+  new Quest("Build Barracks", () => gameState.nodes.some(b => b.type.key === Node.types.barracks_Node.key)),
+  new Quest("Train Defences", () => gameState.totalStoredResources >= 10000),
+  new Quest("Scout Another Base", () => gameState.totalStoredResources >= 10000),
 ];
 // Function to draw the quest log on the canvas screen
 function drawQuestLog() {
@@ -1282,8 +1298,8 @@ const secondAgent = addAgent(centerX+100, centerY+100);
 nodeCoords = getGridCoordinates(centerX, centerY);
 addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
 addNode(nodeCoords[0], nodeCoords[1]-(GRID_SIZE*2), Node.types.storage_Node.key);
-//nodeCoords = getGridCoordinates(centerX + 100, centerY);
-//addNode(nodeCoords[0], nodeCoords[1], "storage_Node");
+nodeCoords = getGridCoordinates(centerX + 100, centerY);
+addNode(nodeCoords[0], nodeCoords[1], "home");
 
 updateUnitInfo();
 
