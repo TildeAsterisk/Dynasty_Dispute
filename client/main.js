@@ -463,7 +463,7 @@ class State {
 
   enter(context) {
     // Code executed when entering the state
-    console.log(`${context.id} enters ${this.constructor.name}.`);
+    //console.log(`${context.id} enters ${this.constructor.name}.`);
   }
   execute(context) {
     // Code executed on each update/tick
@@ -872,7 +872,7 @@ class Agent {
         return true;
       } 
       else {
-        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
+        //console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
         return false;
       }
     }
@@ -976,7 +976,7 @@ class Agent {
             targetResource = new Resource(resource.type, resource.amount);
             this.target.resourceInventory.push(targetResource);
           }
-          console.log(this.id, " deposited",resource.amount,"resources to", this.target.id);
+          //console.log(this.id, " deposited",resource.amount,"resources to", this.target.id);
         });
         this.resourceInventory = [];
       }
@@ -1276,7 +1276,7 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
     if (node.type.key == Node.types.storage_Node.key && resCost > 0) { // Is storage node and can still subtract
       let availableCapacity = node.getTotalResourceAmount();
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
-        node.getTotalResourceAmount() -= resCost;
+        node.resourceInventory.filter(r => r.type === Resource.types.rawMaterials).amount  -= resCost;
         resCost = 0;
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
         resCost -= availableCapacity;
