@@ -87,7 +87,7 @@ function initializeGameObjects() {
     gameState.networkState.nodes.forEach(netNode => {
       const newNode = new Node(netNode.x, netNode.y, netNode.type.key);
       newNode.id = netNode.id;
-      newNode.currentCapacity = netNode.currentCapacity;
+      newNode.resourceInventory = netNode.resourceInventory;
       newNode.agentCapacity = netNode.agentCapacity;
       newNode.maxAgentCapacity = netNode.maxAgentCapacity;
       newNode.agentTypeAllianceKey = netNode.agentTypeAllianceKey;
@@ -372,7 +372,6 @@ class Node {
     this.colour = this.type.colour;
 
     this.maxCapacity = 100;
-    this.currentCapacity = Node.types.resource_Node.key == typeKey ? this.maxCapacity: 0;
     this.resourceInventory = Node.types.resource_Node.key == typeKey ? [new Resource("rawMaterials", 100)] : [];
 
     if (typeKey === Node.types.resource_Node.key) {
@@ -406,8 +405,8 @@ class Node {
     switch (this.type.key){
       case Node.types.storage_Node.key:
         /* Drain resources slowly from storage depo
-        if(this.currentCapacity > 0){
-          this.currentCapacity -= 0.005; // RESOURCE DECAY
+        if(this.get... > 0){
+          this.resourceInventory.food.amount -= 0.005; // RESOURCE DECAY
         }*/
         break;
       case Node.types.resource_Node.key:
@@ -1272,14 +1271,12 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
     if (node.type.key == Node.types.storage_Node.key && resCost > 0) { // Is storage node and can still subtract
       let availableCapacity = node.getTotalResourceAmount();
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
-        node.getTotalResourceAmount -= resCost;
+        node.getTotalResourceAmount() -= resCost;
         resCost = 0;
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
         resCost -= availableCapacity;
-        node.currentCapacity = 0;
       }
 
-      //storedResources += node.currentCapacity;  // calculate stored resources
     }
   });
 
