@@ -33,11 +33,6 @@ canvas.height = window.innerHeight;
 
 // Game State
 let gameState = {
-  resources: {
-    wood: 0,
-    stone: 0,
-    food: 0,
-  },
   nodes: [],
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
@@ -301,7 +296,35 @@ function trainAgents() {
   }
 }
 
+//#region Resource Class
+class Resource {
+  static types = {
+    rawMaterials: {
+      key: "rawMaterials",
+      name: "Raw Materials",
+      description: "Resources for construction and crafting.",
+      colour: "gray"
+    },
+    food: {
+      key: "food",
+      name: "Food",
+      description: "Resources for consumption.",
+      colour: "yellow"
+    },
+    agricultural: {
+      key: "agricultural",
+      name: "Agricultural Resources",
+      description: "Resources for farming and agriculture.",
+      colour: "green"
+    }
+  };
 
+  constructor(typeKey, amount) {
+    this.type = Resource.types[typeKey];
+    this.amount = amount;
+  }
+}
+//#endregion
 
 
 //#region  Node Class
@@ -350,6 +373,11 @@ class Node {
 
     this.maxCapacity = 100;
     this.currentCapacity = Node.types.resource_Node.key == typeKey ? this.maxCapacity: 0;
+    this.resourceInventory = Node.types.resource_Node.key == typeKey ? [new Resource("rawMaterials", 100)] : [];
+
+    if (typeKey === Node.types.resource_Node.key) {
+      this.resourceInventory.push(new Resource(Resource.types.rawMaterials.key, this.maxCapacity));
+    }
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
@@ -398,7 +426,7 @@ class Node {
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
       this.type.colour,
-      (this.currentCapacity/this.maxCapacity)*100
+      (this.getTotalResourceAmount()/this.maxCapacity)*100
     );
     /*drawText(
       this.type.key,
@@ -409,15 +437,20 @@ class Node {
 
   checkCooldownRegen() {
     const now = gameState.gameTick;
-    if (now - this.lastRegenTime >= this.regenCooldown * 60) {  // Check if regen cooldown finished
-      //regen resources
-      this.currentCapacity = this.maxCapacity;
+    if (now - this.lastRegenTime >= this.regenCooldown * 60) { // Check if regen cooldown finished
+      // Regenerate resources
+      this.resourceInventory.forEach(resource => {
+        resource.amount = this.maxCapacity;
+      });
       this.lastRegenTime = now;
       return true;
-    }
-    else{
+    } else {
       return false;
     }
+  }
+
+  getTotalResourceAmount() {
+    return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
   }
 }
 
@@ -717,6 +750,7 @@ class Agent {
     this.target = null; // Current target (node or position)
     this.previousUnitTarget = this.target;  //Stores the previous valid target (non position)
     this.carrying = 0; // Resources being carried
+    this.resourceInventory = [];
     this.maxCarry = 5; // Max resources agent can carry
     this.speed = 2; // Movement speed
     this.home = null;
@@ -761,7 +795,7 @@ class Agent {
    let closestResourceNode = null;
     let shortestDistance = range;
     gameState.nodes.find( (b) => {
-      if(b.type.key === Node.types.resource_Node.key && b.currentCapacity > 0){
+      if(b.type.key === Node.types.resource_Node.key && b.getTotalResourceAmount() > 0){
         const distance = calculateDistance(this, b);
         if (distance < shortestDistance) {
           shortestDistance = distance;
@@ -799,20 +833,50 @@ class Agent {
     return Math.abs(dx) < 5 && Math.abs(dy) < 5;
   }
 
-  gatherResources() {
+  getTotalResourceAmount() {
+    return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+  }
+
+  addResourceToInventory(resourceType, amount) {
+    let resource = this.resourceInventory.find(r => r.type === resourceType);
+    if (resource) {
+      resource.amount += amount;
+    } else {
+      this.resourceInventory.push(new Resource(resourceType, amount));
+    }
+  }
+
+  gatherResources(resourceTypeKey = Resource.types.rawMaterials.key) {
     /* Gather resources and return bool if successful */
 
-    if (this.carrying >= this.maxCarry || (this.target.currentCapacity <= 0) ) { // If there is NO space to carry //  if target is empty
-      //this.carrying = this.maxCarry;  //Limit carry
+    if (this.getTotalResourceAmount() >= this.maxCarry || this.target.getTotalResourceAmount() <= 0) { // If there is NO space to carry or target is empty
       return false;
-    }
-    else{ // There is space to carry, take from target capacity
-      this.carrying++;
-      this.target.currentCapacity--;
-      console.log(this.id," gathering from ",this.target.id);
-      return true;
-    }
+    } 
+    else {
+      let resourceToGather = null;
 
+      if (resourceTypeKey) {
+        // Find the specified resource type in the target's resource storage
+        resourceToGather = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+      } 
+      else {
+        // Find any available resource in the target's resource storage
+        resourceToGather = this.target.resourceInventory.find(resource => resource.amount > 0);
+      }
+
+      if (resourceToGather && resourceToGather.amount > 0) {
+        this.carrying++;
+        //resourceToGather.amount--;
+        this.addResourceToInventory(resourceToGather.type, 1);
+        console.log(this, " gathering", resourceToGather.type.key, "from", this.target.id);
+        //console.log(this.resourceInventory);
+        return true;
+      } 
+      else {
+        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target);
+        return false;
+      }
+    }
   }
 
   findStorageNode_LowestInRange(range = this.searchRadius) {
@@ -825,8 +889,8 @@ class Agent {
       const distance = calculateDistance(this, b);
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius ){
         // Found storage node within search radius
-        if (b.currentCapacity < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
-          lowestCapacity = b.currentCapacity;
+        if (b.getTotalResourceAmount() < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
+          lowestCapacity = b.getTotalResourceAmount();
           foundStorageNode = b;
 
           /*if (distance < shortestDistance){ // if node is within shortest distance
@@ -845,7 +909,7 @@ class Agent {
 
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
-      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && b.currentCapacity > 0 ){
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && b.getTotalResourceAmount() > 0 ){
         // Found empty storage node within search radius
         foundStorageNode = b;
       }
@@ -878,23 +942,49 @@ class Agent {
     });
 
     return foundHome;
-}
-
-  depositResources() {
+  }
+  
+  depositResources(resourceTypeKey = null) {
     // if has resources to deposit and storage is not going to overflow
-    const wouldOverflow = (this.target.currentCapacity + this.carrying) > this.target.maxCapacity;
+    const totalResourceAmount = this.target.getTotalResourceAmount();
+    const wouldOverflow = (totalResourceAmount + this.getTotalResourceAmount()) > this.target.maxCapacity;
+  
     if (!wouldOverflow) {
-      //gameState.resources.wood += this.carrying;  // DELETE THIS
-      //console.log(`Deposited ${this.carrying} resources.`);
-      this.target.currentCapacity += this.carrying;
+      if (resourceTypeKey) {
+        // Deposit only the specified resource type
+        let resourceType = Resource.types[resourceTypeKey];
+        let resource = this.resourceInventory.find(r => r.type === resourceType);
+        if (resource) {
+          let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+          if (targetResource) {
+            targetResource.amount += resource.amount;
+          } else {
+            this.target.resourceInventory.push(new Resource(resource.type, resource.amount));
+          }
+          this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
+        }
+      } else {
+        // Deposit all resources
+        this.resourceInventory.forEach(resource => {
+          let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+          if (targetResource) {
+            targetResource.amount += resource.amount;
+          } else {
+            this.target.resourceInventory.push(new Resource(resource.type, resource.amount));
+          }
+        });
+        this.resourceInventory = [];
+      }
+  
       this.carrying = 0;
+      console.log(this.id, " deposited resources to", this.target.id);
       return true;
-    }
-    else{
-      //console.log("Cannot deposit resources ",this.target.currentCapacity);
+    } else {
+      console.log("Cannot deposit resources ", this.target.getTotalResourceAmount(), "/", this.target.maxCapacity, this.getTotalResourceAmount());
       return false;
     }
   }
+  
 
   changeBehaviourState(newState){
     if (this.behaviourState) {
@@ -1108,11 +1198,6 @@ renderQuests();
 //#endregion
 
 //#region Game Functions
-function collectResources() {
-  gameState.resources.wood += 1;
-  gameState.resources.stone += 1;
-  gameState.resources.food += 1;
-}
 
 function addNode(x, y, typeKey) {
   const newNode = new Node(x, y, typeKey);
@@ -1166,14 +1251,14 @@ function isCellOccupied(x, y) {
   });
 }
 
-function calculateStoredResources(agentTypeKey = null){
+function calculateAndUpdateStoredResources(agentTypeKey = null){
   let storedResources = 0;
   gameState.nodes.forEach(node => {
     if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){
-      storedResources += node.currentCapacity;
+      storedResources += node.getTotalResourceAmount();
     }
     else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) {
-      storedResources += node.currentCapacity;
+      storedResources += node.getTotalResourceAmount();
     }
   });
   gameState.totalStoredResources = storedResources;
@@ -1181,13 +1266,13 @@ function calculateStoredResources(agentTypeKey = null){
 }
 
 function subtractFromStoredResources(resCost, agentTypeKey) {
-  if (calculateStoredResources() < resCost) { console.log("YOU CANT BUY THAT"); return;}
+  if (calculateAndUpdateStoredResources() < resCost) { console.log("YOU CANT BUY THAT"); return;}
 
   gameState.nodes.forEach(node => {
     if (node.type.key == Node.types.storage_Node.key && resCost > 0) { // Is storage node and can still subtract
-      let availableCapacity = node.currentCapacity;
+      let availableCapacity = node.getTotalResourceAmount();
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
-        node.currentCapacity -= resCost;
+        node.getTotalResourceAmount -= resCost;
         resCost = 0;
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
         resCost -= availableCapacity;
@@ -1410,11 +1495,10 @@ function gameLoop() {
   //drawGrid();
 
   // Draw resources
-  const totalStoredResources = calculateStoredResources(Node.types.generic_Agent.key);
+  calculateAndUpdateStoredResources(Node.types.generic_Agent.key);
   const totalLiveAgents = calculateTotalLiveAgents();
-  drawText(`🜨 ${Math.round(totalStoredResources)}`, 10, 30, 20);
+  drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
   drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
-  //drawText(`Food: ${gameState.resources.food}`, 10, 90, 20);
 
   // Draw and update nodes
   gameState.nodes.forEach((node) => {
