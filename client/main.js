@@ -867,12 +867,12 @@ class Agent {
         this.carrying++;
         //resourceToGather.amount--;
         this.addResourceToInventory(resourceToGather.type, 1);
-        console.log(this, " gathering", resourceToGather.type.key, "from", this.target.id);
+        console.log(this.id, " gathered 1 ", resourceToGather.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
       } 
       else {
-        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target);
+        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
         return false;
       }
     }
@@ -957,26 +957,31 @@ class Agent {
           let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
           if (targetResource) {
             targetResource.amount += resource.amount;
-          } else {
-            this.target.resourceInventory.push(new Resource(resource.type, resource.amount));
+          } 
+          else {
+            targetResource = new Resource(resource.type, resource.amount);
+            this.target.resourceInventory.push(targetResource);
           }
           this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
         }
-      } else {
+      } 
+      else {
         // Deposit all resources
         this.resourceInventory.forEach(resource => {
           let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
           if (targetResource) {
             targetResource.amount += resource.amount;
-          } else {
-            this.target.resourceInventory.push(new Resource(resource.type, resource.amount));
+          } 
+          else {
+            targetResource = new Resource(resource.type, resource.amount);
+            this.target.resourceInventory.push(targetResource);
           }
+          console.log(this.id, " deposited",resource.amount,"resources to", this.target.id);
         });
         this.resourceInventory = [];
       }
   
       this.carrying = 0;
-      console.log(this.id, " deposited resources to", this.target.id);
       return true;
     } else {
       console.log("Cannot deposit resources ", this.target.getTotalResourceAmount(), "/", this.target.maxCapacity, this.getTotalResourceAmount());
