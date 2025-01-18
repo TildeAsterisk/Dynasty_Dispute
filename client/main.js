@@ -680,13 +680,13 @@ class AtHome_State extends State {
       
     if (context.getResourceInInventory(Resource.types.food.key).amount >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
-        //leave home
-        context.exitNode();
         //Cannot consume food, gather food state.
-        console.log(context.id+" is at home hungry, going to gather food.");
+        //console.log(context.id+" is at home hungry, going to gather food.");
         context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
         if (context.target) { // If resource found, gather
-          context.changeBehaviourState(new Gathering_State()); 
+          //leave home
+          context.exitNode();
+          context.changeBehaviourState(new Roaming_State()); 
           return;
         }
       }
@@ -697,12 +697,8 @@ class AtHome_State extends State {
     else {
       //leave home
       console.log(context.id+" is at home hungry, going to gather food.");
-      context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
-      if (context.target) { // If resource found, gather
-        context.exitNode();
-        context.changeBehaviourState(new Gathering_State()); 
-        return;
-      }
+      context.exitNode();
+      context.changeBehaviourState(new Roaming_State()); 
     }
   }
 }
@@ -775,7 +771,7 @@ class Agent {
     this.speed = 2; // Movement speed
     this.home = null;
     this.type = type;
-    this.resourceHunger = 0.005;  // Amount of resources consumed per iteration
+    this.resourceHunger = 0.05;  // Amount of resources consumed per iteration
     this.searchRadius = GRID_SIZE * 7
 
     // Combat properties
