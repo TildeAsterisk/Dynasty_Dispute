@@ -11,4 +11,4 @@ assignees: TildeAsterisk
 
 **Change Proposed:**
 
-**What must be done:***
+**How and where?:***
