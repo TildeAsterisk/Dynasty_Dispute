@@ -101,7 +101,10 @@ function initializeGameObjects() {
     const nodeCoords = getGridCoordinates(centerX, centerY);
     addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key);
     addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.storage_Node.key);
-    const homeCoords = getGridCoordinates(centerX + 100, centerY);
+    let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow"},"amount":100} ] }');
+    //console.log(tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
+    const homeCoords = getGridCoordinates(centerX + 100, centerY + 100);
     addNode(homeCoords[0], homeCoords[1], "home");
   }
 
@@ -379,7 +382,7 @@ class Node {
 
     this.agentTypeAllianceKey = 0;
 
-    this.regenCooldown = 20; // gameTicks between regen (20 is good and short)
+    this.regenCooldown = 180; // number of gameTicks between regen (24-60 per second) (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
@@ -415,13 +418,19 @@ class Node {
   draw() {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
+    //calculate percentage of fill
+    let totalResInvFillPct=1;
+    this.resourceInventory.forEach(invResource => {
+      const rFillPct = (invResource.amount/this.maxCapacity);
+      totalResInvFillPct = totalResInvFillPct*rFillPct;
+    });
     drawRect(
       screenX,
       screenY,
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
       this.type.colour,
-      (this.getTotalResourceAmount()/this.maxCapacity)*100
+      totalResInvFillPct *100  // Fill percentage
     );
     /*drawText(
       this.type.key,
@@ -515,7 +524,7 @@ class Roaming_State extends State {
     if(context.target){
 
       if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2), Resource.types.food.key); // try to find resource node
+        context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
           return;
@@ -566,6 +575,7 @@ class Gathering_State extends State {
     
 
     if (context.reachedTarget()) {  // Reached Resource?
+      //console.log("REACHED",context.target);
       if(context.gatherResources()) { // If Target reached and resources gathered
         //console.log(context.id, "Gathering resources ",context.target.id);
         // Set Node typealliance 
@@ -574,7 +584,7 @@ class Gathering_State extends State {
       }
       else{ // If cannot gather anymore
         // iff gathered from resource, then store it. If gathered from stroage then go home
-        //console.log(context.target);
+        //console.log(context.id, "Cannot gather resources from ",context.target.id);
         if(context.target.id && context.target.type.key == Node.types.resource_Node.key){
           const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
           if(storageFound) {
@@ -667,13 +677,18 @@ class AtHome_State extends State {
     this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
-    if (context.getResourceInInventory(Resource.types.food.key) >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
+      
+    if (context.getResourceInInventory(Resource.types.food.key).amount >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
       if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
         //leave home
         context.exitNode();
         //Cannot consume food, gather food state.
         console.log(context.id+" is at home hungry, going to gather food.");
-        context.changeBehaviourState(new Gathering_State());
+        context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
+        if (context.target) { // If resource found, gather
+          context.changeBehaviourState(new Gathering_State()); 
+          return;
+        }
       }
       else{
         //Just ate, stay at home and chill
@@ -681,8 +696,13 @@ class AtHome_State extends State {
     }
     else {
       //leave home
-      context.exitNode();
-      context.changeBehaviourState(new Roaming_State());
+      console.log(context.id+" is at home hungry, going to gather food.");
+      context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
+      if (context.target) { // If resource found, gather
+        context.exitNode();
+        context.changeBehaviourState(new Gathering_State()); 
+        return;
+      }
     }
   }
 }
@@ -794,12 +814,13 @@ class Agent {
     */
     let closestResourceNode = null;
     let shortestDistance = range;
+    console.log(this.id,"Looking for",resourceTypeKey);
 
     gameState.nodes.forEach((b) => {
       if (b.type.key === Node.types.resource_Node.key) {
         const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
         if (soughtResource && soughtResource.amount > 0) {
-          console.log("Found resource node with resources",soughtResource);
+          console.log(this.id,"Found ",soughtResource);
           const distance = calculateDistance(this, b);
           if (distance < shortestDistance) {
             shortestDistance = distance;
@@ -843,12 +864,26 @@ class Agent {
     return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
   }
 
-  addResourceToInventory(resourceType, amount) {
-    let resource = this.resourceInventory.find(r => r.type === resourceType);
+  addResourceToInventory(resourceTypeKey, amount) {
+
+    // Take the resource from the target's resource storage
+    let targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+    if (resourceTypeKey && targetNodeResource && targetNodeResource.amount > 0) {
+      targetNodeResource.amount -= amount;
+    } 
+    else {
+      // Find any available resource in the target's resource storage
+      targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
+      targetNodeResource.amount -= amount;
+    }
+
+    // Add the resource to the inventory
+    let resource = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
     if (resource) {
       resource.amount += amount;
     } else {
-      this.resourceInventory.push(new Resource(resourceType.key, amount));
+      const newResource = new Resource(resourceTypeKey, amount);
+      this.resourceInventory.push(newResource);
     }
   }
 
@@ -860,27 +895,31 @@ class Agent {
    */
   gatherResources(resourceTypeKey) {
     /* Gather resources and return bool if successful */
+    // NEEDS UPDATING SO THAT RESOURCE AMOUNT IS UPDATED. NOT PUSHED
 
     if (this.getTotalResourceAmount() >= this.maxCarry || this.target.getTotalResourceAmount() <= 0) { // If there is NO space to carry or target is empty
       return false;
     } 
     else {
-      let resourceToGather = null;
+      let targetNodeResource = null;
 
       if (resourceTypeKey) {
         // Find the specified resource type in the target's resource storage
-        resourceToGather = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+        targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
       } 
       else {
         // Find any available resource in the target's resource storage
-        resourceToGather = this.target.resourceInventory.find(resource => resource.amount > 0);
+        targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
       }
 
-      if (resourceToGather && resourceToGather.amount > 0) {
+      if (targetNodeResource && targetNodeResource.amount > 0) {
         this.carrying++;
+
+        this.addResourceToInventory(targetNodeResource.type.key, 1);
+
         //resourceToGather.amount--;
-        this.addResourceToInventory(resourceToGather.type, 1);
-        console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
+        //Subtract from target inventory
+        console.log(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
       } 
@@ -899,7 +938,8 @@ class Agent {
 
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
-      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius ){
+      const isFull = b.getTotalResourceAmount() >= b.maxCapacity;
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && !isFull) {
         // Found storage node within search radius
         if (b.getTotalResourceAmount() < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
           lowestCapacity = b.getTotalResourceAmount();
@@ -911,7 +951,7 @@ class Agent {
         }
       }
     });
-    if(!foundStorageNode){console.log("Canot find empty storage node");}
+    if(!foundStorageNode){console.log(this.id,"Canot find empty storage node");}
     return foundStorageNode;
   }
 
@@ -1015,26 +1055,33 @@ class Agent {
 
   getResourceInInventory(resourceTypeKey) {
     //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+    //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
+    //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
     return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
   }
 
   /**
    * Consumes resources of a specific type from the agent's inventory.
-   * @param {string} resoureTypeKey - The key of the resource type to consume.
+   * @param {string} resourceTypeKey - The key of the resource type to consume.
    * @returns {boolean} - Returns true if the agent has enough resources to consume, false otherwise.
    */
-  consumeResources(resoureTypeKey = undefined){
+  consumeResources(resourceTypeKey){
     //define Agents inventory resource to consume
-    const agentInvResource = this.resourceInventory.find(resource => resource.type.key === resoureTypeKey);
-    const agentResourceAmount = agentInvResource ? agentInvResource.amount : 0;
-    let hunger = this.resourceHunger;
-    if (agentResourceAmount >= hunger){
-      agentInvResource.amount -= hunger;
-      //console.log(this.id, " consumed ", hunger, resoureTypeKey);
+    let agentInvResource = this.getResourceInInventory(resourceTypeKey) ? this.getResourceInInventory(resourceTypeKey) : this.resourceInventory[0];
+    //console.log(this.resourceInventory, agentInvResource);
+    
+    if (!agentInvResource) {
+      //console.log(this.resourceInventory, agentInvResource);
+      agentInvResource = { type: Resource.types.food, amount: 0 };
+    }
+
+    if (agentInvResource.amount >= this.resourceHunger){
+      agentInvResource.amount -= this.resourceHunger;
+      //console.log(this.id, " consumed ", this.resourceHunger, resourceTypeKey);
       return true;
     }
     else {  //Agent need to ead and cannot
-      //console.log(this.id+" cannot eat.");
+      console.log(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
       return false;
       //this.die();
       //console.log(this.id+" has died due to lack of resources.");
