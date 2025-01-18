@@ -453,9 +453,13 @@ class Node {
     }
   }
 
-  getTotalResourceAmount() {
-    return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+  getResourceInInventory(resourceTypeKey) {
+    //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+    //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
+    //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
+    return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) : new Resource(resourceTypeKey, 0);
   }
+
 }
 
 
@@ -856,10 +860,6 @@ class Agent {
     return Math.abs(dx) < 5 && Math.abs(dy) < 5;
   }
 
-  getTotalResourceAmount() {
-    return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
-  }
-
   addResourceToInventory(resourceTypeKey, amount) {
 
     // Take the resource from the target's resource storage
@@ -893,7 +893,7 @@ class Agent {
     /* Gather resources and return bool if successful */
     // NEEDS UPDATING SO THAT RESOURCE AMOUNT IS UPDATED. NOT PUSHED
 
-    if (this.getTotalResourceAmount() >= this.maxCarry || this.target.getTotalResourceAmount() <= 0) { // If there is NO space to carry or target is empty
+    if (this.getResourceInInventory(Resource.types.food.key).amount >= this.maxCarry || this.target.getResourceInInventory(Resource.types.food.key).amount <= 0) { // If there is NO space to carry or target is empty
       return false;
     } 
     else {
@@ -934,11 +934,11 @@ class Agent {
 
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
-      const isFull = b.getTotalResourceAmount() >= b.maxCapacity;
+      const isFull = b.getResourceInInventory(Resource.types.food.key).amount >= b.maxCapacity;
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && !isFull) {
         // Found storage node within search radius
-        if (b.getTotalResourceAmount() < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
-          lowestCapacity = b.getTotalResourceAmount();
+        if (b.getResourceInInventory(Resource.types.food.key).amount < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
+          lowestCapacity = b.getResourceInInventory(Resource.types.food.key).amount;
           foundStorageNode = b;
 
           /*if (distance < shortestDistance){ // if node is within shortest distance
@@ -996,8 +996,8 @@ class Agent {
   
   depositResources(resourceTypeKey = null) {
     // if has resources to deposit and storage is not going to overflow
-    const totalResourceAmount = this.target.getTotalResourceAmount();
-    const wouldOverflow = (totalResourceAmount + this.getTotalResourceAmount()) > this.target.maxCapacity;
+    const totalResourceAmount = this.target.getResourceInInventory(Resource.types.food.key).amount;
+    const wouldOverflow = (totalResourceAmount + this.getResourceInInventory(Resource.types.food.key).amount) > this.target.maxCapacity;
   
     if (!wouldOverflow) {
       if (resourceTypeKey) {
@@ -1035,7 +1035,7 @@ class Agent {
       this.carrying = 0;
       return true;
     } else {
-      //console.log("Cannot deposit resources ", this.target.getTotalResourceAmount(), "/", this.target.maxCapacity, this.getTotalResourceAmount());
+      //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
       return false;
     }
   }
@@ -1053,7 +1053,7 @@ class Agent {
     //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
     //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
     //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
-    return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+    return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) : new Resource(resourceTypeKey, 0);
   }
 
   /**
@@ -1352,10 +1352,10 @@ function calculateAndUpdateStoredResources(agentTypeKey = null){
   let storedResources = 0; // Initialize the totalRes variable to 0
   gameState.nodes.forEach(node => {
     if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){ // If agentTypeKey is not provided and the node is a storage node
-      storedResources += node.getTotalResourceAmount();
+      storedResources += node.getResourceInInventory(Resource.types.food.key).amount;
     }
     else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) { // If agentTypeKey is provided and the node is a storage node with the specified agent type alliance key
-      storedResources += node.getTotalResourceAmount(); 
+      storedResources += node.getResourceInInventory(Resource.types.food.key).amount; 
     }
   });
   gameState.totalStoredResources = storedResources;
@@ -1363,14 +1363,16 @@ function calculateAndUpdateStoredResources(agentTypeKey = null){
 }
 
 function subtractFromStoredResources(resCost, agentTypeKey) {
-  if (calculateAndUpdateStoredResources() < resCost) { console.log("YOU CANT BUY THAT"); return;}
+  if (calculateAndUpdateStoredResources() < resCost) { console.log("/!\\YOU CANT BUY THAT/!\\ It costs "+resCost+" and you have "+gameState.totalStoredResources); return;}
 
   gameState.nodes.forEach(node => {
-    if (node.type.key == Node.types.storage_Node.key && resCost > 0) { // Is storage node and can still subtract
-      let availableCapacity = node.getTotalResourceAmount();
+    const resourceToSubtract = node.getResourceInInventory(Resource.types.rawMaterials.key);
+    if (node.type.key == Node.types.storage_Node.key && resourceToSubtract && resCost > 0) { // Is storage node and can still subtract
+      let availableCapacity = resourceToSubtract.amount;
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
-        node.resourceInventory.filter(r => r.type === Resource.types.rawMaterials).amount  -= resCost;
+        resourceToSubtract.amount  -= resCost;
         resCost = 0;
+        console.log("Subtracted ", resCost, " from ", node.resourceInventory);
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
         resCost -= availableCapacity;
       }
