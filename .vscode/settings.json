@@ -1,4 +1,5 @@
 {
   "livePreview.defaultPreviewPath": "/client/index.html",
-  "editor.minimap.showSlider": "always"
+  "editor.minimap.showSlider": "always",
+  "task.autoDetect": "on"
 }

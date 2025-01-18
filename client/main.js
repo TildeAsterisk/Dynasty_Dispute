@@ -1205,8 +1205,14 @@ renderQuests();
 
 //#region Game Functions
 
-function addNode(x, y, typeKey, emit = true) {
+function addNode(x, y, typeKey, emit = true, initObj) {
   const newNode = new Node(x, y, typeKey);
+  if (initObj){
+    initObj.forEach(attribute => {
+      newNode[attribute.key] = attribute.value;   // Set initial attributes
+    });
+  }
+
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
   if (emit){ socket.emit("update-building", newNode); }
