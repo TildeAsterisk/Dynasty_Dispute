@@ -382,7 +382,7 @@ class Node {
 
     this.agentTypeAllianceKey = 0;
 
-    this.regenCooldown = 180; // number of gameTicks between regen (24-60 per second) (20 is good and short)
+    this.regenCooldown = 120; // number of gameTicks between regen (24-60 per second) (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
 
   }
@@ -1608,13 +1608,17 @@ function drawCivStatusBarUI(){
     // Display the total amount of each resource on the UI
     civStatusUIText += `${resource.type.key}: ${resource.amount }  `;
   });
+  civStatusUIText += `☥ ${totalLiveAgents}`;  // Display total live agents
 
   //totalCivResourceArray = totalNodeResourceArray.reduce((total, resource) => total + resource.amount, 0); //to calculate total overall of each resource.
   //civStatusUIText += JSON.stringify(totalCivResourceArray);  // Display total resources of each type
   //console.log(totalNodeResourceArray);
   drawText(`${civStatusUIText}`, 10, 30, 20);
   //drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
-  drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
+  const tmpTotalFood = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
+  const totalFood =  tmpTotalFood ? tmpTotalFood.amount : 0;
+  const civRequirementsText = totalFood - (totalLiveAgents * 50);
+  drawText(`Surplus Food: ${civRequirementsText}`, 10, 60, 20);
 }
 
 
