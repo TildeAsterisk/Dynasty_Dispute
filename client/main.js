@@ -492,8 +492,11 @@ class Idle_State extends State {
 
     }*/
 
-    context.setNewTarget(context.findResourceNode(context.searchRadius*2));
-    if (context.target) { context.changeBehaviourState(new Gathering_State()); }
+    context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key) );
+    if (context.target) { 
+      console.log("Need to look for food");
+      context.changeBehaviourState(new Gathering_State()); 
+    }
     else{
       context.setNewTarget(context.findStorageNode_LowestInRange(context.searchRadius));
       context.changeBehaviourState(new Roaming_State());
@@ -512,7 +515,7 @@ class Roaming_State extends State {
     if(context.target){
 
       if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2)); // try to find resource node
+        context.setNewTarget(context.findResourceNode(context.searchRadius*2), Resource.types.food.key); // try to find resource node
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
           return;
@@ -520,7 +523,7 @@ class Roaming_State extends State {
         else{ // Cannot consume resources, and cannot find resource node
           //context.setRandomRoamPosition() // JIGGLE, Replace with take resources from storage nodes
           
-          context.setNewTarget(context.findStorageNode_NotEmptyInRange(context.searchRadius*2)); // try to find storage node to take from
+          context.setNewTarget(context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key)); // try to find storage node to take from
           if(context.target){
             // STORAGE NODE FOUND, GET ITEMS
             //console.log(context.id, " MOVING TO STORAGE NODE ", context.target);
@@ -784,22 +787,28 @@ class Agent {
     );
     drawText(this.behaviourState.textSymbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
   }
-
-  findResourceNode(range = Infinity) {
+  
+  findResourceNode(range = Infinity, resourceTypeKey) {
     /*
-    Find the closes resource node within range and set it as the target 
+    Find the closest resource node within range and set it as the target 
     */
-   let closestResourceNode = null;
+    let closestResourceNode = null;
     let shortestDistance = range;
-    gameState.nodes.find( (b) => {
-      if(b.type.key === Node.types.resource_Node.key && b.getTotalResourceAmount() > 0){
-        const distance = calculateDistance(this, b);
-        if (distance < shortestDistance) {
-          shortestDistance = distance;
-          closestResourceNode = b;
+
+    gameState.nodes.forEach((b) => {
+      if (b.type.key === Node.types.resource_Node.key) {
+        const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+        if (soughtResource && soughtResource.amount > 0) {
+          console.log("Found resource node with resources",soughtResource);
+          const distance = calculateDistance(this, b);
+          if (distance < shortestDistance) {
+            shortestDistance = distance;
+            closestResourceNode = b;
+          }
         }
       }
     });
+
     return closestResourceNode;
   }
 
@@ -849,7 +858,7 @@ class Agent {
    * @param {string} [resourceTypeKey=Resource.types.rawMaterials.key] - The key of the resource type to gather.
    * @returns {boolean} - True if resources were successfully gathered, false otherwise.
    */
-  gatherResources(resourceTypeKey = Resource.types.rawMaterials.key) {
+  gatherResources(resourceTypeKey) {
     /* Gather resources and return bool if successful */
 
     if (this.getTotalResourceAmount() >= this.maxCarry || this.target.getTotalResourceAmount() <= 0) { // If there is NO space to carry or target is empty
@@ -871,12 +880,12 @@ class Agent {
         this.carrying++;
         //resourceToGather.amount--;
         this.addResourceToInventory(resourceToGather.type, 1);
-        //console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
+        console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
       } 
       else {
-        //console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
+        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
         return false;
       }
     }
@@ -902,21 +911,23 @@ class Agent {
         }
       }
     });
-    if(!foundStorageNode){console.log("Canot find storage node");}
+    if(!foundStorageNode){console.log("Canot find empty storage node");}
     return foundStorageNode;
   }
 
-  findStorageNode_NotEmptyInRange(range = this.searchRadius) {
+  findStorageNode_NotEmptyInRange(range = this.searchRadius, resourceTypeKey = Resource.types.rawMaterials.key) {
     /* Find the closes storage node with the (lowest capacity OR shortest distance) */
     let foundStorageNode = null;
 
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
-      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && b.getTotalResourceAmount() > 0 ){
+      const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount > 0 && distance < this.searchRadius){
         // Found empty storage node within search radius
         foundStorageNode = b;
       }
     });
+    
     if(!foundStorageNode){console.log("Canot find storage node");}
     return foundStorageNode;
   }
@@ -980,7 +991,7 @@ class Agent {
             targetResource = new Resource(resource.type.key, resource.amount);
             this.target.resourceInventory.push(targetResource);
           }
-          //console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+          console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
         });
         this.resourceInventory = [];
       }
@@ -1019,7 +1030,7 @@ class Agent {
     let hunger = this.resourceHunger;
     if (agentResourceAmount >= hunger){
       agentInvResource.amount -= hunger;
-      console.log(this.id, " consumed ", hunger, resoureTypeKey);
+      //console.log(this.id, " consumed ", hunger, resoureTypeKey);
       return true;
     }
     else {  //Agent need to ead and cannot
