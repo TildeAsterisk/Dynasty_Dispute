@@ -79,13 +79,13 @@ function initializeGameObjects() {
   // Clear existing game objects
   gameState.nodes = [];
   gameState.agents = [];
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+  let centerX = canvas.width / 2;
+  let centerY = canvas.height / 2;
 
   // Initialize nodes from the network state
   if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
     gameState.networkState.nodes.forEach(netNode => {
-      const newNode = new Node(netNode.x, netNode.y, netNode.type.key);
+      const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
       newNode.id = netNode.id;
       newNode.resourceInventory = netNode.resourceInventory;
       newNode.agentCapacity = netNode.agentCapacity;
@@ -372,11 +372,7 @@ class Node {
     this.colour = this.type.colour;
 
     this.maxCapacity = 100;
-    this.resourceInventory = Node.types.resource_Node.key == typeKey ? [new Resource("rawMaterials", 100)] : [];
-
-    if (typeKey === Node.types.resource_Node.key) {
-      this.resourceInventory.push(new Resource(Resource.types.rawMaterials.key, this.maxCapacity));
-    }
+    this.resourceInventory = Node.types.resource_Node.key === typeKey ? [new Resource("rawMaterials", this.maxCapacity)] : [];
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
@@ -1203,11 +1199,11 @@ renderQuests();
 
 //#region Game Functions
 
-function addNode(x, y, typeKey) {
+function addNode(x, y, typeKey, emit = true) {
   const newNode = new Node(x, y, typeKey);
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
-  socket.emit("update-building", newNode);
+  if (emit){ socket.emit("update-building", newNode); }
   logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
   return newNode;
 }
