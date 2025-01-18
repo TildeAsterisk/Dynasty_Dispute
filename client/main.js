@@ -459,7 +459,7 @@ class State {
 
   enter(context) {
     // Code executed when entering the state
-    //console.log(`${context.id} enters ${this.constructor.name}.`);
+    console.log(`${context.id} enters ${this.constructor.name}.`);
   }
   execute(context) {
     // Code executed on each update/tick
@@ -511,7 +511,7 @@ class Roaming_State extends State {
     this.checkForEnemy(context);
     if(context.target){
 
-      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+      if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
         context.setNewTarget(context.findResourceNode(context.searchRadius*2)); // try to find resource node
         if (context.target) { // If resource found, gather
           context.changeBehaviourState(new Gathering_State()); 
@@ -664,10 +664,12 @@ class AtHome_State extends State {
     this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
-    if (context.carrying >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
-      if (!context.consumeResources()) { //Consume resources, If cannot then change state to gathering
+    if (context.getResourceInInventory(Resource.types.food.key) >= context.resourceHunger){ //If at home and can eat then consume, if not enough then leave home and gather
+      if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
         //leave home
         context.exitNode();
+        //Cannot consume food, gather food state.
+        console.log(context.id+" is at home hungry, going to gather food.");
         context.changeBehaviourState(new Gathering_State());
       }
       else{
@@ -1000,9 +1002,24 @@ class Agent {
     this.behaviourState.enter(this); // Enter the new state
   }
 
-  consumeResources(hunger=this.resourceHunger){
-    if (this.carrying >= hunger){
-      this.carrying -= hunger;
+  getResourceInInventory(resourceTypeKey) {
+    //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+    return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+  }
+
+  /**
+   * Consumes resources of a specific type from the agent's inventory.
+   * @param {string} resoureTypeKey - The key of the resource type to consume.
+   * @returns {boolean} - Returns true if the agent has enough resources to consume, false otherwise.
+   */
+  consumeResources(resoureTypeKey = undefined){
+    //define Agents inventory resource to consume
+    const agentInvResource = this.resourceInventory.find(resource => resource.type.key === resoureTypeKey);
+    const agentResourceAmount = agentInvResource ? agentInvResource.amount : 0;
+    let hunger = this.resourceHunger;
+    if (agentResourceAmount >= hunger){
+      agentInvResource.amount -= hunger;
+      console.log(this.id, " consumed ", hunger, resoureTypeKey);
       return true;
     }
     else {  //Agent need to ead and cannot
