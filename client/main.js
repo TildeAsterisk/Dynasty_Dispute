@@ -372,7 +372,7 @@ class Node {
     this.colour = this.type.colour;
 
     this.maxCapacity = 100;
-    this.resourceInventory = Node.types.resource_Node.key === typeKey ? [new Resource("rawMaterials", this.maxCapacity)] : [];
+    this.resourceInventory = (Node.types.resource_Node.key === typeKey) ? [new Resource(Resource.types.rawMaterials.key, this.maxCapacity)] : [];
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
@@ -837,10 +837,16 @@ class Agent {
     if (resource) {
       resource.amount += amount;
     } else {
-      this.resourceInventory.push(new Resource(resourceType, amount));
+      this.resourceInventory.push(new Resource(resourceType.key, amount));
     }
   }
 
+  /**
+   * Gather resources and return a boolean indicating if the gathering was successful.
+   * 
+   * @param {string} [resourceTypeKey=Resource.types.rawMaterials.key] - The key of the resource type to gather.
+   * @returns {boolean} - True if resources were successfully gathered, false otherwise.
+   */
   gatherResources(resourceTypeKey = Resource.types.rawMaterials.key) {
     /* Gather resources and return bool if successful */
 
@@ -863,7 +869,7 @@ class Agent {
         this.carrying++;
         //resourceToGather.amount--;
         this.addResourceToInventory(resourceToGather.type, 1);
-        console.log(this.id, " gathered 1 ", resourceToGather.type.key, "from", this.target.id);
+        console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
       } 
@@ -955,7 +961,7 @@ class Agent {
             targetResource.amount += resource.amount;
           } 
           else {
-            targetResource = new Resource(resource.type, resource.amount);
+            targetResource = new Resource(resource.type.key, resource.amount);
             this.target.resourceInventory.push(targetResource);
           }
           this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
@@ -969,10 +975,10 @@ class Agent {
             targetResource.amount += resource.amount;
           } 
           else {
-            targetResource = new Resource(resource.type, resource.amount);
+            targetResource = new Resource(resource.type.key, resource.amount);
             this.target.resourceInventory.push(targetResource);
           }
-          //console.log(this.id, " deposited",resource.amount,"resources to", this.target.id);
+          console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
         });
         this.resourceInventory = [];
       }
@@ -1251,14 +1257,21 @@ function isCellOccupied(x, y) {
   });
 }
 
+/**
+ * Calculates and updates the total stored resources in the game state.
+ * If agentTypeKey is provided, it only considers storage nodes with the specified agent type alliance key.
+ * If agentTypeKey is not provided, it considers all storage nodes.
+ * @param {string|null} agentTypeKey - The agent type alliance key to filter storage nodes (optional).
+ * @returns {number} - The calculated total stored resources.
+ */
 function calculateAndUpdateStoredResources(agentTypeKey = null){
-  let storedResources = 0;
+  let storedResources = 0; // Initialize the totalRes variable to 0
   gameState.nodes.forEach(node => {
-    if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){
+    if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){ // If agentTypeKey is not provided and the node is a storage node
       storedResources += node.getTotalResourceAmount();
     }
-    else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) {
-      storedResources += node.getTotalResourceAmount();
+    else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) { // If agentTypeKey is provided and the node is a storage node with the specified agent type alliance key
+      storedResources += node.getTotalResourceAmount(); 
     }
   });
   gameState.totalStoredResources = storedResources;
@@ -1483,6 +1496,41 @@ canvas.addEventListener("click", (event) => {
 
 //#endregion
 
+function drawCivStatusBarUI(){
+  calculateAndUpdateStoredResources(Node.types.generic_Agent.key);  // Update total stored resources
+  const totalLiveAgents = calculateTotalLiveAgents(); //Calulate total live agents
+  let totalCivResourceArray = [];
+  // Calculate total amount of each resource
+  let civStatusUIText = ""; // Initialize the text to be displayed on the UI
+  gameState.nodes.forEach(node => {
+    node.resourceInventory.forEach(resource => {
+      //For each resource of each node
+      // Check if the resource is already in the array
+      let existingResource = totalCivResourceArray.find(r => r.type.key === resource.type.key);
+      if(existingResource){
+        // If the resource is already in the array, add the amount to the existing resource
+        existingResource.amount += resource.amount;
+      } 
+      else {  // If the resource is not in the array, add it to the array
+        totalCivResourceArray.push({type: resource.type, amount: resource.amount});
+      }
+    });
+  });
+
+  totalCivResourceArray.forEach(resource => {
+    // Display the total amount of each resource on the UI
+    civStatusUIText += `${resource.type.key}: ${resource.amount }  `;
+  });
+
+  //totalCivResourceArray = totalNodeResourceArray.reduce((total, resource) => total + resource.amount, 0); //to calculate total overall of each resource.
+  //civStatusUIText += JSON.stringify(totalCivResourceArray);  // Display total resources of each type
+  //console.log(totalNodeResourceArray);
+  drawText(`${civStatusUIText}`, 10, 30, 20);
+  //drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
+  drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
+}
+
+
 //#region  Game Loop
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1492,11 +1540,8 @@ function gameLoop() {
   // Draw grid
   //drawGrid();
 
-  // Draw resources
-  calculateAndUpdateStoredResources(Node.types.generic_Agent.key);
-  const totalLiveAgents = calculateTotalLiveAgents();
-  drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
-  drawText(`☥ ${totalLiveAgents}`, 10, 60, 20);
+  // Draw Civ Status Bar
+  drawCivStatusBarUI();
 
   // Draw and update nodes
   gameState.nodes.forEach((node) => {
