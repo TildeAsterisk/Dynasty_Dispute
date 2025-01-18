@@ -352,7 +352,7 @@ class Node {
       name: "Resource Node",
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 200",
-      cost : 200 
+      cost : 0
     },
     barracks_Node : 
     { 
@@ -372,7 +372,7 @@ class Node {
     this.colour = this.type.colour;
 
     this.maxCapacity = 100;
-    this.resourceInventory = (Node.types.resource_Node.key === typeKey) ? [new Resource(Resource.types.rawMaterials.key, this.maxCapacity)] : [];
+    this.resourceInventory = (Node.types.resource_Node.key === typeKey) ? [new Resource(Resource.types.rawMaterials.key, this.maxCapacity)] : []; //If resource node give default inventory
 
     this.agentCapacity = [];
     this.maxAgentCapacity = 2;
@@ -869,7 +869,7 @@ class Agent {
         this.carrying++;
         //resourceToGather.amount--;
         this.addResourceToInventory(resourceToGather.type, 1);
-        console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
+        //console.log(this.id, " gathered   ", 1, resourceToGather.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
       } 
@@ -978,7 +978,7 @@ class Agent {
             targetResource = new Resource(resource.type.key, resource.amount);
             this.target.resourceInventory.push(targetResource);
           }
-          console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+          //console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
         });
         this.resourceInventory = [];
       }
@@ -986,7 +986,7 @@ class Agent {
       this.carrying = 0;
       return true;
     } else {
-      console.log("Cannot deposit resources ", this.target.getTotalResourceAmount(), "/", this.target.maxCapacity, this.getTotalResourceAmount());
+      //console.log("Cannot deposit resources ", this.target.getTotalResourceAmount(), "/", this.target.maxCapacity, this.getTotalResourceAmount());
       return false;
     }
   }
@@ -1207,10 +1207,17 @@ renderQuests();
 
 function addNode(x, y, typeKey, emit = true, initObj) {
   const newNode = new Node(x, y, typeKey);
+
+  // If initObj is given, initialise the new node with the given attributes
   if (initObj){
-    initObj.forEach(attribute => {
-      newNode[attribute.key] = attribute.value;   // Set initial attributes
-    });
+    console.log("INitialising : ",initObj);
+    for (let key in initObj) {
+      //console.log(attribute.key, attribute.value);
+      newNode[key] = initObj[key];   // Set initial attributes
+    }
+  }
+  else{
+    console.log("NEW NODE INVENTORY",newNode.resourceInventory);
   }
 
   gameState.nodes.push(newNode);
@@ -1314,10 +1321,11 @@ const buildTypes  = Node.types;
 buildTypes.generic_Agent = Agent.types.generic_Agent;
 buildTypes.raider_Agent = Agent.types.raider_Agent;
 
-function selectType(typeKey) {
-  
+function selectType(typeKey, initObj) {
   if (buildTypes[typeKey]) {
     gameState.selectedType = buildTypes[typeKey];
+    gameState.selectedType.initObj = initObj;
+    //gameState.selectedType.initObj = bui
     console.log(`Selected type: ${buildTypes[typeKey].key}`);
   }
   else{
@@ -1351,8 +1359,9 @@ document.querySelectorAll('.grid-item').forEach(item => {
       item.classList.add('selected');
       // Find node type by name
       displayDetails(item.dataset.value);
-
-      selectType(item.dataset.value);
+      console.log(item.dataset.initobj);
+      let initObj = item.dataset.initobj ? JSON.parse(item.dataset.initobj) : undefined;
+      selectType(item.dataset.value, initObj ? initObj : undefined  );
   });
 });
 
@@ -1490,7 +1499,8 @@ canvas.addEventListener("click", (event) => {
       addAgent(snappedX, snappedY, gameState.selectedType.key);
     }
     else{
-      addNode(snappedX, snappedY, gameState.selectedType.key);
+      //console.log(JSON.parse(gameState.selectedType.initObj));
+      addNode(snappedX, snappedY, gameState.selectedType.key, undefined, gameState.selectedType.initObj );
     }
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
