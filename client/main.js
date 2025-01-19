@@ -553,7 +553,22 @@ class Roaming_State extends State {
 
   /**
    * Executes the roaming state logic.
-   * - If the agent has a target, move towards it.
+   * - Checks for enemies.
+   * - If the agent has a target, attempts to move towards it.
+   * - If the agent cannot consume resources, it tries to find a resource node.
+   *   - If a resource node is found, it changes state to gathering.
+   *   - If no resource node is found, it tries to find a storage node.
+   *     - If a storage node is found, it changes state to gathering.
+   *     - If no storage node is found, the agent dies due to lack of resources.
+   * - If the agent can consume resources, it continues roaming.
+   *   - It tries to find a resource node for raw materials.
+   *     - If a resource node is found, it changes state to gathering.
+   *     - If no resource node is found, it reverts to the previous target and changes state to gathering.
+   * - Moves towards the target.
+   * - If the agent reaches the target:
+   *   - If the target is a storage node, the agent stays at the storage node.
+   *   - Otherwise, it sets a new random roam position.
+   * - If the agent has no target, it sets a new random roam position.
    * @param {object|null} context - The agent object.
    */
   execute(context) {
@@ -710,7 +725,7 @@ class Depositing_State extends State {
     if (context.reachedTarget()) {
       if(context.depositResources()){ // If can deposit
         context.target.agentTypeAllianceKey = context.type.key; // Change Node alliance key
-        //context.changeBehaviourState(new Roaming_State());  // Go roaming
+        context.changeBehaviourState(new Roaming_State());  // Go roaming
       }
       else {
         //Nodes storage is full!
