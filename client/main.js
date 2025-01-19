@@ -1513,12 +1513,12 @@ function calculateAndUpdateStoredResources(agentTypeKey = null) {
     // Check if no specific agent type key is provided and the node is a storage node
     if (!agentTypeKey && node.type.key == Node.types.storage_Node.key) {
       // Add the total resource amount of the node to the stored resources counter
-      storedResources += node.getTotalResourceAmount();
+      storedResources += node.getResourceInInventory(agentTypeKey);
     }
     // Check if a specific agent type key is provided, the node is a storage node, and the node's agent type matches the provided key
     else if (agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) {
       // Add the total resource amount of the node to the stored resources counter
-      storedResources += node.getTotalResourceAmount();
+      storedResources += node.getResourceInInventory(agentTypeKey);
     }
   });
 
@@ -1790,19 +1790,15 @@ function drawCivStatusBarUI(){
   civStatusUIText = `☥ ${totalLiveAgents}`;  // Display total live agents
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
 
-  //totalCivResourceArray = totalNodeResourceArray.reduce((total, resource) => total + resource.amount, 0); //to calculate total overall of each resource.
-  //civStatusUIText += JSON.stringify(totalCivResourceArray);  // Display total resources of each type
-  //console.log(totalNodeResourceArray);
-  //const startPosX = 10; const startPosY = 30; const textSize = 20;
-  //drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
-  //drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
+  uiPosX = 10; uiPosY = 60;
+  civStatusUIText = '❗';
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+  uiPosX += textSize*1.5;
 
-
+  //Calulcate surplus value
   const tmpTotalFood = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
   const totalFood =  tmpTotalFood ? tmpTotalFood.amount : 0;
   const civResReqSurplus = totalFood - (totalLiveAgents * 50);
-  let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
-  const civHomeReqSurplus = totalLiveAgents - (numHomes/2);
   // Determine Surplus colour, red bad, green good.
   let surplusColour;
   if (civResReqSurplus <= 0){
@@ -1814,14 +1810,22 @@ function drawCivStatusBarUI(){
   else {
     surplusColour = 'green';
   }
-  uiPosX = 10; uiPosY = 60;
-  civStatusUIText = '❗';
-  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
-  uiPosX += textSize*1.5;
+
   civStatusUIText = `${Resource.types.food.symbol + Math.round(civResReqSurplus)}`;
   drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
   uiPosX+=textSize*statSpacing;
   
+  let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+  const civHomeReqSurplus = totalLiveAgents - numHomes;
+  if (civHomeReqSurplus <= 0){
+    surplusColour = 'red';
+  }
+  else if (civHomeReqSurplus>0 && civHomeReqSurplus < numHomes * 2 ){
+    surplusColour = 'orange';
+  }
+  else {
+    surplusColour = 'green';
+  }
   civStatusUIText = `🏠${Math.round(civHomeReqSurplus)}`;
   drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
 
