@@ -306,19 +306,22 @@ class Resource {
       key: "rawMaterials",
       name: "Raw Materials",
       description: "Resources for construction and crafting.",
-      colour: "gray"
+      colour: "gray",
+      symbol : "☁"
     },
     food: {
       key: "food",
       name: "Food",
       description: "Resources for consumption.",
-      colour: "yellow"
+      colour: "yellow",
+      symbol : "🥩"
     },
     agricultural: {
       key: "agricultural",
       name: "Agricultural Resources",
       description: "Resources for farming and agriculture.",
-      colour: "green"
+      colour: "green",
+      symbol : "⚘"
     }
   };
 
@@ -558,7 +561,7 @@ class Idle_State extends State {
           return;
         }
         else{ // No work to be done (Storage full). Go home, or roam or chill...
-          context.changeBehaviourState(new Roaming_State());
+          context.changeBehaviourState(new GoingHome_State());
           return;
         }
       }
@@ -622,13 +625,22 @@ class Roaming_State extends State {
     }
     else{ // Can consume food.
       // Roam around randomly
-      if(context.target){
+      if(context.target){ // has target, move to it
         context.moveToTarget();
-        return;
+        if (context.reachedTarget()){ // Has target and reached it.
+          context.setRandomRoamPosition();  // move to new target
+          context.moveToTarget();
+          return;
+        }
+        else{
+          // moving to target still...
+        }
       }
       else{
         //  Roaming with no target. Set a new one? 
         context.setRandomRoamPosition();
+        context.moveToTarget();
+        return;
       }
     }
 
@@ -670,21 +682,22 @@ class Gathering_State extends State {
         if(context.target.id && context.target.type.key == Node.types.resource_Node.key){
           const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
           if(storageFound) {
+            // finished gathering from resource node.
             context.setNewTarget(storageFound);  // Find new storage
             context.changeBehaviourState(new Depositing_State());
             return;
           }
           else{ // No storage found
-            console.log(context.id,"finished gathering and no storage found");
+            console.log(context.id,"finished gathering from resource node and no storage found to put it away.");
             context.changeBehaviourState(new GoingHome_State());
             return;
           }
         }
 
         else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {
-          // Finished gathering from storage.
-          console.log(context.id,"finished taking from storage");
-          context.changeBehaviourState(new GoingHome_State());
+          // Finished gathering from storage. Idle, look for some work
+          console.log(context.id,"finished taking from storage. Idle, going to look for some work");
+          context.changeBehaviourState(new Idle_State());
           return;
         }
         else{ // cannot gather from target
@@ -724,8 +737,7 @@ class Depositing_State extends State {
       else {
         // If cannot deposit resources, go home
         console.log(context.id," cannot deposit resources, going home.");
-        context.setNewTarget(context.home);
-        context.changeBehaviourState(new GoingHome_State());
+        context.changeBehaviourState(new Idle_State());
       }
     }
   }
@@ -749,7 +761,12 @@ class GoingHome_State extends State {
     this.checkForEnemy(context);
     //execute
     context.home = context.findHome(context.searchRadius);
-    context.setNewTarget(context.home);
+    if (context.home){context.setNewTarget(context.home);}
+    else{
+      context.changeBehaviourState(new Roaming_State());
+      return;
+    }
+    
 
     context.moveToTarget();
     if (context.reachedTarget()){
@@ -794,8 +811,10 @@ class AtHome_State extends State {
       // try to find resource node with food
       newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
       if (newTargetQuery) { // If food found, gather
+        console.log(context.id,"ran out of food at home.")
         context.setNewTarget(newTargetQuery);
         context.targetResourceTypeKey = Resource.types.food.key;
+        context.exitNode();
         context.changeBehaviourState(new Gathering_State()); 
         return;
       }
@@ -804,14 +823,15 @@ class AtHome_State extends State {
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
         if(newTargetQuery){
           console.log(context.id+" is at home hungry, going to gather food.");
-          context.exitNode();
           context.setNewTarget(newTargetQuery);
           context.targetResourceTypeKey = Resource.types.food.key;
+          context.exitNode();
           context.changeBehaviourState(new Gathering_State()); 
           return;
         }
         else{
-          console.log(context.id+" ran out of resources and died home.");
+          console.log(context.id+" ran out of resources and died at home.");
+          //context.exitNode();
           context.die();
           return;
         }    
@@ -820,8 +840,10 @@ class AtHome_State extends State {
     }
     else{
       // Is at home, has enough food to eat. Effectivdely Idle, look for work.
-      context.exitNode();
-      context.changeBehaviourState(new Idle_State());
+      //context.exitNode();
+      //context.changeBehaviourState(new Idle_State());
+
+      //Stay at home and chill
       return;
 
     }
@@ -1735,37 +1757,74 @@ function drawCivStatusBarUI(){
   const totalLiveAgents = calculateTotalLiveAgents(); //Calulate total live agents
   let totalCivResourceArray = [];
   // Calculate total amount of each resource
-  let civStatusUIText = ""; // Initialize the text to be displayed on the UI
   gameState.nodes.forEach(node => {
-    node.resourceInventory.forEach(resource => {
-      //For each resource of each node
-      // Check if the resource is already in the array
-      let existingResource = totalCivResourceArray.find(r => r.type.key === resource.type.key);
-      if(existingResource){
-        // If the resource is already in the array, add the amount to the existing resource
-        existingResource.amount += resource.amount;
-      } 
-      else {  // If the resource is not in the array, add it to the array
-        totalCivResourceArray.push({type: resource.type, amount: resource.amount});
-      }
-    });
+    if(node.type.key !== Node.types.resource_Node.key){
+      node.resourceInventory.forEach(resource => {
+        //For each resource of each node
+        // Check if the resource is already in the array
+        let existingResource = totalCivResourceArray.find(r => r.type.key === resource.type.key);
+        if(existingResource){
+          // If the resource is already in the array, add the amount to the existing resource
+          existingResource.amount += resource.amount;
+        } 
+        else {  // If the resource is not in the array, add it to the array
+          totalCivResourceArray.push({type: resource.type, amount: resource.amount});
+        }
+      }); 
+    }
   });
 
+  let civStatusUIText = "📦"; // Initialize the text to be displayed on the UI
+  let uiPosX = 10; let uiPosY = 30; 
+  const textSize = 20;
+  const statSpacing = 3.5;
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+  uiPosX += textSize*1.5;
   totalCivResourceArray.forEach(resource => {
     // Display the total amount of each resource on the UI
-    civStatusUIText += `${resource.type.key}: ${resource.amount }  `;
-  });
-  civStatusUIText += `☥ ${totalLiveAgents}`;  // Display total live agents
+    //console.log("LETS GOOOOOO",resource);
+    civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount) }  `;
+    drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+    uiPosX+=textSize*statSpacing;
+    });
+  civStatusUIText = `☥ ${totalLiveAgents}`;  // Display total live agents
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
 
   //totalCivResourceArray = totalNodeResourceArray.reduce((total, resource) => total + resource.amount, 0); //to calculate total overall of each resource.
   //civStatusUIText += JSON.stringify(totalCivResourceArray);  // Display total resources of each type
   //console.log(totalNodeResourceArray);
-  drawText(`${civStatusUIText}`, 10, 30, 20);
+  //const startPosX = 10; const startPosY = 30; const textSize = 20;
+  //drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   //drawText(`🜨 ${Math.round(gameState.totalStoredResources)}`, 10, 30, 20);
+
+
   const tmpTotalFood = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
   const totalFood =  tmpTotalFood ? tmpTotalFood.amount : 0;
-  const civRequirementsText = totalFood - (totalLiveAgents * 50);
-  drawText(`Surplus Food: ${civRequirementsText}`, 10, 60, 20);
+  const civResReqSurplus = totalFood - (totalLiveAgents * 50);
+  let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+  const civHomeReqSurplus = totalLiveAgents - (numHomes/2);
+  // Determine Surplus colour, red bad, green good.
+  let surplusColour;
+  if (civResReqSurplus <= 0){
+    surplusColour = 'red';
+  }
+  else if (civResReqSurplus>0 && civResReqSurplus < (totalLiveAgents * 50)){
+    surplusColour = 'orange';
+  }
+  else {
+    surplusColour = 'green';
+  }
+  uiPosX = 10; uiPosY = 60;
+  civStatusUIText = '❗';
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+  uiPosX += textSize*1.5;
+  civStatusUIText = `${Resource.types.food.symbol + Math.round(civResReqSurplus)}`;
+  drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
+  uiPosX+=textSize*statSpacing;
+  
+  civStatusUIText = `🏠${Math.round(civHomeReqSurplus)}`;
+  drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
+
 }
 
 
