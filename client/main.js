@@ -37,7 +37,7 @@ let gameState = {
   agents: [],
   selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount : 0,
-  agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
+  agentBirthChance : 2000,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit : null,
   totalStoredResources : 0,
   gameTick : 0,
@@ -1351,7 +1351,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
 
 
 //#region Questing
-// Quest Class
+/* Quest Class
 class Quest {
   constructor(description, condition) {
     this.description = description;
@@ -1370,7 +1370,7 @@ class Quest {
 
 // Quest Log
 const questLog = [
-  /*new Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key)),*/
+  // Quest("Build a resource node", () => gameState.nodes.some(b => b.type === Node.types.resource_Node.key))
   new Quest("Build a Storage Node.",   () => (gameState.nodes.filter(b => b.type.key === Node.types.storage_Node.key).length >= 1) ),
   new Quest("Build a Home.",           () => gameState.nodes.some(b => b.type.key === Node.types.home.key)),
   new Quest("Collect 50 resources.",   () => gameState.totalStoredResources >= 50),
@@ -1426,7 +1426,7 @@ function checkQuests() {
 
 // Call renderQuests initially to populate the list
 renderQuests();
-
+*/
 //#endregion
 
 //#region Game Functions
@@ -1816,11 +1816,11 @@ function drawCivStatusBarUI(){
   uiPosX+=textSize*statSpacing;
   
   let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
-  const civHomeReqSurplus = totalLiveAgents - numHomes;
-  if (civHomeReqSurplus <= 0){
+  const civHomeReqSurplus = numHomes - totalLiveAgents;
+  if (civHomeReqSurplus < 0){
     surplusColour = 'red';
   }
-  else if (civHomeReqSurplus>0 && civHomeReqSurplus < numHomes * 2 ){
+  else if (civHomeReqSurplus>=0 && civHomeReqSurplus < (totalLiveAgents) ){
     surplusColour = 'orange';
   }
   else {
@@ -1860,7 +1860,7 @@ function gameLoop() {
   //drawQuestLog();
 
   // Check quests
-  checkQuests();
+  //checkQuests();
 
   updateUnitInfo(gameState.selectedUnit);
 
