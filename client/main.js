@@ -1481,17 +1481,29 @@ function isCellOccupied(x, y) {
  * @param {string|null} agentTypeKey - The agent type alliance key to filter storage nodes (optional).
  * @returns {number} - The calculated total stored resources.
  */
-function calculateAndUpdateStoredResources(agentTypeKey = null){
-  let storedResources = 0; // Initialize the totalRes variable to 0
+// Function to calculate and update the total stored resources
+function calculateAndUpdateStoredResources(agentTypeKey = null) {
+  // Initialize stored resources counter
+  let storedResources = 0;
+
+  // Iterate over each node in the game state
   gameState.nodes.forEach(node => {
-    if (!agentTypeKey && node.type.key == Node.types.storage_Node.key){ // If agentTypeKey is not provided and the node is a storage node
-      storedResources += node.getResourceInInventory(Resource.types.food.key).amount;
+    // Check if no specific agent type key is provided and the node is a storage node
+    if (!agentTypeKey && node.type.key == Node.types.storage_Node.key) {
+      // Add the total resource amount of the node to the stored resources counter
+      storedResources += node.getTotalResourceAmount();
     }
-    else if ( agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) { // If agentTypeKey is provided and the node is a storage node with the specified agent type alliance key
-      storedResources += node.getResourceInInventory(Resource.types.food.key).amount; 
+    // Check if a specific agent type key is provided, the node is a storage node, and the node's agent type matches the provided key
+    else if (agentTypeKey && node.type.key == Node.types.storage_Node.key && node.agentTypeAllianceKey == agentTypeKey) {
+      // Add the total resource amount of the node to the stored resources counter
+      storedResources += node.getTotalResourceAmount();
     }
   });
+
+  // Update the total stored resources in the game state
   gameState.totalStoredResources = storedResources;
+
+  // Return the total stored resources
   return storedResources;
 }
 
