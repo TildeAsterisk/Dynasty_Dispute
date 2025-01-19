@@ -498,14 +498,21 @@ class State {
 }
 
 //#region Idle State
+/**
+ * ## Idle_State.execute(context)
+ * ### Executes the idle state logic.
+ * - If the agent cannot consume resources, it tries to find a resource node.
+ * - If a resource node is found, it changes state to gathering.
+ * - If no resource node is found, it tries to find a storage node.
+ *   - If a storage node is found, it changes state to gathering.
+ *   - If no storage node is found, the agent dies due to lack of resources.
+ * - If the agent can consume resources, it continues roaming.
+ * - It tries to find a resource node for raw materials.
+ *   - If a resource node is found, it changes state to gathering.
+ *   - If no resource node is found, it reverts to the previous target and changes state to gathering.
+ * @param {object|null} context - The agent object.
+ */
 class Idle_State extends State {
-  /**
-   * Executes the idle state logic.
-   * - If the agent is hungry, search for a food resource node.
-   *   - If no food resource node is found, search for a storage node to get food from. Otherwise, roam around.
-   * - If the agent is not hungry, search for any resource node. Otherwise, go roam around.
-   * @param {object|null} context - The agent object.
-   */
   execute(context) {
     /*context.moveToTarget();
     if (context.reachedTarget()){
@@ -513,147 +520,140 @@ class Idle_State extends State {
     }*/
     let newTargetQuery;
 
-    if(context.isHungry()){ 
-      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key); // try to find resource node with food
-      if (newTargetQuery) { context.setNewTarget(newTargetQuery); }
-      else{
-        //find storage node with food
-        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key); // try to find storage node to take from
-        if (newTargetQuery) { context.setNewTarget(newTargetQuery); }
-        else{ // No food found. Go Home.
-          context.changeBehaviourState(new Roaming_State());
-        }
+    if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
+      // try to find resource node with food
+      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      if (newTargetQuery) { // If food found, gather
+        context.setNewTarget(newTargetQuery);
+        context.targetResourceTypeKey = Resource.types.food.key;
+        context.changeBehaviourState(new Gathering_State()); 
+        return;
       }
-    }
-    else { // Agent is not hungry: More food in inventory than resourceHunger.
-      // check for available storage to gather for.
-      // If there is space to fill. Get to work.
-      newTargetQuery = context.findStorageNode_LowestInRange(context.searchRadius*2); // try to find storage node to take from
-      if (newTargetQuery) {
-        newTargetQuery = context.findResourceNode(context.searchRadius*2);  // try to find any resource node with any resource to put into storage
-        if (newTargetQuery){ 
+      else{ // Cannot consume resources, and cannot find resource node
+        // try to find storage node to take from
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
+        if(newTargetQuery){
+          //console.log(context.id, "is retrieving food from storage", context.target.id);
           context.setNewTarget(newTargetQuery);
-          context.targetResourceTypeKey = newTargetQuery.resourceInventory[0].type.key;
+          context.targetResourceTypeKey = Resource.types.food.key;
           context.changeBehaviourState(new Gathering_State());
+          return;
         }
-        else{ // No resource node found. Go Home.
-          context.changeBehaviourState(new Roaming_State());
-        }
+        else{
+          console.log(context.id+" ran out of resources while Idle.");
+          context.die();
+          return;
+        }    
       }
     }
-  }
+    else{ // Is idle and just consumed food. Find work to do...
+      // find a storage node with space to deposit into
+      newTargetQuery = context.findStorageNode_LowestInRange(context.searchRadius, Resource.types.rawMaterials.key);
+      if (newTargetQuery) { // If there is storage node with space, find resource node to gather
+        newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.rawMaterials.key);
+        if(newTargetQuery){
+          context.setNewTarget(newTargetQuery);
+          context.targetResourceTypeKey = Resource.types.rawMaterials.key;
+          context.changeBehaviourState(new Gathering_State()); 
+          return;
+        }
+        else{ // No work to be done (Storage full). Go home, or roam or chill...
+          context.changeBehaviourState(new Roaming_State());
+          return;
+        }
+      }
+      else{ // Idle, consumed food and no work to do.
+        context.changeBehaviourState(new GoingHome_State());
+        return;
+      }
+    }
 
+  }
 }
 
 //#region Roaming State
+/**
+ * ## Roaming_State.execute(context)
+ * ### Executes the roaming state logic.
+ * - Checks for enemies.
+ * - If the agent cannot consume resources, it tries to find a resource node.
+ *   - If no resource node is found, it tries to find a storage node to gather from.
+ *     - If a storage node is found, it changes state to gathering.
+ *     - If no storage node is found, the agent dies due to lack of resources.
+ * 
+ * - If the agent can consume resources and has a target, attempts to move towards it.
+ *   - Moves towards the target.
+ *   - If the agent reaches the target, it sets a new random roam position.
+ * @param {object|null} context - The agent object.
+ */
 class Roaming_State extends State {
   constructor(){
     super(); this.textSymbol = "";//"🧭";
   }
 
-  /**
-   * Executes the roaming state logic.
-   * - Checks for enemies.
-   * - If the agent has a target, attempts to move towards it.
-   * - If the agent cannot consume resources, it tries to find a resource node.
-   *   - If a resource node is found, it changes state to gathering.
-   *   - If no resource node is found, it tries to find a storage node.
-   *     - If a storage node is found, it changes state to gathering.
-   *     - If no storage node is found, the agent dies due to lack of resources.
-   * - If the agent can consume resources, it continues roaming.
-   *   - It tries to find a resource node for raw materials.
-   *     - If a resource node is found, it changes state to gathering.
-   *     - If no resource node is found, it reverts to the previous target and changes state to gathering.
-   * - Moves towards the target.
-   * - If the agent reaches the target:
-   *   - If the target is a storage node, the agent stays at the storage node.
-   *   - Otherwise, it sets a new random roam position.
-   * - If the agent has no target, it sets a new random roam position.
-   * @param {object|null} context - The agent object.
-   */
   execute(context) {
     this.checkForEnemy(context);
-    if(context.target){
-      if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
-        if (context.target) { // If resource found, gather
+    let newTargetQuery;
+    if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
+      // try to find resource node with food
+      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      if (newTargetQuery) { // If food found, gather
+        context.setNewTarget(newTargetQuery);
+        context.targetResourceTypeKey = Resource.types.food.key;
+        context.changeBehaviourState(new Gathering_State()); 
+        return;
+      }
+      else{ // Cannot consume resources, and cannot find resource node
+        // try to find storage node to take from
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
+        if(newTargetQuery){
+          //console.log(context.id, "is retrieving food from storage", context.target.id);
+          context.setNewTarget(newTargetQuery);
           context.targetResourceTypeKey = Resource.types.food.key;
-          context.changeBehaviourState(new Gathering_State()); 
+          context.changeBehaviourState(new Gathering_State());
           return;
         }
-        else{ // Cannot consume resources, and cannot find resource node
-          //context.setRandomRoamPosition() // JIGGLE, Replace with take resources from storage nodes
-          
-          context.setNewTarget(context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key)); // try to find storage node to take from
-          if(context.target){
-            // STORAGE NODE FOUND, GET ITEMS
-            //console.log(context.id, " MOVING TO STORAGE NODE ", context.target);
-            context.targetResourceTypeKey = Resource.types.food.key;
-            context.changeBehaviourState(new Gathering_State());
-          }
-          else{
-            console.log(context.id+" ran out of resources while roaming.");
-            context.die();
-            return;
-          }
-            
-        }
+        else{
+          console.log(context.id+" ran out of resources while Roaming.");
+          context.die();
+          return;
+        }    
+      }
+    }
+    else{ // Can consume food.
+      // Roam around randomly
+      if(context.target){
+        context.moveToTarget();
+        return;
       }
       else{
-        //can consume resources, keep roaming
-        // Gather mats if found?
-        //if there is a storage node to store resources
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.rawMaterials.key)); // try to find resource node
-        if (context.target) { // If resource found, gather
-          context.targetResourceTypeKey = Resource.types.rawMaterials.key;
-          context.changeBehaviourState(new Gathering_State()); 
-          //return;
-        }
-        else{
-          //console.log(context.id, " cannot find resources that isnt food.");
-          context.target = context.previousUnitTarget;
-          context.changeBehaviourState(new Gathering_State()); 
-        }
+        //  Roaming with no target. Set a new one? 
+        context.setRandomRoamPosition();
       }
+    }
 
-      context.moveToTarget();
-      if (context.reachedTarget()){ // Has target, can consume resources, reached target
-        //check if at storage node
-        if (context.target.type && context.target.type.key == Node.types.storage_Node.key){  // at storage node, stay and gather
-          // Just hanging out at the storage
-        }
-        else{ //reached target roaming, go again
-          context.setRandomRoamPosition()
-        }
-      }
-    }
-    else{
-      //  Roaming with no target. Set a new one? 
-      context.setRandomRoamPosition()
-    }
   }
 }
 
 //#region Gathering State
+/**
+ * Executes the gathering state logic.
+ * - If the agent has reached the target, gather resources. (Set node alliance key)
+ * - If the agent is gathering from a resource node and cannot gather anymore...
+ *   - Find a storage node to deposit resources.
+ *   - If no storage node is found to deposit, go home.
+ * - If the agent is gathering from a storage node and cannot gather anymore...
+ *   - Find a storage node to deposit resources.
+ *     - If no storage node is found to deposit, go home.
+ * @param {object|null} context - The agent object.
+ */
 class Gathering_State extends State {
   constructor(){
     super(); this.textSymbol = "⚙"; //📥?
   }
 
-  /**
-   * Executes the gathering state logic.
-   * - If the agent has reached the target, gather resources. (Set node alliance key)
-   * - If the agent is gathering from a resource node and cannot gather anymore...
-   *   - Find a storage node to deposit resources.
-   *   - If no storage node is found to deposit, go home.
-   * - If the agent is gathering from a storage node and cannot gather anymore...
-   *   - Find a storage node to deposit resources.
-   *     - If no storage node is found to deposit, go home.
-   * @param {object|null} context - The agent object.
-   */
   execute(context) {
     this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
-    
 
     if (context.reachedTarget()) {  // Reached Resource?
       //console.log("REACHED",context.target);
@@ -681,21 +681,15 @@ class Gathering_State extends State {
           }
         }
 
-        else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {  // Gathering from a storage node
-          const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
-          if(storageFound) {
-            context.setNewTarget(storageFound);  // Find new storage
-            context.changeBehaviourState(new Depositing_State());
-            return;
-          }
-          else{ // No storage found to deposit
-            console.log(context.id,"finished gathering and no storage found");
-            context.changeBehaviourState(new GoingHome_State());
-            return;
-          }
+        else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {
+          // Finished gathering from storage.
+          console.log(context.id,"finished taking from storage");
+          context.changeBehaviourState(new GoingHome_State());
+          return;
         }
-        else{
-          //target is something else??
+        else{ // cannot gather from target
+          context.changeBehaviourState(new GoingHome_State());
+          return;
         }
 
       }
@@ -707,30 +701,29 @@ class Gathering_State extends State {
 }
 
 //#region Depositing State
-class Depositing_State extends State {
-  constructor(){
-    super(); this.textSymbol = "📦"; //📤?
-  }
-
-  /**
+/**
    * Executes the depositing state logic.
    * - If the agent has reached the target, deposit resources.
    * - If the agent cannot deposit resources, go home.
    * @param {object|null} context - The agent object.
    */
+class Depositing_State extends State {
+  constructor(){
+    super(); this.textSymbol = "📦"; //📤?
+  }
+
   execute(context) {
     //Execute
     this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
-      if(context.depositResources()){ // If can deposit
+      if(context.depositResources(context.targetNodeResource)){ // If can deposit
         context.target.agentTypeAllianceKey = context.type.key; // Change Node alliance key
         context.changeBehaviourState(new Roaming_State());  // Go roaming
       }
       else {
-        //Nodes storage is full!
-        console.log(context.id," cannot deposit resources.");
-        //Go Home
+        // If cannot deposit resources, go home
+        console.log(context.id," cannot deposit resources, going home.");
         context.setNewTarget(context.home);
         context.changeBehaviourState(new GoingHome_State());
       }
@@ -739,19 +732,19 @@ class Depositing_State extends State {
 }
 
 //#region Going Home State
+/**
+ * Executes the going home state logic.
+ * - If the agent can find a home, move towards it.
+ * - If the agent has reached home, enter the home.
+ * - If the agent cannot find a home, go roaming.
+ * - If the agent has no home, go roaming.
+ * @param {object|null} context - The agent object.
+ */
 class GoingHome_State extends State {
   constructor(){
     super(); this.textSymbol = "🏠";
   }
 
-  /**
-   * Executes the going home state logic.
-   * - If the agent can find a home, move towards it.
-   * - If the agent has reached home, enter the home.
-   * - If the agent cannot find a home, go roaming.
-   * - If the agent has no home, go roaming.
-   * @param {object|null} context - The agent object.
-   */
   execute(context) {
     this.checkForEnemy(context);
     //execute
@@ -779,42 +772,58 @@ class GoingHome_State extends State {
 }
 
 //#region At Home State
+/**
+ * Executes the at home state logic.
+ * - If the agent is hungry, consume food and do nothing...
+ *   - If the agent cannot consume food, go gathering.
+ * - If the agent is not hungry, stay home and do nothing...
+ * @param {object|null} context - The agent object.
+ */
 class AtHome_State extends State {
   constructor(){
     super(); this.textSymbol = "💤";
   }
 
-  /**
-   * Executes the at home state logic.
-   * - If the agent is hungry, consume food and do nothing...
-   *   - If the agent cannot consume food, go gathering.
-   * - If the agent is not hungry, stay home and do nothing...
-   * @param {object|null} context - The agent object.
-   */
   execute(context) {
     this.checkForEnemy(context);
     //execute
     if(context.target != context.home){ console.error("At home but target is not home."); }
-      
-    if (context.isHungry()){ //If at home and can eat then consume, if not enough then leave home and gather
-      if (!context.consumeResources(Resource.types.food.key)) { //Consume resources, If cannot then change state to gathering
-        //Cannot consume food, gather food state.
-        //console.log(context.id+" is at home hungry, going to gather food.");
-        context.setNewTarget(context.findResourceNode(context.searchRadius*2, Resource.types.food.key)); // try to find resource node
-        if (context.target) { // If resource found, gather
-          //leave home
+
+    let newTargetQuery;
+    if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
+      // try to find resource node with food
+      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      if (newTargetQuery) { // If food found, gather
+        context.setNewTarget(newTargetQuery);
+        context.targetResourceTypeKey = Resource.types.food.key;
+        context.changeBehaviourState(new Gathering_State()); 
+        return;
+      }
+      else{ // Cannot consume resources, and cannot find resource node
+        // try to find storage node to take from
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
+        if(newTargetQuery){
+          console.log(context.id+" is at home hungry, going to gather food.");
           context.exitNode();
+          context.setNewTarget(newTargetQuery);
           context.targetResourceTypeKey = Resource.types.food.key;
           context.changeBehaviourState(new Gathering_State()); 
           return;
         }
+        else{
+          console.log(context.id+" ran out of resources and died home.");
+          context.die();
+          return;
+        }    
       }
-      else{
-        //Just ate, stay at home and chill
-      }
+
     }
-    else {
-      // At home, not hungry... chilling... could work but lazy type shit
+    else{
+      // Is at home, has enough food to eat. Effectivdely Idle, look for work.
+      context.exitNode();
+      context.changeBehaviourState(new Idle_State());
+      return;
+
     }
   }
 }
@@ -887,7 +896,7 @@ class Agent {
     this.speed = 2; // Movement speed
     this.home = null;
     this.type = type;
-    this.resourceHunger = 0.0005;  // Amount of resources consumed per iteration
+    this.resourceHunger = 0.01;  // Amount of resources consumed per iteration
     this.searchRadius = GRID_SIZE * 7
 
     // Combat properties
