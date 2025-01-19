@@ -257,20 +257,39 @@ function updateUnitInfo(object=null) {
   // Populate table rows with object's attributes
   for (const [key, value] of Object.entries(object)) {
     let roundedValue = value;
-    if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round
-    if (typeof value == 'object') { roundedValue = value.id ? value.id : JSON.stringify(value);}
-    if (key == "type") { roundedValue = value.name; }
-
-    const row = table.insertRow();
-    row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
-    row.innerHTML = `<td style="border: none; ">${key}</td>
-                     <td style="border: none;">: ${roundedValue}</td>`;
+    /*
+    if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round*/
+    //let tmpSymbol = value.symbol ? value.symbol : value.type.symbol;
+    if (value && typeof value == 'object' ) { 
+      //console.log("OBJECT ATTRIBNUTE", key, value);
+      if (value.symbol ) { roundedValue = value.symbol; }
+      else if ( typeof value.type == 'object' && value.type.symbol ) { roundedValue = value.type.symbol; }
+      else { 
+        //console.log(Object.entries(value));
+        for (const [skey, stat] of Object.entries(value)){
+          let newStat = stat.type ? stat.type : stat;
+          roundedValue = newStat.key ? newStat.key : undefined;
+          const row = table.insertRow();
+          row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
+          row.innerHTML = `<td style="border: none; ">${newStat.symbol}</td>
+                            <td style="border: none;">: ${ (Math.round( value[skey].amount * 100) / 100).toFixed(2) }</td>`;
+        }
+      }
+      if(key != "resourceInventory"){
+        const row = table.insertRow();
+        row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
+        row.innerHTML = `<td style="border: none; ">${key}</td>
+                        <td style="border: none;">: ${roundedValue}</td>`;
+      }
+      
+    }
+    //if (key == "type") { roundedValue = value.name; }
   }
 
   // Set the inner HTML of the div and append the table
-  unitInfoDiv.innerHTML = `<b>Unit Info:</b>`;
+  unitInfoDiv.innerHTML = `<b>${object.id}</b>`;
   unitInfoDiv.appendChild(table);
-  unitInfoDiv.innerHTML += `<br>`;
+  //unitInfoDiv.innerHTML += `<br>`;
 }
 
 // Helper function to calculate the distance between two positions
@@ -356,7 +375,8 @@ class Node {
       name: "Storage Node",
       colour: "brown", 
       description: "A repository for resources. Cost: 50",
-      cost : 50
+      cost : 50,
+      symbol : "📦"
     },
     home : 
     { 
@@ -364,7 +384,8 @@ class Node {
       name: "Home",
       description: "A central hub for agents. Cost: 50", 
       colour: "grey", 
-      cost : 50 
+      cost : 50,
+      symbol : "⌂"
     },
     resource_Node : 
     { 
@@ -372,7 +393,8 @@ class Node {
       name: "Resource Node",
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 0",
-      cost : 0
+      cost : 0,
+      symbol : "🪵"
     },
     barracks_Node : 
     { 
@@ -380,7 +402,9 @@ class Node {
       name: "Barracks Node",
       colour: "orange", 
       description: "Houses and trains Agents for defence.  Cost: 150",
-      cost : 150 
+      cost : 150,
+      symbol : "🏰"
+
     }
   }
 
@@ -484,7 +508,7 @@ class Node {
 // Define a State base class (optional)
 class State {
   constructor(){
-    this.textSymbol = "💭";
+    this.symbol = "💭";
   }
 
   enter(context) {
@@ -605,7 +629,7 @@ class Idle_State extends State {
  */
 class Roaming_State extends State {
   constructor(){
-    super(); this.textSymbol = "";//"🧭";
+    super(); this.symbol = "";//"🧭";
   }
 
   execute(context) {
@@ -675,7 +699,7 @@ class Roaming_State extends State {
  */
 class Gathering_State extends State {
   constructor(){
-    super(); this.textSymbol = "⚙"; //📥?
+    super(); this.symbol = "⚙"; //📥?
   }
 
   execute(context) {
@@ -736,7 +760,7 @@ class Gathering_State extends State {
    */
 class Depositing_State extends State {
   constructor(){
-    super(); this.textSymbol = "📦"; //📤?
+    super(); this.symbol = "📦"; //📤?
   }
 
   execute(context) {
@@ -768,7 +792,7 @@ class Depositing_State extends State {
  */
 class GoingHome_State extends State {
   constructor(){
-    super(); this.textSymbol = "🏠";
+    super(); this.symbol = "🏠";
   }
 
   execute(context) {
@@ -812,7 +836,7 @@ class GoingHome_State extends State {
  */
 class AtHome_State extends State {
   constructor(){
-    super(); this.textSymbol = "💤";
+    super(); this.symbol = "💤";
   }
 
   execute(context) {
@@ -867,7 +891,7 @@ class AtHome_State extends State {
 //#region Combat State
 class Combat_State extends State {
   constructor(){
-    super(); this.textSymbol = "⚔";
+    super(); this.symbol = "⚔";
   }
   enter(agent) {
     console.log(`${agent.id} is entering combat.`);
@@ -907,14 +931,16 @@ class Agent {
     name: "Generic Agent",
     description: "A general-purpose agent. Cost: 100",
     colour:"black",
-    cost : 100
+    cost : 100,
+    symbol : "👤"
     },
     raider_Agent  : {
     key:"raider_Agent", 
     name: "Raider",
     description: "An aggressive agent.",
     colour:"red",
-    cost : 0
+    cost : 0,
+    symbol : "🤺"
     }
   }
 
@@ -962,7 +988,7 @@ class Agent {
       this.colour,
       undefined
     );
-    drawText(this.behaviourState.textSymbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
+    drawText(this.behaviourState.symbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
   }
   
 /**
