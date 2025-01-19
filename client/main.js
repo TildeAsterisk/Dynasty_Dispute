@@ -73,6 +73,20 @@ socket.on("connect_error", (error) => {
 socket.on("reconnect_attempt", () => {
     logMessage("Attempting to reconnect...");
 });
+
+socket.on('update-building', (buildingData) => {
+  // Update the map with the new building data
+  updateMapWithBuildingData(buildingData);
+});
+
+function updateMapWithBuildingData(buildingData) {
+  // Logic to update the map with the new building data
+  // For example, you might update the DOM elements representing the buildings
+  gameState.nodes.push(buildingData);
+  io.emit("map-update", gameState.nodes); // Broadcast to all clients
+  console.log('Building data updated:', buildingData);
+  // Add your map update logic here
+}
 //#endregion
 
 function initializeGameObjects() {
@@ -1740,7 +1754,7 @@ canvas.addEventListener("click", (event) => {
     }
     else{
       //console.log(JSON.parse(gameState.selectedType.initObj));
-      addNode(snappedX, snappedY, gameState.selectedType.key, undefined, gameState.selectedType.initObj );
+      addNode(snappedX, snappedY, gameState.selectedType.key, true, gameState.selectedType.initObj );
     }
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }

@@ -35,3 +35,17 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   logMessage(`Server running on port ${PORT}`);
 });
+
+
+
+function handleBuildingUpdate(buildingData) {
+  // Emit the update-building event to all connected clients
+  socket.emit('update-building', buildingData);
+}
+
+// Example usage
+/*handleSocketConnection(socket => {
+  socket.on('building-updated', (buildingData) => {
+      handleBuildingUpdate(buildingData);
+  });
+});*/
