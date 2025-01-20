@@ -570,7 +570,7 @@ class Idle_State extends State {
         context.changeBehaviourState(new Gathering_State()); 
         return;
       }
-      else{ // Cannot consume resources, and cannot find resource node
+      else { // Cannot consume resources, and cannot find resource node
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
         if(newTargetQuery){
@@ -1191,49 +1191,50 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
   }
   
   depositResources(resourceTypeKey = undefined) {
-    // if has resources to deposit and storage is not going to overflow
-    const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
-    const wouldOverflow = (totalResourceAmount > this.target.maxCapacity);
   
-    if (!wouldOverflow) {
-      if (resourceTypeKey) {
-        // Deposit only the specified resource type
-        let resourceType = Resource.types[resourceTypeKey];
-        let resource = this.resourceInventory.find(r => r.type === resourceType);
-        if (resource) {
-          let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
-          if (targetResource) {
-            targetResource.amount += resource.amount;
-          } 
-          else {
-            targetResource = new Resource(resource.type.key, resource.amount);
-            this.target.resourceInventory.push(targetResource);
-          }
-          this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
-        }
-      } 
-      else {
-        // Deposit all resources
-        this.resourceInventory.forEach(resource => {
-          let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
-          if (targetResource) {
-            targetResource.amount += resource.amount;
-          } 
-          else {
-            targetResource = new Resource(resource.type.key, resource.amount);
-            this.target.resourceInventory.push(targetResource);
-          }
-          console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
-        });
-        this.resourceInventory = [];
+    if (resourceTypeKey) {
+      // Deposit only the specified resource type
+      let resourceType = Resource.types[resourceTypeKey];
+      let resource = this.resourceInventory.find(r => r.type === resourceType);
+
+      const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
+      const wouldOverflow = ( (totalResourceAmount + resource.amount) > this.target.maxCapacity);
+      //check if would overflow
+      if (wouldOverflow){
+          //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
+          return false;
       }
-  
-      this.carrying = 0;
-      return true;
-    } else {
-      //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
-      return false;
+      
+      if (resource) {
+        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+        if (targetResource) {
+          targetResource.amount += resource.amount;
+        } 
+        else {
+          targetResource = new Resource(resource.type.key, resource.amount);
+          this.target.resourceInventory.push(targetResource);
+        }
+        this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
+      }
+    } 
+    else {
+      // Deposit all resources
+      this.resourceInventory.forEach(resource => {
+        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+        if (targetResource) {
+          targetResource.amount += resource.amount;
+        } 
+        else {
+          targetResource = new Resource(resource.type.key, resource.amount);
+          this.target.resourceInventory.push(targetResource);
+        }
+        console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+      });
+      this.resourceInventory = [];
     }
+    
+    this.carrying = 0;
+    return true;
   }
   
 
