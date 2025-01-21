@@ -89,67 +89,7 @@ function updateMapWithBuildingData(buildingData) {
 }
 //#endregion
 
-function initializeGameObjects() {
-  // Clear existing game objects
-  gameState.nodes = [];
-  gameState.agents = [];
-  let centerX = canvas.width / 2;
-  let centerY = canvas.height / 2;
 
-  // Initialize nodes from the network state
-  if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
-    gameState.networkState.nodes.forEach(netNode => {
-      const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
-      newNode.id = netNode.id;
-      newNode.resourceInventory = netNode.resourceInventory;
-      newNode.agentCapacity = netNode.agentCapacity;
-      newNode.maxAgentCapacity = netNode.maxAgentCapacity;
-      newNode.agentTypeAllianceKey = netNode.agentTypeAllianceKey;
-      newNode.regenCooldown = netNode.regenCooldown;
-      newNode.lastRegenTime = netNode.lastRegenTime;
-      gameState.nodes.push(newNode);
-      logMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
-    });
-  } else {
-    // Add a resource node and a storage_Node nearby
-    const nodeCoords = getGridCoordinates(centerX, centerY);
-    let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow"},"amount":100} ] }');
-    //console.log(tmpInitObj);
-    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
-    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
-    addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
-    addNode(nodeCoords[0], nodeCoords[1], "home");
-  }
-
-  // Initialize agents from the network state
-  if (gameState.networkState.agents && gameState.networkState.agents.length > 0) {
-    gameState.networkState.agents.forEach(netAgent => {
-      const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
-      newAgent.id = netAgent.id;
-      newAgent.colour = netAgent.colour;
-      newAgent.behaviourState = new Idle_State(); // Assuming agents start in Idle_State
-      newAgent.target = netAgent.target;
-      newAgent.previousUnitTarget = netAgent.previousUnitTarget;
-      newAgent.carrying = netAgent.carrying;
-      newAgent.maxCarry = netAgent.maxCarry;
-      newAgent.speed = netAgent.speed;
-      newAgent.home = netAgent.home;
-      newAgent.resourceHunger = netAgent.resourceHunger;
-      newAgent.searchRadius = netAgent.searchRadius;
-      newAgent.health = netAgent.health;
-      newAgent.attackPower = netAgent.attackPower;
-      newAgent.attackRange = netAgent.attackRange;
-      newAgent.attackCooldown = netAgent.attackCooldown;
-      newAgent.lastAttackTime = netAgent.lastAttackTime;
-      gameState.agents.push(newAgent);
-      logMessage(`Agent added from Server at (${newAgent.x}, ${newAgent.y})`);
-    });
-  } else {
-    // Add initial setup for testing
-    const firstAgent = addAgent(centerX, centerY);
-    const secondAgent = addAgent(centerX + 100, centerY + 100);
-  }
-}
 
 // Grid and Camera
 const GRID_SIZE = 50;
@@ -1523,6 +1463,7 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   gameState.spawnedUnitsCount += 1;
   if (emit){ socket.emit("update-building", newNode); }
   logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
+  console.log(newNode);
   return newNode;
 }
 
@@ -1941,6 +1882,69 @@ function gameLoop() {
 
   gameState.gameTick += 1;
   requestAnimationFrame(gameLoop);
+}
+
+function initializeGameObjects() {
+  // Clear existing game objects
+  gameState.nodes = [];
+  gameState.agents = [];
+  let centerX = canvas.width / 2;
+  let centerY = canvas.height / 2;
+
+  // Initialize nodes from the network state
+  if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
+    gameState.networkState.nodes.forEach(netNode => {
+      const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
+      newNode.id = netNode.id;
+      newNode.resourceInventory = netNode.resourceInventory;
+      newNode.agentCapacity = netNode.agentCapacity;
+      newNode.maxAgentCapacity = netNode.maxAgentCapacity;
+      newNode.agentTypeAllianceKey = netNode.agentTypeAllianceKey;
+      newNode.regenCooldown = netNode.regenCooldown;
+      newNode.lastRegenTime = netNode.lastRegenTime;
+      gameState.nodes.push(newNode);
+      logMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
+    });
+  } else {
+    // Add a resource node and a storage_Node nearby
+    const nodeCoords = getGridCoordinates(centerX, centerY);
+    let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
+    tmpInitObj.symbol = "🌾";
+    //console.log(tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
+    addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
+    addNode(nodeCoords[0], nodeCoords[1], "home");
+  }
+
+  // Initialize agents from the network state
+  if (gameState.networkState.agents && gameState.networkState.agents.length > 0) {
+    gameState.networkState.agents.forEach(netAgent => {
+      const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
+      newAgent.id = netAgent.id;
+      newAgent.colour = netAgent.colour;
+      newAgent.behaviourState = new Idle_State(); // Assuming agents start in Idle_State
+      newAgent.target = netAgent.target;
+      newAgent.previousUnitTarget = netAgent.previousUnitTarget;
+      newAgent.carrying = netAgent.carrying;
+      newAgent.maxCarry = netAgent.maxCarry;
+      newAgent.speed = netAgent.speed;
+      newAgent.home = netAgent.home;
+      newAgent.resourceHunger = netAgent.resourceHunger;
+      newAgent.searchRadius = netAgent.searchRadius;
+      newAgent.health = netAgent.health;
+      newAgent.attackPower = netAgent.attackPower;
+      newAgent.attackRange = netAgent.attackRange;
+      newAgent.attackCooldown = netAgent.attackCooldown;
+      newAgent.lastAttackTime = netAgent.lastAttackTime;
+      gameState.agents.push(newAgent);
+      logMessage(`Agent added from Server at (${newAgent.x}, ${newAgent.y})`);
+    });
+  } else {
+    // Add initial setup for testing
+    const firstAgent = addAgent(centerX, centerY);
+    const secondAgent = addAgent(centerX + 100, centerY + 100);
+  }
 }
 
 
