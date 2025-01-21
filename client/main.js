@@ -216,22 +216,20 @@ function drawRect(x, y, width, height, colour, fillPercent) {
 }
 
 function drawASCIIartInRect(x, y, width, height, colour) {
-  const asciiArt = `
-[.↟.↟.↟.↟.]
-[↟.↟.↟.↟.↟]
-[.↟.↟.↟.↟.]
-[.↟.↟.↟.↟.]
-[↟.↟.↟.↟.↟]
-  `;
+  const asciiArt = `[↟_↟_↟_↟]
+[_↟_↟_↟_]
+[↟_↟_↟_↟]
+[_↟_↟_↟_]
+[↟_↟_↟_↟]`;
   // Draw the rectangle
-  //ctx.fillStyle = colour;
+  //ctx.fillStyle = 'black';
   //ctx.fillRect(x, y, width, height);
 
   // Draw the ASCII art inside the rectangle
   if (asciiArt) {
     const lines = asciiArt.split("\n"); // Split the ASCII art into lines
-    const fontSize = height / (lines.length); // Adjust font size to fit all lines
-    ctx.fillStyle = "black"; // Set the text color
+    const fontSize = height / (lines.length ); // Adjust font size to fit all lines
+    //ctx.fillStyle = "black"; // Set the text color
     ctx.font = `${fontSize}px monospace`; // Use a monospace font for ASCII art
     ctx.textAlign = "center"; // Center horizontally
     ctx.textBaseline = "middle"; // Adjust vertically for each line
@@ -500,7 +498,7 @@ class Node {
       const rFillPct = (invResource.amount/this.maxCapacity);
       totalResInvFillPct = totalResInvFillPct*rFillPct;
     });
-    drawRect(
+    drawASCIIartInRect(
       screenX,
       screenY,
       GRID_SIZE * camera.scale,
