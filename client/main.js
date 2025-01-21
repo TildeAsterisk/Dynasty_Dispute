@@ -312,7 +312,7 @@ class Resource {
       name: "Raw Materials",
       description: "Resources for construction and crafting.",
       colour: "gray",
-      symbol : "☁"
+      symbol : "🪨"
     },
     food: {
       key: "food",
@@ -357,7 +357,7 @@ class Node {
       description: "A central hub for agents. Cost: 50", 
       colour: "grey", 
       cost : 50,
-      symbol : "⌂"
+      symbol : "🏠"
     },
     resource_Node : 
     { 
@@ -366,7 +366,7 @@ class Node {
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 0",
       cost : 0,
-      symbol : "🗻"
+      symbol : "🏭"
     },
     barracks_Node : 
     { 
@@ -1896,6 +1896,7 @@ function initializeGameObjects() {
     gameState.networkState.nodes.forEach(netNode => {
       const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
       newNode.id = netNode.id;
+      newNode.type = netNode.type;
       newNode.resourceInventory = netNode.resourceInventory;
       newNode.agentCapacity = netNode.agentCapacity;
       newNode.maxAgentCapacity = netNode.maxAgentCapacity;
@@ -1912,6 +1913,8 @@ function initializeGameObjects() {
     tmpInitObj.symbol = "🌾";
     //console.log(tmpInitObj);
     addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
+    //tmpCustomTypeSymbolNode.type.symbol = "🌾";
+
     addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
     addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
     addNode(nodeCoords[0], nodeCoords[1], "home");
