@@ -426,7 +426,7 @@ class Node {
       colour: "green", 
       description: "Contains resources to be extracted.  Cost: 0",
       cost : 0,
-      symbol : "🪵"
+      symbol : "🗻"
     },
     barracks_Node : 
     { 
