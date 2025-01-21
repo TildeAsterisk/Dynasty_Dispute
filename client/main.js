@@ -113,13 +113,12 @@ function initializeGameObjects() {
   } else {
     // Add a resource node and a storage_Node nearby
     const nodeCoords = getGridCoordinates(centerX, centerY);
-    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key);
-    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.storage_Node.key);
     let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow"},"amount":100} ] }');
     //console.log(tmpInitObj);
-    addNode(nodeCoords[0], nodeCoords[1], Node.types.resource_Node.key, undefined,tmpInitObj);
-    const homeCoords = getGridCoordinates(centerX + 100, centerY + 100);
-    addNode(homeCoords[0], homeCoords[1], "home");
+    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
+    addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
+    addNode(nodeCoords[0], nodeCoords[1], "home");
   }
 
   // Initialize agents from the network state
@@ -498,7 +497,7 @@ class Node {
       const rFillPct = (invResource.amount/this.maxCapacity);
       totalResInvFillPct = totalResInvFillPct*rFillPct;
     });
-    drawASCIIartInRect(
+    drawRect(
       screenX,
       screenY,
       GRID_SIZE * camera.scale,
