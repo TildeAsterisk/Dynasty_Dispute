@@ -211,6 +211,41 @@ function drawRect(x, y, width, height, colour, fillPercent) {
   // Draw the filled portion
   ctx.fillStyle = colour;
   ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
+
+  //drawASCIIartInRect(x,y,width,height,colour);
+}
+
+function drawASCIIartInRect(x, y, width, height, colour) {
+  const asciiArt = `
+[.↟.↟.↟.↟.]
+[↟.↟.↟.↟.↟]
+[.↟.↟.↟.↟.]
+[.↟.↟.↟.↟.]
+[↟.↟.↟.↟.↟]
+  `;
+  // Draw the rectangle
+  //ctx.fillStyle = colour;
+  //ctx.fillRect(x, y, width, height);
+
+  // Draw the ASCII art inside the rectangle
+  if (asciiArt) {
+    const lines = asciiArt.split("\n"); // Split the ASCII art into lines
+    const fontSize = height / (lines.length); // Adjust font size to fit all lines
+    ctx.fillStyle = "black"; // Set the text color
+    ctx.font = `${fontSize}px monospace`; // Use a monospace font for ASCII art
+    ctx.textAlign = "center"; // Center horizontally
+    ctx.textBaseline = "middle"; // Adjust vertically for each line
+
+    const lineHeight = fontSize; // Space between lines
+    const centerY = y + height / 2; // Vertical center of the rectangle
+    const startY = centerY - (lineHeight * (lines.length - 1)) / 2; // Top line position
+
+    ctx.fillStyle = colour;
+    lines.forEach((line, index) => {
+      const lineY = startY + index * lineHeight;
+      ctx.fillText(line, x + width / 2, lineY); // Draw each line
+    });
+  }
 }
 
 
