@@ -364,8 +364,8 @@ class Node {
       key : "resource_Node",
       name: "Resource Node",
       colour: "green", 
-      description: "Contains resources to be extracted.  Cost: 0",
-      cost : 0,
+      description: "Contains resources to be extracted.  Cost: 100",
+      cost : 100,
       symbol : "🏭"
     },
     barracks_Node : 
@@ -373,8 +373,8 @@ class Node {
       key : "barracks_Node",
       name: "Barracks Node",
       colour: "orange", 
-      description: "Houses and trains Agents for defence.  Cost: 150",
-      cost : 150,
+      description: "Houses and trains Agents for defence.  Cost: 1000",
+      cost : 1000,
       symbol : "🏰"
 
     }
@@ -432,11 +432,14 @@ class Node {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
     //calculate percentage of fill
-    let totalResInvFillPct=1;
+    let totalResInvFillPct=0;
     this.resourceInventory.forEach(invResource => {
       const rFillPct = (invResource.amount/this.maxCapacity);
-      totalResInvFillPct = totalResInvFillPct*rFillPct;
-    });
+      totalResInvFillPct = totalResInvFillPct+rFillPct;
+    }); //calculate fill percentage for each resource and add them up
+    totalResInvFillPct = totalResInvFillPct/ (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
+    console.log(this, totalResInvFillPct);
+
     drawRect(
       screenX,
       screenY,
@@ -570,7 +573,8 @@ class Idle_State extends State {
           context.changeBehaviourState(new Gathering_State()); 
           return;
         }
-        else{ // No work to be done (Storage full). Go home, or roam or chill...
+        else{
+          console.log(context.id+" No work to be done (Storage full). Go home, or roam or chill...");
           context.changeBehaviourState(new GoingHome_State());
           return;
         }
@@ -698,8 +702,8 @@ class Gathering_State extends State {
             return;
           }
           else{ // No storage found
-            console.log(context.id,"finished gathering from resource node and no storage found to put it away.");
-            context.changeBehaviourState(new GoingHome_State());
+            console.log(context.id,"finished gathering from resource node and no storage found to put it away. Idle, looking for work.");
+            context.changeBehaviourState(new Idle_State());
             return;
           }
         }
@@ -1126,7 +1130,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     gameState.nodes.forEach( (b) => {
       const distance = calculateDistance(this, b);
       const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
-      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount > 0 && distance < this.searchRadius){
+      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount >= 0 && distance < this.searchRadius){
         // Found empty storage node within search radius
         foundStorageNode = b;
       }
