@@ -2,12 +2,12 @@
 //const log = document.getElementById("log");
 
 function logMessage(message) {
-    const logEntry = document.createElement("div");
-    logEntry.textContent = message;
-    //log.appendChild(logEntry);
-    //log.scrollTop = log.scrollHeight;
-    socket.emit("client-log", message); // Emit log message to the server
-    console.log(message);
+  const logEntry = document.createElement("div");
+  logEntry.textContent = message;
+  //log.appendChild(logEntry);
+  //log.scrollTop = log.scrollHeight;
+  socket.emit("client-log", message); // Emit log message to the server
+  console.log(message);
 }
 
 /*function viewMap() {
@@ -17,7 +17,7 @@ function logMessage(message) {
 */
 
 function clearLog() {
-    //log.innerHTML = "";
+  //log.innerHTML = "";
 }
 
 
@@ -35,13 +35,13 @@ canvas.height = window.innerHeight;
 let gameState = {
   nodes: [],
   agents: [],
-  selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
-  spawnedUnitsCount : 0,
-  agentBirthChance : 2000,  //1 out of <agentBirthChance> chance to give birth
-  selectedUnit : null,
-  totalStoredResources : 0,
-  gameTick : 0,
-  networkState : {nodes: [], agents: [], players: []}
+  selectedType: null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
+  spawnedUnitsCount: 0,
+  agentBirthChance: 2000,  //1 out of <agentBirthChance> chance to give birth
+  selectedUnit: null,
+  totalStoredResources: 0,
+  gameTick: 0,
+  networkState: { nodes: [], agents: [], players: [] }
 };
 
 
@@ -55,23 +55,23 @@ socket.on("game-state", (state) => {
 
 socket.on("map-update", (updatedMap) => {
   gameState.networkState.nodes = updatedMap;
-  logMessage("Map updated "+Date.now());
+  logMessage("Map updated " + Date.now());
   //renderGame();
 });
 
 // Listen for log messages from the server
 socket.on("log-message", (message) => {
-    logMessage(message);
+  logMessage(message);
 });
 
 // Handle connection errors
 socket.on("connect_error", (error) => {
-    logMessage(`Connection error: ${error.message}`);
+  logMessage(`Connection error: ${error.message}`);
 });
 
 // Handle reconnection attempts
 socket.on("reconnect_attempt", () => {
-    logMessage("Attempting to reconnect...");
+  logMessage("Attempting to reconnect...");
 });
 
 socket.on('update-building', (buildingData) => {
@@ -100,15 +100,15 @@ const camera = {
 };
 
 //#region Utility Functions
-function drawText(text, x, y, size=11,  colour = "white", outlineColour="black", textAlign = null) {
-  if (typeof text != "string") { console.error("text is not a string"); console.log(text); return;}
+function drawText(text, x, y, size = 11, colour = "white", outlineColour = "black", textAlign = null) {
+  if (typeof text != "string") { console.error("text is not a string"); console.log(text); return; }
 
-  ctx.font = size.toString()+"px Arial";
-  if (textAlign=="center"){
+  ctx.font = size.toString() + "px Arial";
+  if (textAlign == "center") {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
   }
-  else{ 
+  else {
     //Default values
     ctx.textAlign = 'start';
     ctx.textBaseline = 'alphabetic';
@@ -120,7 +120,7 @@ function drawText(text, x, y, size=11,  colour = "white", outlineColour="black",
   text=String(text).charAt(0).toUpperCase() + String(text).slice(1);
   text = text.replace("_", " ");*/
 
-  if(outlineColour!="None"){
+  if (outlineColour != "None") {
     // Draw an outline
     ctx.strokeStyle = outlineColour;
     ctx.lineWidth = 3;
@@ -140,8 +140,8 @@ function drawRect(x, y, width, height, colour, fillPercent) {
     ctx.lineWidth = lineWidth;
     ctx.strokeRect(x + lineWidth / 2, y + lineWidth / 2, width - lineWidth, height - lineWidth);
   }
-  else{
-    fillPercent=100;
+  else {
+    fillPercent = 100;
   }
 
   // Calculate the height of the filled portion
@@ -167,7 +167,7 @@ function drawASCIIartInRect(x, y, width, height, colour) {
   // Draw the ASCII art inside the rectangle
   if (asciiArt) {
     const lines = asciiArt.split("\n"); // Split the ASCII art into lines
-    const fontSize = height / (lines.length ); // Adjust font size to fit all lines
+    const fontSize = height / (lines.length); // Adjust font size to fit all lines
     //ctx.fillStyle = "black"; // Set the text color
     ctx.font = `${fontSize}px monospace`; // Use a monospace font for ASCII art
     ctx.textAlign = "center"; // Center horizontally
@@ -189,13 +189,13 @@ function drawASCIIartInRect(x, y, width, height, colour) {
 function getGridCoordinates(worldX, worldY) {
   const gridX = Math.floor(worldX / GRID_SIZE) * GRID_SIZE;
   const gridY = Math.floor(worldY / GRID_SIZE) * GRID_SIZE;
-  return [gridX,gridY]; // Return as a unique key for the cell
+  return [gridX, gridY]; // Return as a unique key for the cell
 }
 
 // Utility function to check if a point is within a rectangle
 function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
   return px >= rectX && px <= rectX + rectWidth &&
-         py >= rectY && py <= rectY + rectHeight;
+    py >= rectY && py <= rectY + rectHeight;
 }
 
 function getRandomPositionInRange(obj, range) {
@@ -206,9 +206,9 @@ function getRandomPositionInRange(obj, range) {
 }
 
 // Function to update the #unitInfo div
-function updateUnitInfo(object=null) {
+function updateUnitInfo(object = null) {
   const unitInfoDiv = document.getElementById("unitInfo");
-  if (!object){
+  if (!object) {
     unitInfoDiv.innerHTML = ``;
     return;
   }
@@ -232,28 +232,28 @@ function updateUnitInfo(object=null) {
     /*
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round*/
     //let tmpSymbol = value.symbol ? value.symbol : value.type.symbol;
-    if (value && typeof value == 'object' ) { 
+    if (value && typeof value == 'object') {
       //console.log("OBJECT ATTRIBNUTE", key, value);
-      if (value.symbol ) { roundedValue = value.symbol; }
-      else if ( typeof value.type == 'object' && value.type.symbol ) { roundedValue = value.type.symbol; }
-      else { 
+      if (value.symbol) { roundedValue = value.symbol; }
+      else if (typeof value.type == 'object' && value.type.symbol) { roundedValue = value.type.symbol; }
+      else {
         //console.log(Object.entries(value));
-        for (const [skey, stat] of Object.entries(value)){
+        for (const [skey, stat] of Object.entries(value)) {
           let newStat = stat.type ? stat.type : stat;
           roundedValue = newStat.key ? newStat.key : undefined;
           const row = table.insertRow();
           row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
           row.innerHTML = `<td style="border: none; ">${newStat.symbol}</td>
-                            <td style="border: none;">: ${ (Math.round( value[skey].amount * 100) / 100).toFixed(2) }</td>`;
+                            <td style="border: none;">: ${(Math.round(value[skey].amount * 100) / 100).toFixed(2)}</td>`;
         }
       }
-      if(key != "resourceInventory"){
+      if (key != "resourceInventory") {
         const row = table.insertRow();
         row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
         row.innerHTML = `<td style="border: none; ">${key}</td>
                         <td style="border: none;">: ${roundedValue}</td>`;
       }
-      
+
     }
     //if (key == "type") { roundedValue = value.name; }
   }
@@ -271,9 +271,9 @@ function calculateDistance(pos1, pos2) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function displaySelectedUnitMenu(object = null){
+function displaySelectedUnitMenu(object = null) {
   const unitInfoDiv = document.getElementById("unitActionsMenu");
-  if (!object){
+  if (!object) {
     unitInfoDiv.innerHTML = ``;
     return;
   }
@@ -312,21 +312,21 @@ class Resource {
       name: "Raw Materials",
       description: "Resources for construction and crafting.",
       colour: "gray",
-      symbol : "🪨"
+      symbol: "🪨"
     },
     food: {
       key: "food",
       name: "Food",
       description: "Resources for consumption.",
       colour: "yellow",
-      symbol : "🥩"
+      symbol: "🥩"
     },
     agricultural: {
       key: "agricultural",
       name: "Agricultural Resources",
       description: "Resources for farming and agriculture.",
       colour: "green",
-      symbol : "⚘"
+      symbol: "⚘"
     }
   };
 
@@ -341,41 +341,41 @@ class Resource {
 //#region  Node Class
 class Node {
   static types = {
-    storage_Node : 
-    { 
-      key : "storage_Node",
+    storage_Node:
+    {
+      key: "storage_Node",
       name: "Storage Node",
-      colour: "brown", 
+      colour: "brown",
       description: "A repository for resources. Cost: 50",
-      cost : 50,
-      symbol : "📦"
+      cost: 50,
+      symbol: "📦"
     },
-    home : 
-    { 
-      key : "home",
+    home:
+    {
+      key: "home",
       name: "Home",
-      description: "A central hub for agents. Cost: 50", 
-      colour: "grey", 
-      cost : 50,
-      symbol : "🏠"
+      description: "A central hub for agents. Cost: 50",
+      colour: "grey",
+      cost: 50,
+      symbol: "🏠"
     },
-    resource_Node : 
-    { 
-      key : "resource_Node",
+    resource_Node:
+    {
+      key: "resource_Node",
       name: "Resource Node",
-      colour: "green", 
+      colour: "green",
       description: "Contains resources to be extracted.  Cost: 100",
-      cost : 100,
-      symbol : "🏭"
+      cost: 100,
+      symbol: "🏭"
     },
-    barracks_Node : 
-    { 
-      key : "barracks_Node",
+    barracks_Node:
+    {
+      key: "barracks_Node",
       name: "Barracks Node",
-      colour: "orange", 
+      colour: "orange",
       description: "Houses and trains Agents for defence.  Cost: 1000",
-      cost : 1000,
-      symbol : "🏰"
+      cost: 1000,
+      symbol: "🏰"
 
     }
   }
@@ -387,7 +387,7 @@ class Node {
     this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
     this.colour = this.type.colour;
 
-    this.maxCapacity = 100;
+    this.maxCapacity = 100; // max capacity for each resource in the inventory
     this.resourceInventory = (Node.types.resource_Node.key === typeKey) ? [new Resource(Resource.types.rawMaterials.key, this.maxCapacity)] : []; //If resource node give default inventory
 
     this.agentCapacity = [];
@@ -400,21 +400,21 @@ class Node {
 
   }
 
-  update(){
+  update() {
     // Random chance to spawn agent
     // check if number of homes is enough for new agent
     let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
     let numAgents = calculateTotalLiveAgents();
-    const enoughHomes = ( numAgents < (numHomes*2)+1 );
-    if(this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance)==1 && enoughHomes ){
+    const enoughHomes = (numAgents < (numHomes * 2) + 1);
+    if (this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance) == 1 && enoughHomes) {
       //Random change to give birth to a new agent
-      addAgent(this.x+(GRID_SIZE/2),this.y+(GRID_SIZE/2), this.agentCapacity[0].type.key);
+      addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2), this.agentCapacity[0].type.key);
       console.log("New Agent Spawned!!!"); //newborn
     }
 
-    
 
-    switch (this.type.key){
+
+    switch (this.type.key) {
       case Node.types.storage_Node.key:
         /* Drain resources slowly from storage depo
         if(this.get... > 0){
@@ -432,13 +432,12 @@ class Node {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
     //calculate percentage of fill
-    let totalResInvFillPct=0;
+    let totalResInvFillPct = 0;
     this.resourceInventory.forEach(invResource => {
-      const rFillPct = (invResource.amount/this.maxCapacity);
-      totalResInvFillPct = totalResInvFillPct+rFillPct;
+      const rFillPct = (invResource.amount / this.maxCapacity);
+      totalResInvFillPct = totalResInvFillPct + rFillPct;
     }); //calculate fill percentage for each resource and add them up
-    totalResInvFillPct = totalResInvFillPct/ (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
-    console.log(this, totalResInvFillPct);
+    totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
 
     drawRect(
       screenX,
@@ -446,7 +445,7 @@ class Node {
       GRID_SIZE * camera.scale,
       GRID_SIZE * camera.scale,
       this.type.colour,
-      totalResInvFillPct *100  // Fill percentage
+      totalResInvFillPct * 100  // Fill percentage
     );
     /*drawText(
       this.type.key,
@@ -464,7 +463,11 @@ class Node {
       });
       this.lastRegenTime = now;
       return true;
-    } else {
+    }
+    else {
+      if (this.resourceInventory[0].amount < this.maxCapacity) {
+        this.resourceInventory[0].amount += 0.05;
+      }
       return false;
     }
   }
@@ -482,7 +485,7 @@ class Node {
 //#region State Class
 // Define a State base class (optional)
 class State {
-  constructor(){
+  constructor() {
     this.symbol = "💭";
   }
 
@@ -502,7 +505,7 @@ class State {
     //console.log(`${context.id} stops  ${this.constructor.name}.`);
   }
 
-  checkForEnemy(context){
+  checkForEnemy(context) {
     // Check for nearby enemies
     const enemy = context.findEnemy(context.searchRadius);
     if (enemy) {
@@ -536,33 +539,59 @@ class Idle_State extends State {
     }*/
     let newTargetQuery;
 
-    if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
+    if (!context.consumeResources(Resource.types.food.key)) { // Eat food, if cannot...
+      context.targetResourceTypeKey = Resource.types.food.key;
+
       // try to find resource node with food
-      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      newTargetQuery = context.findResourceNode(context.searchRadius * 2, Resource.types.food.key);
       if (newTargetQuery) { // If food found, gather
         context.setNewTarget(newTargetQuery);
-        context.targetResourceTypeKey = Resource.types.food.key;
-        context.changeBehaviourState(new Gathering_State()); 
+        context.changeBehaviourState(new Gathering_State());
         return;
       }
       else { // Cannot consume resources, and cannot find resource node
         // try to find storage node to take from
-        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
-        if(newTargetQuery){
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
+        if (newTargetQuery) {
           //console.log(context.id, "is retrieving food from storage", context.target.id);
           context.setNewTarget(newTargetQuery);
-          context.targetResourceTypeKey = Resource.types.food.key;
           context.changeBehaviourState(new Gathering_State());
           return;
         }
-        else{
-          console.log(context.id+" ran out of resources while Idle.");
+        else {
+          console.log(context.id + " ran out of resources while Idle.");
           context.die();
           return;
-        }    
+        }
       }
     }
-    else{ // Is idle and just consumed food. Find work to do...
+    else { // Is idle and just consumed food. Find work to do...
+      //context.changeBehaviourState(new Idle_State());
+      console.log(context.id," just consumed food, looking for work.");
+
+      // try to find resource node with raw materials
+      context.targetResourceTypeKey = Resource.types.rawMaterials.key;
+
+      const newResourceNodeTargetQuery = context.findResourceNode(context.searchRadius * 2, Resource.types.rawMaterials.key);
+      if (!newResourceNodeTargetQuery) { // If no resources found then go home or roam
+        context.changeBehaviourState(new GoingHome_State());
+        return;
+      }
+      // try to find storage node to take from
+      let newTargetQuery = context.findStorageNode_LowestInRange(context.searchRadius * 2, Resource.types.rawMaterials.key);
+      if (newTargetQuery) {
+        context.setNewTarget(newResourceNodeTargetQuery);
+        context.changeBehaviourState(new Gathering_State());
+        return;
+      }
+      else {
+        console.log(context.id + " no work to do, going home.");
+        context.changeBehaviourState(new GoingHome_State());
+        return;
+      }
+      
+      return;
+      /*
       // find a storage node with space to deposit into
       newTargetQuery = context.findStorageNode_LowestInRange(context.searchRadius, Resource.types.rawMaterials.key);
       if (newTargetQuery) { // If there is storage node with space, find resource node to gather
@@ -582,7 +611,7 @@ class Idle_State extends State {
       else{ // Idle, consumed food and no work to do.
         context.changeBehaviourState(new GoingHome_State());
         return;
-      }
+      }*/
     }
 
   }
@@ -604,7 +633,7 @@ class Idle_State extends State {
  * @param {object|null} context - The agent object.
  */
 class Roaming_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "";//"🧭";
   }
 
@@ -613,44 +642,44 @@ class Roaming_State extends State {
     let newTargetQuery;
     if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
       // try to find resource node with food
-      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      context.targetResourceTypeKey = Resource.types.food.key;
+
+      newTargetQuery = context.findResourceNode(context.searchRadius * 2, Resource.types.food.key);
       if (newTargetQuery) { // If food found, gather
         context.setNewTarget(newTargetQuery);
-        context.targetResourceTypeKey = Resource.types.food.key;
-        context.changeBehaviourState(new Gathering_State()); 
+        context.changeBehaviourState(new Gathering_State());
         return;
       }
-      else{ // Cannot consume resources, and cannot find resource node
+      else { // Cannot consume resources, and cannot find resource node
         // try to find storage node to take from
-        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
-        if(newTargetQuery){
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
+        if (newTargetQuery) {
           //console.log(context.id, "is retrieving food from storage", context.target.id);
           context.setNewTarget(newTargetQuery);
-          context.targetResourceTypeKey = Resource.types.food.key;
           context.changeBehaviourState(new Gathering_State());
           return;
         }
-        else{
-          console.log(context.id+" ran out of resources while Roaming.");
+        else {
+          console.log(context.id + " ran out of resources while Roaming.");
           context.die();
           return;
-        }    
+        }
       }
     }
-    else{ // Can consume food.
+    else { // Can consume food.
       // Roam around randomly
-      if(context.target){ // has target, move to it
+      if (context.target) { // has target, move to it
         context.moveToTarget();
-        if (context.reachedTarget()){ // Has target and reached it.
+        if (context.reachedTarget()) { // Has target and reached it.
           context.setRandomRoamPosition();  // move to new target
           context.moveToTarget();
           return;
         }
-        else{
+        else {
           // moving to target still...
         }
       }
-      else{
+      else {
         //  Roaming with no target. Set a new one? 
         context.setRandomRoamPosition();
         context.moveToTarget();
@@ -674,7 +703,7 @@ class Roaming_State extends State {
  * @param {object|null} context - The agent object.
  */
 class Gathering_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "⚙"; //📥?
   }
 
@@ -683,26 +712,26 @@ class Gathering_State extends State {
 
     if (context.reachedTarget()) {  // Reached Resource?
       //console.log("REACHED",context.target);
-      if(context.gatherResources(context.targetResourceTypeKey)) { // If Target reached and resources gathered
+      if (context.gatherResources(context.targetResourceTypeKey)) { // If Target reached and resources gathered
         //console.log(context.id, "Gathering resources ",context.target.id);
         // Set Node typealliance 
         context.target.agentTypeAllianceKey = context.type.key;
         return;
       }
-      else{ // If cannot gather anymore
+      else { // If cannot gather anymore
         // iff gathered from resource, then store it. If gathered from stroage then go home
-        console.log(context.id, "Cannot gather "+ context.targetResourceTypeKey+" from ",context.target.id);
+        console.log(context.id, "Cannot gather " + context.targetResourceTypeKey + " from ", context.target.id);
 
-        if(context.target.id && context.target.type.key == Node.types.resource_Node.key){
+        if (context.target.id && context.target.type.key == Node.types.resource_Node.key) {
           const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
-          if(storageFound) {
+          if (storageFound) {
             // finished gathering from resource node.
             context.setNewTarget(storageFound);  // Find new storage
             context.changeBehaviourState(new Depositing_State());
             return;
           }
-          else{ // No storage found
-            console.log(context.id,"finished gathering from resource node and no storage found to put it away. Idle, looking for work.");
+          else { // No storage found
+            console.log(context.id, "finished gathering from resource node and no storage found to put it away. Idle, looking for work.");
             context.changeBehaviourState(new Idle_State());
             return;
           }
@@ -710,18 +739,18 @@ class Gathering_State extends State {
 
         else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {
           // Finished gathering from storage. Idle, look for some work
-          console.log(context.id,"finished taking from storage. Idle, going to look for some work");
+          console.log(context.id, "finished taking from storage. Idle, going to look for some work");
           context.changeBehaviourState(new Idle_State());
           return;
         }
-        else{ // cannot gather from target
+        else { // cannot gather from target
           context.changeBehaviourState(new GoingHome_State());
           return;
         }
 
       }
     }
-    else{
+    else {
       context.moveToTarget(); // Advance towards target
     }
   }
@@ -735,7 +764,7 @@ class Gathering_State extends State {
    * @param {object|null} context - The agent object.
    */
 class Depositing_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "📦"; //📤?
   }
 
@@ -744,13 +773,13 @@ class Depositing_State extends State {
     this.checkForEnemy(context);
     context.moveToTarget();
     if (context.reachedTarget()) {
-      if(context.depositResources(context.targetNodeResource)){ // If can deposit
+      if (context.depositResources(context.targetNodeResource)) { // If can deposit
         context.target.agentTypeAllianceKey = context.type.key; // Change Node alliance key
-        context.changeBehaviourState(new Roaming_State());  // Go roaming
+        context.changeBehaviourState(new Idle_State());  // Go look for work
       }
       else {
         // If cannot deposit resources, go home
-        console.log(context.id," cannot deposit resources, going home.");
+        console.log(context.id, " cannot deposit resources, looking for work.");
         context.changeBehaviourState(new Idle_State());
       }
     }
@@ -767,7 +796,7 @@ class Depositing_State extends State {
  * @param {object|null} context - The agent object.
  */
 class GoingHome_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "🏠";
   }
 
@@ -775,17 +804,17 @@ class GoingHome_State extends State {
     this.checkForEnemy(context);
     //execute
     context.home = context.findHome(context.searchRadius);
-    if (context.home){context.setNewTarget(context.home);}
-    else{
+    if (context.home) { context.setNewTarget(context.home); }
+    else {
       context.changeBehaviourState(new Roaming_State());
       return;
     }
-    
+
 
     context.moveToTarget();
-    if (context.reachedTarget()){
+    if (context.reachedTarget()) {
       // If agent reached home and its not full
-      if(context.home && context.home.agentCapacity.length < context.home.maxAgentCapacity){
+      if (context.home && context.home.agentCapacity.length < context.home.maxAgentCapacity) {
         context.enterTargetNode();
         context.changeBehaviourState(new AtHome_State());
         return;
@@ -795,8 +824,8 @@ class GoingHome_State extends State {
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
-      context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE*3));
-      context.changeBehaviourState(new Roaming_State()); 
+      context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE * 3));
+      context.changeBehaviourState(new Roaming_State());
       return;
     }
   }
@@ -811,48 +840,47 @@ class GoingHome_State extends State {
  * @param {object|null} context - The agent object.
  */
 class AtHome_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "💤";
   }
 
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    if(context.target != context.home){ console.error("At home but target is not home."); }
+    if (context.target != context.home) { console.error("At home but target is not home."); }
 
     let newTargetQuery;
     if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
       // try to find resource node with food
-      newTargetQuery = context.findResourceNode(context.searchRadius*2, Resource.types.food.key);
+      context.targetResourceTypeKey = Resource.types.food.key;
+      newTargetQuery = context.findResourceNode(context.searchRadius * 2, Resource.types.food.key);
       if (newTargetQuery) { // If food found, gather
-        console.log(context.id,"ran out of food at home.")
+        console.log(context.id, "ran out of food at home.")
         context.setNewTarget(newTargetQuery);
-        context.targetResourceTypeKey = Resource.types.food.key;
         context.exitNode();
-        context.changeBehaviourState(new Gathering_State()); 
+        context.changeBehaviourState(new Gathering_State());
         return;
       }
-      else{ // Cannot consume resources, and cannot find resource node
+      else { // Cannot consume resources, and cannot find resource node
         // try to find storage node to take from
-        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius*2, Resource.types.food.key);
-        if(newTargetQuery){
-          console.log(context.id+" is at home hungry, going to gather food.");
+        newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
+        if (newTargetQuery) {
+          console.log(context.id + " is at home hungry, going to gather food.");
           context.setNewTarget(newTargetQuery);
-          context.targetResourceTypeKey = Resource.types.food.key;
           context.exitNode();
-          context.changeBehaviourState(new Gathering_State()); 
+          context.changeBehaviourState(new Gathering_State());
           return;
         }
-        else{
-          console.log(context.id+" ran out of resources and died at home.");
+        else {
+          console.log(context.id + " ran out of resources and died at home.");
           //context.exitNode();
           context.die();
           return;
-        }    
+        }
       }
 
     }
-    else{
+    else {
       // Is at home, has enough food to eat. Effectivdely Idle, look for work.
       //context.exitNode();
       //context.changeBehaviourState(new Idle_State());
@@ -866,7 +894,7 @@ class AtHome_State extends State {
 
 //#region Combat State
 class Combat_State extends State {
-  constructor(){
+  constructor() {
     super(); this.symbol = "⚔";
   }
   enter(agent) {
@@ -902,21 +930,21 @@ class Combat_State extends State {
 //#region Agent Class
 class Agent {
   static types = {
-    generic_Agent : {
-    key:"generic_Agent",
-    name: "Generic Agent",
-    description: "A general-purpose agent. Cost: 100",
-    colour:"black",
-    cost : 100,
-    symbol : "👤"
+    generic_Agent: {
+      key: "generic_Agent",
+      name: "Generic Agent",
+      description: "A general-purpose agent. Cost: 100",
+      colour: "black",
+      cost: 100,
+      symbol: "👤"
     },
-    raider_Agent  : {
-    key:"raider_Agent", 
-    name: "Raider",
-    description: "An aggressive agent.",
-    colour:"red",
-    cost : 0,
-    symbol : "🤺"
+    raider_Agent: {
+      key: "raider_Agent",
+      name: "Raider",
+      description: "An aggressive agent.",
+      colour: "red",
+      cost: 0,
+      symbol: "🤺"
     }
   }
 
@@ -946,7 +974,7 @@ class Agent {
   }
 
   update() {
-    if (this.behaviourState){
+    if (this.behaviourState) {
       this.behaviourState.execute(this);
     }
 
@@ -964,52 +992,52 @@ class Agent {
       this.colour,
       undefined
     );
-    drawText(this.behaviourState.symbol, screenX+(agentScreenSize/2), screenY-agentScreenSize, undefined,undefined,undefined,'center');
+    drawText(this.behaviourState.symbol, screenX + (agentScreenSize / 2), screenY - agentScreenSize, undefined, undefined, undefined, 'center');
   }
-  
-/**
- * Find the closest resource node within range and set it as the target.
- * If no resourceTypeKey is given, a node with any resource will be found.
- * @param {number} range - The maximum range to search for resource nodes.
- * @param {string} resourceTypeKey - The key of the desired resource type.
- * @returns {Node|null} - The closest resource node or null if none is found.
- */
-findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExcludeKey = undefined) {
-  let closestResourceNode = null;
-  let shortestDistance = range;
-  console.log(this.id, "Looking for", resourceTypeKey);
 
-  gameState.nodes.forEach((b) => {
-    const isEmpty = b.getResourceInInventory(resourceTypeKey).amount <= 0;
-    if (b.type.key === Node.types.resource_Node.key && !isEmpty) {
-      let soughtResource;
-      
-      if (resourceTypeKey) {
-        soughtResource = b.resourceInventory.find(resource => ( (resource.type.key === resourceTypeKey) && ( !resourceToExcludeKey || resource.type.key !== resourceToExcludeKey) ) );
-      }
-      else{
-        soughtResource = b.resourceInventory.find(resource => (resource.amount > 0 && ( resource.type.key != resourceToExcludeKey) ) );
-      }
-      
-      if (soughtResource) {
-        console.log(this.id, "Found", soughtResource);
-        const distance = calculateDistance(this, b);
-        if (distance < shortestDistance) {
-          shortestDistance = distance;
-          closestResourceNode = b;
+  /**
+   * Find the closest resource node within range and set it as the target.
+   * If no resourceTypeKey is given, a node with any resource will be found.
+   * @param {number} range - The maximum range to search for resource nodes.
+   * @param {string} resourceTypeKey - The key of the desired resource type.
+   * @returns {Node|null} - The closest resource node or null if none is found.
+   */
+  findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExcludeKey = undefined) {
+    let closestResourceNode = null;
+    let shortestDistance = range;
+    console.log(this.id, "Looking for", resourceTypeKey);
+
+    gameState.nodes.forEach((b) => {
+      const isEmpty = b.getResourceInInventory(resourceTypeKey).amount <= 0;
+      if (b.type.key === Node.types.resource_Node.key && !isEmpty) {
+        let soughtResource;
+
+        if (resourceTypeKey) {
+          soughtResource = b.resourceInventory.find(resource => ((resource.type.key === resourceTypeKey) && (!resourceToExcludeKey || resource.type.key !== resourceToExcludeKey)));
+        }
+        else {
+          soughtResource = b.resourceInventory.find(resource => (resource.amount > 0 && (resource.type.key != resourceToExcludeKey)));
+        }
+
+        if (soughtResource) {
+          console.log(this.id, "Found", soughtResource);
+          const distance = calculateDistance(this, b);
+          if (distance < shortestDistance) {
+            shortestDistance = distance;
+            closestResourceNode = b;
+          }
         }
       }
-    }
-  });
+    });
 
-  return closestResourceNode;
-}
+    return closestResourceNode;
+  }
 
   moveToTarget() {
     /*
     Moves Agent towards target
     */
-    if (!this.target){ console.error("Theres no target to move to"); return;}
+    if (!this.target) { console.error("Theres no target to move to"); return; }
 
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
@@ -1020,7 +1048,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
       this.x += (dx / distance) * this.speed;
       this.y += (dy / distance) * this.speed;
     }
-    else{
+    else {
       //console.error(this.id+" Cannot walk to target "+this.target);
       //console.log(this.target);
     }
@@ -1038,7 +1066,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     let targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
     if (resourceTypeKey && targetNodeResource && targetNodeResource.amount > 0) {
       targetNodeResource.amount -= amount;
-    } 
+    }
     else {
       // Find any available resource in the target's resource storage
       targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
@@ -1067,14 +1095,14 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
 
     if (this.getResourceInInventory(resourceTypeKey).amount >= this.maxCarry || this.target.getResourceInInventory(resourceTypeKey).amount <= 0) { // If there is NO space to carry or target is empty
       return false;
-    } 
+    }
     else {
       let targetNodeResource = null;
 
       if (resourceTypeKey) {
         // Find the specified resource type in the target's resource storage
         targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
-      } 
+      }
       else {
         // Find any available resource in the target's resource storage
         targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
@@ -1090,7 +1118,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
         console.log(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
         //console.log(this.resourceInventory);
         return true;
-      } 
+      }
       else {
         console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
         return false;
@@ -1104,7 +1132,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     let shortestDistance = range;
     let lowestCapacity = Infinity;
 
-    gameState.nodes.forEach( (b) => {
+    gameState.nodes.forEach((b) => {
       const distance = calculateDistance(this, b);
       const isFull = b.getResourceInInventory(this.targetResourceTypeKey).amount >= b.maxCapacity;
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && !isFull) {
@@ -1119,7 +1147,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
         }
       }
     });
-    if(!foundStorageNode){console.log(this.id,"Canot find empty storage node");}
+    if (!foundStorageNode) { console.log(this.id, "Canot find empty storage node"); }
     return foundStorageNode;
   }
 
@@ -1127,16 +1155,16 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     /* Find the closes storage node with the (lowest capacity OR shortest distance) */
     let foundStorageNode = null;
 
-    gameState.nodes.forEach( (b) => {
+    gameState.nodes.forEach((b) => {
       const distance = calculateDistance(this, b);
       const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
-      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount >= 0 && distance < this.searchRadius){
+      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount >= 0 && distance < this.searchRadius) {
         // Found empty storage node within search radius
         foundStorageNode = b;
       }
     });
-    
-    if(!foundStorageNode){console.log("Canot find storage node");}
+
+    if (!foundStorageNode) { console.log("Canot find storage node"); }
     return foundStorageNode;
   }
 
@@ -1153,68 +1181,69 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     // Iterate over all nodes to find the closest eligible home
     gameState.nodes.forEach((b) => {
       if (b.type.key === Node.types.home.key && b.agentCapacity.length < b.maxAgentCapacity) {
-        const pos1 =  {x:this.x, y:this.y};
-        const pos2 =  {x:b.x, y:b.y};
+        const pos1 = { x: this.x, y: this.y };
+        const pos2 = { x: b.x, y: b.y };
         const distance = calculateDistance(pos1, pos2);
         if (distance < shortestDistance) {
-            shortestDistance = distance;
-            foundHome = b;
+          shortestDistance = distance;
+          foundHome = b;
         }
       }
     });
 
     return foundHome;
   }
-  
+
   depositResources(resourceTypeKey = undefined) {
-  
+
+    resourceTypeKey = this.targetResourceTypeKey;
     if (resourceTypeKey) {
       // Deposit only the specified resource type
       let resourceType = Resource.types[resourceTypeKey];
       let resource = this.resourceInventory.find(r => r.type === resourceType);
 
       const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
-      const wouldOverflow = ( (totalResourceAmount + resource.amount) > this.target.maxCapacity);
+      const wouldOverflow = ((totalResourceAmount + resource.amount) >= this.target.maxCapacity);
       //check if would overflow
-      if (wouldOverflow){
-          //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
-          return false;
+      if (wouldOverflow) {
+        //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
+        return false;
       }
-      
+
       if (resource) {
         let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
         if (targetResource) {
           targetResource.amount += resource.amount;
-        } 
+        }
         else {
           targetResource = new Resource(resource.type.key, resource.amount);
           this.target.resourceInventory.push(targetResource);
         }
         this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
       }
-    } 
+    }
     else {
-      // Deposit all resources
+      console.log(this, "depositing all resources");
       this.resourceInventory.forEach(resource => {
         let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
         if (targetResource) {
           targetResource.amount += resource.amount;
-        } 
+        }
         else {
           targetResource = new Resource(resource.type.key, resource.amount);
           this.target.resourceInventory.push(targetResource);
         }
-        console.log(this.id, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+        //console.log(this, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
       });
       this.resourceInventory = [];
     }
-    
+
     this.carrying = 0;
     return true;
   }
-  
 
-  changeBehaviourState(newState){
+
+  changeBehaviourState(newState) {
     if (this.behaviourState) {
       this.behaviourState.exit(this); // Exit the current state
     }
@@ -1238,13 +1267,13 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     //define Agents inventory resource to consume
     let agentInvResource = this.getResourceInInventory(resourceTypeKey);// ? this.getResourceInInventory(resourceTypeKey) : this.resourceInventory[0];
     //console.log(this.resourceInventory, agentInvResource);
-    
+
     if (!agentInvResource) {
       //console.log(this.resourceInventory, agentInvResource);
       agentInvResource = { type: Resource.types.food, amount: 0 };
     }
 
-    if (agentInvResource.amount >= this.resourceHunger){
+    if (agentInvResource.amount >= this.resourceHunger) {
       agentInvResource.amount -= this.resourceHunger;
       //console.log(this.id, " consumed ", this.resourceHunger, resourceTypeKey);
       return true;
@@ -1257,16 +1286,16 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     }
   }
 
-  isHungry(){
+  isHungry() {
     return this.getResourceInInventory(Resource.types.food.key) <= this.resourceHunger;
   }
 
-  die(){
+  die() {
     console.log(`${this.id} has died.`);
     gameState.agents = gameState.agents.filter((agent) => agent !== this);
-    
+
     //if is at home then remove from home capacity
-    if (this.behaviourState.constructor.name  == AtHome_State.constructor.name && this.home.agentCapacity.length > 0){
+    if (this.behaviourState.constructor.name == AtHome_State.constructor.name && this.home.agentCapacity.length > 0) {
       this.home = this.home.agentCapacity.filter((agent) => agent !== this);
     }
 
@@ -1310,7 +1339,7 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
         }
 
         this.lastAttackTime = now;
-      } 
+      }
       else {
         console.log(`${this.id} has no valid target to attack.`);
         this.changeBehaviourState(new GoingHome_State());
@@ -1318,49 +1347,49 @@ findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExclud
     }
   }
 
-  setNewTarget(newTarget){
+  setNewTarget(newTarget) {
     /*
     Set a new target for the Agent.
     If the previoustarget is a unit with a valid ID then set previous target
     */
-    if (this.target){
+    if (this.target) {
       this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
     }
     this.target = newTarget;
   }
 
-  setRandomRoamPosition(){
+  setRandomRoamPosition() {
     let focus;
     const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
       //console.log("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
     }
-    else if( this.previousUnitTarget){  // Target doesnt have ID
+    else if (this.previousUnitTarget) {  // Target doesnt have ID
       focus = this.previousUnitTarget;
     }
-    else{
+    else {
       console.log("no target or id or prev");
       focus = this;
     }
 
-    this.setNewTarget( getRandomPositionInRange(focus, roamingRange) );  // sets a random position within the range of the object
+    this.setNewTarget(getRandomPositionInRange(focus, roamingRange));  // sets a random position within the range of the object
   }
 
-  enterTargetNode(){
-    if (this.target.agentCapacity.length == 0){
+  enterTargetNode() {
+    if (this.target.agentCapacity.length == 0) {
       this.target.agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
     }
     this.target.agentCapacity.push(this);
-    console.log(this.id," is entering node ", this.home.id);
+    console.log(this.id, " is entering node ", this.home.id);
   }
 
-  exitNode(){
+  exitNode() {
     this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
-    if (this.target.agentCapacity.length == 0){
+    if (this.target.agentCapacity.length == 0) {
       this.target.agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
     }
-    console.log(this.id," is leaving node ", this.home.id);
+    console.log(this.id, " is leaving node ", this.home.id);
   }
 
 
@@ -1452,26 +1481,26 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   const newNode = new Node(x, y, typeKey);
 
   // If initObj is given, initialise the new node with the given attributes
-  if (initObj){
-    console.log("INitialising : ",initObj);
+  if (initObj) {
+    console.log("INitialising : ", initObj);
     for (let key in initObj) {
       //console.log(attribute.key, attribute.value);
       newNode[key] = initObj[key];   // Set initial attributes
     }
   }
-  else{
-    console.log("NEW NODE INVENTORY",newNode.resourceInventory);
+  else {
+    console.log("NEW NODE INVENTORY", newNode.resourceInventory);
   }
 
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
-  if (emit){ socket.emit("update-building", newNode); }
+  if (emit) { socket.emit("update-building", newNode); }
   logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
   console.log(newNode);
   return newNode;
 }
 
-function addAgent(x, y, typeKey  = Agent.types.generic_Agent.key) {
+function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
   const newAgent = new Agent(x, y, Agent.types[typeKey]);
   //newAgent.type = ;  // if type is given set type if not then leave default
   gameState.agents.push(newAgent);
@@ -1548,14 +1577,14 @@ function calculateAndUpdateStoredResources(agentTypeKey = null) {
 }
 
 function subtractFromStoredResources(resCost, agentTypeKey) {
-  if (calculateAndUpdateStoredResources() < resCost) { console.log("/!\\YOU CANT BUY THAT/!\\ It costs "+resCost+" and you have "+gameState.totalStoredResources); return;}
+  if (calculateAndUpdateStoredResources() < resCost) { console.log("/!\\YOU CANT BUY THAT/!\\ It costs " + resCost + " and you have " + gameState.totalStoredResources); return; }
 
   gameState.nodes.forEach(node => {
     const resourceToSubtract = node.getResourceInInventory(Resource.types.rawMaterials.key);
     if (node.type.key == Node.types.storage_Node.key && resourceToSubtract && resCost > 0) { // Is storage node and can still subtract
       let availableCapacity = resourceToSubtract.amount;
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
-        resourceToSubtract.amount  -= resCost;
+        resourceToSubtract.amount -= resCost;
         resCost = 0;
         console.log("Subtracted ", resCost, " from ", node.resourceInventory);
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
@@ -1570,12 +1599,12 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
 }
 
 
-function calculateTotalLiveAgents(){
+function calculateTotalLiveAgents() {
   return gameState.agents.length;
 }
 
 //#region BUILD MENU
-const buildTypes  = Node.types;
+const buildTypes = Node.types;
 buildTypes.generic_Agent = Agent.types.generic_Agent;
 buildTypes.raider_Agent = Agent.types.raider_Agent;
 
@@ -1586,7 +1615,7 @@ function selectType(typeKey, initObj) {
     //gameState.selectedType.initObj = bui
     console.log(`Selected type: ${buildTypes[typeKey].key}`);
   }
-  else{
+  else {
     gameState.selectedType = null;
     //console.error(`Invalid type selected: ${type}`);
     console.log(`Invalid node type selected: ${typeKey}`);
@@ -1599,11 +1628,11 @@ function displayDetails(buildTypeKey) {
   // get build type from list
   buildType = buildTypes[buildTypeKey];
   const details = document.getElementById("selectedBuildItemInfo");
-  if(!buildType){ details.innerHTML=""; return; }  // buildType = {name:"Inspection Mode", description:"Click on a unit to view its information."
-  if(details){
+  if (!buildType) { details.innerHTML = ""; return; }  // buildType = {name:"Inspection Mode", description:"Click on a unit to view its information."
+  if (details) {
     details.innerHTML = `<p style="margin:0;"><b>${buildType.name}</b><br><i>${buildType.description}</i></p>`;
   }
-  
+
 }
 
 function togglePanel() {
@@ -1613,13 +1642,13 @@ function togglePanel() {
 
 document.querySelectorAll('.grid-item').forEach(item => {
   item.addEventListener('click', () => {
-      document.querySelectorAll('.grid-item').forEach(i => i.classList.remove('selected'));
-      item.classList.add('selected');
-      // Find node type by name
-      displayDetails(item.dataset.value);
-      console.log(item.dataset.initobj);
-      let initObj = item.dataset.initobj ? JSON.parse(item.dataset.initobj) : undefined;
-      selectType(item.dataset.value, initObj ? initObj : undefined  );
+    document.querySelectorAll('.grid-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    // Find node type by name
+    displayDetails(item.dataset.value);
+    console.log(item.dataset.initobj);
+    let initObj = item.dataset.initobj ? JSON.parse(item.dataset.initobj) : undefined;
+    selectType(item.dataset.value, initObj ? initObj : undefined);
   });
 });
 
@@ -1709,17 +1738,17 @@ canvas.addEventListener("wheel", (event) => {
 });
 
 // Prevent right-click context menu
-document.addEventListener('contextmenu', function(event) {
+document.addEventListener('contextmenu', function (event) {
   event.preventDefault();
 });
 
 // Prevent text selection
-document.addEventListener('selectstart', function(event) {
+document.addEventListener('selectstart', function (event) {
   event.preventDefault();
 });
 
 // Prevent text dragging
-document.addEventListener('dragstart', function(event) {
+document.addEventListener('dragstart', function (event) {
   event.preventDefault();
 });
 
@@ -1738,7 +1767,7 @@ canvas.addEventListener("click", (event) => {
 
 
   // Ensure a type is selected
-  if (gameState.selectedType!=null) {
+  if (gameState.selectedType != null) {
     // Check if the cell is already occupied
     if (isCellOccupied(snappedX, snappedY)) {
       console.log("Cannot place node: Cell is already occupied.");
@@ -1747,82 +1776,82 @@ canvas.addEventListener("click", (event) => {
     }
 
     // Subtract resources if can
-    if(!subtractFromStoredResources(gameState.selectedType.cost)){
+    if (!subtractFromStoredResources(gameState.selectedType.cost)) {
       console.log("cannot build unit");
       return;
     }
 
     let buildTypeIsAgent = Object.values(Agent.types).includes(gameState.selectedType);
-    if(buildTypeIsAgent){
+    if (buildTypeIsAgent) {
       addAgent(snappedX, snappedY, gameState.selectedType.key);
     }
-    else{
+    else {
       //console.log(JSON.parse(gameState.selectedType.initObj));
-      addNode(snappedX, snappedY, gameState.selectedType.key, true, gameState.selectedType.initObj );
+      addNode(snappedX, snappedY, gameState.selectedType.key, true, gameState.selectedType.initObj);
     }
     console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
-  else{
+  else {
     // Selecting a unit?
   }
-  
+
 });
 
 //#endregion
 
-function drawCivStatusBarUI(){
+function drawCivStatusBarUI() {
   calculateAndUpdateStoredResources(Node.types.generic_Agent.key);  // Update total stored resources
   const totalLiveAgents = calculateTotalLiveAgents(); //Calulate total live agents
   let totalCivResourceArray = [];
   // Calculate total amount of each resource
   gameState.nodes.forEach(node => {
-    if(node.type.key !== Node.types.resource_Node.key){
+    if (node.type.key !== Node.types.resource_Node.key) {
       node.resourceInventory.forEach(resource => {
         //For each resource of each node
         // Check if the resource is already in the array
         let existingResource = totalCivResourceArray.find(r => r.type.key === resource.type.key);
-        if(existingResource){
+        if (existingResource) {
           // If the resource is already in the array, add the amount to the existing resource
           existingResource.amount += resource.amount;
-        } 
-        else {  // If the resource is not in the array, add it to the array
-          totalCivResourceArray.push({type: resource.type, amount: resource.amount});
         }
-      }); 
+        else {  // If the resource is not in the array, add it to the array
+          totalCivResourceArray.push({ type: resource.type, amount: resource.amount });
+        }
+      });
     }
   });
 
   let civStatusUIText = "📦"; // Initialize the text to be displayed on the UI
-  let uiPosX = 10; let uiPosY = 30; 
+  let uiPosX = 10; let uiPosY = 30;
   const textSize = 20;
   const statSpacing = 3.5;
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
-  uiPosX += textSize*1.5;
+  uiPosX += textSize * 1.5;
   totalCivResourceArray.forEach(resource => {
     // Display the total amount of each resource on the UI
     //console.log("LETS GOOOOOO",resource);
-    civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount) }  `;
+    civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
     drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
-    uiPosX+=textSize*statSpacing;
-    });
+    uiPosX += textSize * statSpacing;
+  });
   civStatusUIText = `☥ ${totalLiveAgents}`;  // Display total live agents
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
 
   uiPosX = 10; uiPosY = 60;
   civStatusUIText = '❗';
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
-  uiPosX += textSize*1.5;
+  uiPosX += textSize * 1.5;
 
   //Calulcate surplus value
   const tmpTotalFood = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
-  const totalFood =  tmpTotalFood ? tmpTotalFood.amount : 0;
+  const totalFood = tmpTotalFood ? tmpTotalFood.amount : 0;
   const civResReqSurplus = totalFood - (totalLiveAgents * 50);
   // Determine Surplus colour, red bad, green good.
   let surplusColour;
-  if (civResReqSurplus <= 0){
+  if (civResReqSurplus <= 0) {
     surplusColour = 'red';
   }
-  else if (civResReqSurplus>0 && civResReqSurplus < (totalLiveAgents * 50)){
+  else if (civResReqSurplus > 0 && civResReqSurplus < (totalLiveAgents * 50)) {
     surplusColour = 'orange';
   }
   else {
@@ -1831,14 +1860,14 @@ function drawCivStatusBarUI(){
 
   civStatusUIText = `${Resource.types.food.symbol + Math.round(civResReqSurplus)}`;
   drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
-  uiPosX+=textSize*statSpacing;
-  
+  uiPosX += textSize * statSpacing;
+
   let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
   const civHomeReqSurplus = numHomes - totalLiveAgents;
-  if (civHomeReqSurplus < 0){
+  if (civHomeReqSurplus < 0) {
     surplusColour = 'red';
   }
-  else if (civHomeReqSurplus>=0 && civHomeReqSurplus < (totalLiveAgents) ){
+  else if (civHomeReqSurplus >= 0 && civHomeReqSurplus < (totalLiveAgents)) {
     surplusColour = 'orange';
   }
   else {
@@ -1855,7 +1884,7 @@ function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Fill the entire canvas with colour
   ctx.fillStyle = "rgb(51, 51, 51)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   // Draw grid
   //drawGrid();
 
@@ -1916,7 +1945,7 @@ function initializeGameObjects() {
     let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
     tmpInitObj.symbol = "🌾";
     //console.log(tmpInitObj);
-    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined,tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined, tmpInitObj);
     //tmpCustomTypeSymbolNode.type.symbol = "🌾";
 
     addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
