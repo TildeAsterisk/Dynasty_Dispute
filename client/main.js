@@ -465,7 +465,7 @@ class Node {
       return true;
     }
     else {
-      if (this.resourceInventory[0].amount < this.maxCapacity) {
+      if (this.resourceInventory[0].amount < this.maxCapacity && this.resourceInventory[0].amount > 0 ) {
         this.resourceInventory[0].amount += 0.05;
       }
       return false;
@@ -710,6 +710,10 @@ class Gathering_State extends State {
   execute(context) {
     this.checkForEnemy(context);  // Check for an Enemy, if found transition to Combat immediately
 
+    if(context.getResourceInInventory(Resource.types.food.key).amount > context.resourceHunger){
+      context.consumeResources(Resource.types.food.key); // Consume food
+    }
+
     if (context.reachedTarget()) {  // Reached Resource?
       //console.log("REACHED",context.target);
       if (context.gatherResources(context.targetResourceTypeKey)) { // If Target reached and resources gathered
@@ -771,6 +775,13 @@ class Depositing_State extends State {
   execute(context) {
     //Execute
     this.checkForEnemy(context);
+    //Dont eat when depositing resources, theres no point. Inventory will likely be empty right after. Don't get high on your own supply.
+
+    //if(context.target.getResourceInInventory(Resource.types.food.key).amount < context.resourceHunger){
+      //console.log(context.id,"has food to consume");
+      //context.consumeResources(Resource.types.food.key); // Consume food
+    //}
+
     context.moveToTarget();
     if (context.reachedTarget()) {
       if (context.depositResources(context.targetNodeResource)) { // If can deposit
@@ -779,8 +790,9 @@ class Depositing_State extends State {
       }
       else {
         // If cannot deposit resources, go home
-        console.log(context.id, " cannot deposit resources, looking for work.");
-        context.changeBehaviourState(new Idle_State());
+        console.log(context.id, "cannot deposit resources, storage would overflow, looking for work.");
+        context.targetResourceTypeKey = Resource.types.food.key;
+        context.changeBehaviourState(new Idle_State()); // go look for work to do
       }
     }
   }
@@ -1134,7 +1146,7 @@ class Agent {
 
     gameState.nodes.forEach((b) => {
       const distance = calculateDistance(this, b);
-      const isFull = b.getResourceInInventory(this.targetResourceTypeKey).amount >= b.maxCapacity;
+      const isFull = (b.getResourceInInventory(this.targetResourceTypeKey).amount+this.getResourceInInventory(this.targetResourceTypeKey).amount) >= b.maxCapacity;
       if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && !isFull) {
         // Found storage node within search radius
         if (b.getResourceInInventory(this.targetResourceTypeKey).amount < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
@@ -1200,13 +1212,18 @@ class Agent {
     if (resourceTypeKey) {
       // Deposit only the specified resource type
       let resourceType = Resource.types[resourceTypeKey];
-      let resource = this.resourceInventory.find(r => r.type === resourceType);
+      let resource = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
+      /*if (!resource){
+        resource = new Resource(resourceTypeKey, 0);
+        this.resourceInventory.push(resource);
+      }*/
 
       const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
       const wouldOverflow = ((totalResourceAmount + resource.amount) >= this.target.maxCapacity);
       //check if would overflow
       if (wouldOverflow) {
         //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
+        //this.targetResourceTypeKey = undefined;
         return false;
       }
 
@@ -1219,7 +1236,7 @@ class Agent {
           targetResource = new Resource(resource.type.key, resource.amount);
           this.target.resourceInventory.push(targetResource);
         }
-        this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
+        //this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
       }
     }
     else {
@@ -1279,7 +1296,7 @@ class Agent {
       return true;
     }
     else {  //Agent need to ead and cannot
-      console.log(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
+      //console.log(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
       return false;
       //this.die();
       //console.log(this.id+" has died due to lack of resources.");
@@ -1805,7 +1822,7 @@ function drawCivStatusBarUI() {
   let totalCivResourceArray = [];
   // Calculate total amount of each resource
   gameState.nodes.forEach(node => {
-    if (node.type.key !== Node.types.resource_Node.key) {
+    //if (node.type.key !== Node.types.resource_Node.key) {
       node.resourceInventory.forEach(resource => {
         //For each resource of each node
         // Check if the resource is already in the array
@@ -1818,7 +1835,7 @@ function drawCivStatusBarUI() {
           totalCivResourceArray.push({ type: resource.type, amount: resource.amount });
         }
       });
-    }
+    //}
   });
 
   let civStatusUIText = "📦"; // Initialize the text to be displayed on the UI
