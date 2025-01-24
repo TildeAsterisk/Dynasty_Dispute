@@ -37,6 +37,14 @@ class Node {
       cost: 50,
       symbol: "🏰"
 
+    },
+    path_Node : {
+      key: "path_Node",
+      name: "Path Node",
+      colour: "rgb(200, 200, 200)",
+      description: "A path for agents to travel on. Cost: 10",
+      cost: 10,
+      symbol: "🛤️"
     }
   }
 
@@ -57,6 +65,8 @@ class Node {
 
     this.regenCooldown = 120; // number of gameTicks between regen (24-60 per second) (20 is good and short)
     this.lastRegenTime = 0; // Time of the regen
+
+    this.neighbors = [];
 
   }
 
@@ -162,6 +172,15 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   if (emit) { socket.emit("update-building", newNode); }
   logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
   console.log(newNode);
+
+  //Update neighbors
+  gameState.nodes.forEach(node => {
+    if (node !== newNode && calculateDistance(newNode, node) < GRID_SIZE * 1.5) {
+      newNode.neighbors.push(node);
+      node.neighbors.push(newNode);
+    }
+  });
+
   return newNode;
 }
 

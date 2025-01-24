@@ -76,6 +76,7 @@ function initializeGameObjects() {
       newNode.agentTypeAllianceKey = netNode.agentTypeAllianceKey;
       newNode.regenCooldown = netNode.regenCooldown;
       newNode.lastRegenTime = netNode.lastRegenTime;
+      newNode.neighbors = netNode.neighbors;
       gameState.nodes.push(newNode);
       logMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
     });
