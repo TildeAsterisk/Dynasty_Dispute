@@ -1,0 +1,480 @@
+//#region Agent Class
+class Agent {
+  static types = {
+    generic_Agent: {
+      key: "generic_Agent",
+      name: "Generic Agent",
+      description: "A general-purpose agent. Cost: 100",
+      colour: "black",
+      cost: 100,
+      symbol: "👤"
+    },
+    raider_Agent: {
+      key: "raider_Agent",
+      name: "Raider",
+      description: "An aggressive agent.",
+      colour: "red",
+      cost: 0,
+      symbol: "🤺"
+    }
+  }
+
+  constructor(x, y, type = Agent.types.generic_Agent) {
+    this.id = "Agent" + gameState.spawnedUnitsCount;
+    this.x = x;
+    this.y = y;
+    this.colour = type.colour;
+    this.behaviourState = new Idle_State(); // Possible behaviourStates: idle, gathering, depositing
+    this.target = null; // Current target (node or position)
+    this.previousUnitTarget = this.target;  //Stores the previous valid target (non position)
+    this.carrying = 0; // Resources being carried
+    this.resourceInventory = [];
+    this.maxCarry = 5; // Max resources agent can carry
+    this.speed = 2; // Movement speed
+    this.home = null;
+    this.type = type;
+    this.resourceHunger = 0.01;  // Amount of resources consumed per iteration
+    this.searchRadius = GRID_SIZE * 7
+
+    // Combat properties
+    this.health = 100; // Agent's health
+    this.attackPower = 10; // Damage dealt by the agent
+    this.attackRange = 10; // Range of attack
+    this.attackCooldown = 1; // Seconds between attacks
+    this.lastAttackTime = 0; // Time of the last attack
+  }
+
+  update() {
+    if (this.behaviourState) {
+      this.behaviourState.execute(this);
+    }
+
+  }
+
+  draw() {
+    const screenX = (this.x - camera.x) * camera.scale;
+    const screenY = (this.y - camera.y) * camera.scale;
+    const agentScreenSize = (GRID_SIZE / 5) * camera.scale;
+    drawRect(
+      screenX,
+      screenY,
+      agentScreenSize,
+      agentScreenSize,
+      this.colour,
+      undefined
+    );
+    drawText(this.behaviourState.symbol, screenX + (agentScreenSize / 2), screenY - agentScreenSize, undefined, undefined, undefined, 'center');
+  }
+
+  /**
+   * Find the closest resource node within range and set it as the target.
+   * If no resourceTypeKey is given, a node with any resource will be found.
+   * @param {number} range - The maximum range to search for resource nodes.
+   * @param {string} resourceTypeKey - The key of the desired resource type.
+   * @returns {Node|null} - The closest resource node or null if none is found.
+   */
+  findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExcludeKey = undefined) {
+    let closestResourceNode = null;
+    let shortestDistance = range;
+    console.log(this.id, "Looking for", resourceTypeKey);
+
+    gameState.nodes.forEach((b) => {
+      const isEmpty = b.getResourceInInventory(resourceTypeKey).amount <= 0;
+      if (b.type.key === Node.types.resource_Node.key && !isEmpty) {
+        let soughtResource;
+
+        if (resourceTypeKey) {
+          soughtResource = b.resourceInventory.find(resource => ((resource.type.key === resourceTypeKey) && (!resourceToExcludeKey || resource.type.key !== resourceToExcludeKey)));
+        }
+        else {
+          soughtResource = b.resourceInventory.find(resource => (resource.amount > 0 && (resource.type.key != resourceToExcludeKey)));
+        }
+
+        if (soughtResource) {
+          console.log(this.id, "Found", soughtResource);
+          const distance = calculateDistance(this, b);
+          if (distance < shortestDistance) {
+            shortestDistance = distance;
+            closestResourceNode = b;
+          }
+        }
+      }
+    });
+
+    return closestResourceNode;
+  }
+
+  moveToTarget() {
+    /*
+    Moves Agent towards target
+    */
+    if (!this.target) { console.error("Theres no target to move to"); return; }
+
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > this.speed) {
+      //console.log("Waking to target");
+      this.x += (dx / distance) * this.speed;
+      this.y += (dy / distance) * this.speed;
+    }
+    else {
+      //console.error(this.id+" Cannot walk to target "+this.target);
+      //console.log(this.target);
+    }
+  }
+
+  reachedTarget() {
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    return Math.abs(dx) < 5 && Math.abs(dy) < 5;
+  }
+
+  addResourceToInventory(resourceTypeKey, amount) {
+
+    // Take the resource from the target's resource storage
+    let targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+    if (resourceTypeKey && targetNodeResource && targetNodeResource.amount > 0) {
+      targetNodeResource.amount -= amount;
+    }
+    else {
+      // Find any available resource in the target's resource storage
+      targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
+      targetNodeResource.amount -= amount;
+    }
+
+    // Add the resource to the inventory
+    let resource = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
+    if (resource) {
+      resource.amount += amount;
+    } else {
+      const newResource = new Resource(resourceTypeKey, amount);
+      this.resourceInventory.push(newResource);
+    }
+  }
+
+  /**
+   * Gather resources and return a boolean indicating if the gathering was successful.
+   * 
+   * @param {string} [resourceTypeKey=Resource.types.rawMaterials.key] - The key of the resource type to gather.
+   * @returns {boolean} - True if resources were successfully gathered, false otherwise.
+   */
+  gatherResources(resourceTypeKey) {
+    /* Gather resources and return bool if successful */
+    // NEEDS UPDATING SO THAT RESOURCE AMOUNT IS UPDATED. NOT PUSHED
+
+    if (this.getResourceInInventory(resourceTypeKey).amount >= this.maxCarry || this.target.getResourceInInventory(resourceTypeKey).amount <= 0) { // If there is NO space to carry or target is empty
+      return false;
+    }
+    else {
+      let targetNodeResource = null;
+
+      if (resourceTypeKey) {
+        // Find the specified resource type in the target's resource storage
+        targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+      }
+      else {
+        // Find any available resource in the target's resource storage
+        targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
+      }
+
+      if (targetNodeResource && targetNodeResource.amount > 0) {
+        this.carrying++;
+
+        this.addResourceToInventory(targetNodeResource.type.key, 1);
+
+        //resourceToGather.amount--;
+        //Subtract from target inventory
+        console.log(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
+        //console.log(this.resourceInventory);
+        return true;
+      }
+      else {
+        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
+        return false;
+      }
+    }
+  }
+
+  findStorageNode_LowestInRange(range = this.searchRadius) {
+    /* Find the closes storage node with the (lowest capacity OR shortest distance) */
+    let foundStorageNode = null;
+    let shortestDistance = range;
+    let lowestCapacity = Infinity;
+
+    gameState.nodes.forEach((b) => {
+      const distance = calculateDistance(this, b);
+      const isFull = (b.getResourceInInventory(this.targetResourceTypeKey).amount+this.getResourceInInventory(this.targetResourceTypeKey).amount) >= b.maxCapacity;
+      if (b.type.key === Node.types.storage_Node.key && distance < this.searchRadius && !isFull) {
+        // Found storage node within search radius
+        if (b.getResourceInInventory(this.targetResourceTypeKey).amount < lowestCapacity && distance < range) { //if node is within searchradius AND has lower capacity
+          lowestCapacity = b.getResourceInInventory(this.targetResourceTypeKey).amount;
+          foundStorageNode = b;
+
+          /*if (distance < shortestDistance){ // if node is within shortest distance
+            shortestDistance = distance;
+          }*/
+        }
+      }
+    });
+    if (!foundStorageNode) { console.log(this.id, "Canot find empty storage node"); }
+    return foundStorageNode;
+  }
+
+  findStorageNode_NotEmptyInRange(range = this.searchRadius, resourceTypeKey = Resource.types.rawMaterials.key) {
+    /* Find the closes storage node with the (lowest capacity OR shortest distance) */
+    let foundStorageNode = null;
+
+    gameState.nodes.forEach((b) => {
+      const distance = calculateDistance(this, b);
+      const soughtResource = b.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+      if (b.type.key === Node.types.storage_Node.key && soughtResource && soughtResource.amount >= 0 && distance < this.searchRadius) {
+        // Found empty storage node within search radius
+        foundStorageNode = b;
+      }
+    });
+
+    if (!foundStorageNode) { console.log("Canot find storage node"); }
+    return foundStorageNode;
+  }
+
+  findHome(range) {
+    /*
+    Find the closest Node of type Home and set target.
+    Find the closest home that has capacity and go there.
+
+    Output: foundHome
+    */
+    let foundHome = null; // If no home is found, return null
+    let shortestDistance = range;
+
+    // Iterate over all nodes to find the closest eligible home
+    gameState.nodes.forEach((b) => {
+      if (b.type.key === Node.types.home.key && b.agentCapacity.length < b.maxAgentCapacity) {
+        const pos1 = { x: this.x, y: this.y };
+        const pos2 = { x: b.x, y: b.y };
+        const distance = calculateDistance(pos1, pos2);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          foundHome = b;
+        }
+      }
+    });
+
+    return foundHome;
+  }
+
+  depositResources(resourceTypeKey = undefined) {
+
+    resourceTypeKey = this.targetResourceTypeKey;
+    if (resourceTypeKey) {
+      // Deposit only the specified resource type
+      let resourceType = Resource.types[resourceTypeKey];
+      let resource = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
+      /*if (!resource){
+        resource = new Resource(resourceTypeKey, 0);
+        this.resourceInventory.push(resource);
+      }*/
+
+      const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
+      const wouldOverflow = ((totalResourceAmount + resource.amount) >= this.target.maxCapacity);
+      //check if would overflow
+      if (wouldOverflow) {
+        //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
+        //this.targetResourceTypeKey = undefined;
+        return false;
+      }
+
+      if (resource) {
+        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+        if (targetResource) {
+          targetResource.amount += resource.amount;
+        }
+        else {
+          targetResource = new Resource(resource.type.key, resource.amount);
+          this.target.resourceInventory.push(targetResource);
+        }
+        //this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
+      }
+    }
+    else {
+      console.log(this, "depositing all resources");
+      this.resourceInventory.forEach(resource => {
+        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+        if (targetResource) {
+          targetResource.amount += resource.amount;
+        }
+        else {
+          targetResource = new Resource(resource.type.key, resource.amount);
+          this.target.resourceInventory.push(targetResource);
+        }
+        //console.log(this, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+      });
+      this.resourceInventory = [];
+    }
+
+    this.carrying = 0;
+    return true;
+  }
+
+
+  changeBehaviourState(newState) {
+    if (this.behaviourState) {
+      this.behaviourState.exit(this); // Exit the current state
+    }
+    this.behaviourState = newState;
+    this.behaviourState.enter(this); // Enter the new state
+  }
+
+  getResourceInInventory(resourceTypeKey) {
+    //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
+    //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
+    //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
+    return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) : new Resource(resourceTypeKey, 0);
+  }
+
+  /**
+   * Consumes resources of a specific type from the agent's inventory.
+   * @param {string} resourceTypeKey - The key of the resource type to consume.
+   * @returns {boolean} - Returns true if the agent has enough resources to consume, false otherwise.
+   */
+  consumeResources(resourceTypeKey) {
+    //define Agents inventory resource to consume
+    let agentInvResource = this.getResourceInInventory(resourceTypeKey);// ? this.getResourceInInventory(resourceTypeKey) : this.resourceInventory[0];
+    //console.log(this.resourceInventory, agentInvResource);
+
+    if (!agentInvResource) {
+      //console.log(this.resourceInventory, agentInvResource);
+      agentInvResource = { type: Resource.types.food, amount: 0 };
+    }
+
+    if (agentInvResource.amount >= this.resourceHunger) {
+      agentInvResource.amount -= this.resourceHunger;
+      //console.log(this.id, " consumed ", this.resourceHunger, resourceTypeKey);
+      return true;
+    }
+    else {  //Agent need to ead and cannot
+      //console.log(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
+      return false;
+      //this.die();
+      //console.log(this.id+" has died due to lack of resources.");
+    }
+  }
+
+  isHungry() {
+    return this.getResourceInInventory(Resource.types.food.key) <= this.resourceHunger;
+  }
+
+  die() {
+    console.log(`${this.id} has died.`);
+    gameState.agents = gameState.agents.filter((agent) => agent !== this);
+
+    //if is at home then remove from home capacity
+    if (this.behaviourState.constructor.name == AtHome_State.constructor.name && this.home.agentCapacity.length > 0) {
+      this.home = this.home.agentCapacity.filter((agent) => agent !== this);
+    }
+
+    delete this;
+  }
+
+  findEnemy(range = Infinity) {
+    /*
+    Finds an enemy and sets it as a target
+    */
+    let closestEnemy = null;
+    let shortestDistance = range;
+
+    gameState.agents.forEach((agent) => {
+      if (agent.type.key !== this.type.key && agent.health > 0) { // Find enemies with health > 0
+        const distance = calculateDistance(this, agent);
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          closestEnemy = agent;
+        }
+      }
+    });
+
+    //this.setNewTarget(closestEnemy);
+    return closestEnemy;
+  }
+
+
+  attackTarget() {
+    const now = gameState.gameTick;
+    if (now - this.lastAttackTime >= this.attackCooldown * 60) {
+      if (this.target && this.target.health > 0) {
+        console.log(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
+        this.target.health -= this.attackPower;
+
+        if (this.target.health <= 0) {
+          console.log(`${this.target.id} has been defeated.`);
+          this.target.die();
+          this.setNewTarget(null); // Reset target after defeat
+          this.changeBehaviourState(new GoingHome_State());
+        }
+
+        this.lastAttackTime = now;
+      }
+      else {
+        console.log(`${this.id} has no valid target to attack.`);
+        this.changeBehaviourState(new GoingHome_State());
+      }
+    }
+  }
+
+  setNewTarget(newTarget) {
+    /*
+    Set a new target for the Agent.
+    If the previoustarget is a unit with a valid ID then set previous target
+    */
+    if (this.target) {
+      this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
+    }
+    this.target = newTarget;
+  }
+
+  setRandomRoamPosition() {
+    let focus;
+    const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
+    if (this.target && this.target.id) {   // If target has ID (not random position)
+      //console.log("TARGET HAS ID");
+      focus = this.target;  // Set focus for random position range
+    }
+    else if (this.previousUnitTarget) {  // Target doesnt have ID
+      focus = this.previousUnitTarget;
+    }
+    else {
+      console.log("no target or id or prev");
+      focus = this;
+    }
+
+    this.setNewTarget(getRandomPositionInRange(focus, roamingRange));  // sets a random position within the range of the object
+  }
+
+  enterTargetNode() {
+    if (this.target.agentCapacity.length == 0) {
+      this.target.agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
+    }
+    this.target.agentCapacity.push(this);
+    console.log(this.id, " is entering node ", this.home.id);
+  }
+
+  exitNode() {
+    this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
+    if (this.target.agentCapacity.length == 0) {
+      this.target.agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
+    }
+    console.log(this.id, " is leaving node ", this.home.id);
+  }
+
+
+}
+
+function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
+  const newAgent = new Agent(x, y, Agent.types[typeKey]);
+  //newAgent.type = ;  // if type is given set type if not then leave default
+  gameState.agents.push(newAgent);
+  gameState.spawnedUnitsCount += 1;
+  return newAgent;
+}
