@@ -110,10 +110,12 @@ class Agent {
     */
     if (!this.target) { console.error("Theres no target to move to"); return; }
 
+    // Calulcate distance to target
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
+    // If not already close to target then move directly towards target
     if (distance > this.speed) {
       //console.log("Waking to target");
       this.x += (dx / distance) * this.speed;
@@ -270,15 +272,14 @@ class Agent {
     resourceTypeKey = this.targetResourceTypeKey;
     if (resourceTypeKey) {
       // Deposit only the specified resource type
-      let resourceType = Resource.types[resourceTypeKey];
-      let resource = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
+      let resourceInAgentInv = this.resourceInventory.find(r => r.type.key === resourceTypeKey);
       /*if (!resource){
         resource = new Resource(resourceTypeKey, 0);
         this.resourceInventory.push(resource);
       }*/
 
       const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
-      const wouldOverflow = ((totalResourceAmount + resource.amount) >= this.target.maxCapacity);
+      const wouldOverflow = ((totalResourceAmount + resourceInAgentInv.amount) >= this.target.maxCapacity);
       //check if would overflow
       if (wouldOverflow) {
         //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
@@ -286,14 +287,19 @@ class Agent {
         return false;
       }
 
-      if (resource) {
-        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
-        if (targetResource) {
-          targetResource.amount += resource.amount;
+      if (resourceInAgentInv) {
+        let resourceInTargetInv = this.target.resourceInventory.find(r => r.type === resourceInAgentInv.type);
+        if (resourceInTargetInv) {
+          resourceInTargetInv.amount += resourceInAgentInv.amount;
+          resourceInAgentInv.amount = 0;
         }
         else {
-          targetResource = new Resource(resource.type.key, resource.amount);
-          this.target.resourceInventory.push(targetResource);
+          // Add Empty resource to Agent inventory
+          resourceInTargetInv = new Resource(resourceInAgentInv.type.key, resourceInAgentInv.amount);
+          this.target.resourceInventory.push(resourceInTargetInv);
+          // Add Empty resource to Node INventory
+          resourceInAgentInv = new Resource(resourceInAgentInv.type.key, 0);
+          //this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceTypeKey);
         }
         //this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceType);
       }

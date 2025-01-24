@@ -34,7 +34,7 @@ class Node {
       name: "Barracks Node",
       colour: "orange",
       description: "Houses and trains Agents for defence.  Cost: 1000",
-      cost: 1000,
+      cost: 50,
       symbol: "🏰"
 
     }
@@ -116,6 +116,7 @@ class Node {
 
   checkCooldownRegen() {
     const now = gameState.gameTick;
+    const regenPerTick = 0.05;
     if (now - this.lastRegenTime >= this.regenCooldown * 60) { // Check if regen cooldown finished
       // Regenerate resources
       this.resourceInventory.forEach(resource => {
@@ -125,8 +126,8 @@ class Node {
       return true;
     }
     else {
-      if (this.resourceInventory[0].amount < this.maxCapacity && this.resourceInventory[0].amount > 0 ) {
-        this.resourceInventory[0].amount += 0.05;
+      if ( (this.resourceInventory[0].amount + regenPerTick)  <= this.maxCapacity && this.resourceInventory[0].amount > 0 ) {
+        this.resourceInventory[0].amount += regenPerTick;
       }
       return false;
     }

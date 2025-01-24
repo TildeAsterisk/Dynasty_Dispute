@@ -131,7 +131,6 @@ function drawCivStatusBarUI() {
   let totalCivResourceArray = [];
   // Calculate total amount of each resource
   gameState.nodes.forEach(node => {
-    //if (node.type.key !== Node.types.resource_Node.key) {
       node.resourceInventory.forEach(resource => {
         //For each resource of each node
         // Check if the resource is already in the array
@@ -144,8 +143,25 @@ function drawCivStatusBarUI() {
           totalCivResourceArray.push({ type: resource.type, amount: resource.amount });
         }
       });
-    //}
   });
+
+  // Calculate total amount of each STORED resource
+  let totalCivStorageNodesArray = gameState.nodes.filter(n => n.type.key === Node.types.storage_Node.key);
+  let totalCivStoredResourcesArray = [];
+  totalCivStorageNodesArray.forEach(sNode => {
+    sNode.resourceInventory.forEach(resource => {
+      //For each resource of each node
+      // Check if the resource is already in the array
+      let existingResource = totalCivStoredResourcesArray.find(r => r.type.key === resource.type.key);
+      if (existingResource) {
+        // If the resource is already in the array, add the amount to the existing resource
+        existingResource.amount += resource.amount;
+      }
+      else {  // If the resource is not in the array, add it to the array
+        totalCivStoredResourcesArray.push({ type: resource.type, amount: resource.amount });
+      }
+    });
+});
 
   let civStatusUIText = "📦"; // Initialize the text to be displayed on the UI
   let uiPosX = 10; let uiPosY = 30;
@@ -153,13 +169,31 @@ function drawCivStatusBarUI() {
   const statSpacing = 3.5;
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   uiPosX += textSize * 1.5;
-  totalCivResourceArray.forEach(resource => {
+
+  /*totalCivResourceArray.forEach(resource => {
     // Display the total amount of each resource on the UI
     //console.log("LETS GOOOOOO",resource);
     civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
     drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
     uiPosX += textSize * statSpacing;
-  });
+  });*/
+  
+  // Display the total amount of the resource on the UI
+  //console.log("LETS GOOOOOO",resource);
+
+  // display TOTAL food
+  let resource = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
+  resource = resource ? resource : { type: Resource.types.food, amount: 0 };
+  civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+  uiPosX += textSize * statSpacing;
+  // Display STORAED raw materials
+  resource = totalCivStoredResourcesArray.find(r => r.type.key === Resource.types.rawMaterials.key);
+  resource = resource ? resource : { type: Resource.types.rawMaterials, amount: 0 };
+  civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
+  drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
+  uiPosX += textSize * statSpacing;
+  
   civStatusUIText = `☥ ${totalLiveAgents}`;  // Display total live agents
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
 
@@ -168,7 +202,7 @@ function drawCivStatusBarUI() {
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   uiPosX += textSize * 1.5;
 
-  //Calulcate surplus value
+  //Calulcate surplus FOOD value
   const tmpTotalFood = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
   const totalFood = tmpTotalFood ? tmpTotalFood.amount : 0;
   const civResReqSurplus = totalFood - (totalLiveAgents * 50);

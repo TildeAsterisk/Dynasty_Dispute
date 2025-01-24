@@ -21,7 +21,7 @@ canvas.addEventListener("click", (event) => {
       console.log(gameObject);
       // IF SELECTED BARRACKS, OPEN MENU TO TRAIN AGENTS
       if (gameObject.type == Node.types.barracks_Node) {
-        displaySelectedUnitMenu(gameObject);
+        updateUnitInfo(gameObject);
       }
       return;
     }
@@ -29,7 +29,7 @@ canvas.addEventListener("click", (event) => {
 
   // Clear unit info if no unit is clicked
   updateUnitInfo(null);
-  displaySelectedUnitMenu(null);
+  updateUnitInfo(null);
   gameState.selectedUnit = null;
 });
 
