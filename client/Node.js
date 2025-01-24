@@ -141,6 +141,30 @@ class Node {
 
 }
 
+function addNode(x, y, typeKey, emit = true, initObj) {
+  const newNode = new Node(x, y, typeKey);
+
+  // If initObj is given, initialise the new node with the given attributes
+  if (initObj) {
+    console.log("INitialising : ", initObj);
+    for (let key in initObj) {
+      //console.log(attribute.key, attribute.value);
+      newNode[key] = initObj[key];   // Set initial attributes
+    }
+  }
+  else {
+    console.log("NEW NODE INVENTORY", newNode.resourceInventory);
+  }
+
+  gameState.nodes.push(newNode);
+  gameState.spawnedUnitsCount += 1;
+  if (emit) { socket.emit("update-building", newNode); }
+  logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
+  console.log(newNode);
+  return newNode;
+}
+
+
 /**
  * Calculates and updates the total stored resources in the game state.
  * If agentTypeKey is provided, it only considers storage nodes with the specified agent type alliance key.
@@ -196,25 +220,9 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
   return resCost <= 0;
 }
 
-function addNode(x, y, typeKey, emit = true, initObj) {
-  const newNode = new Node(x, y, typeKey);
-
-  // If initObj is given, initialise the new node with the given attributes
-  if (initObj) {
-    console.log("INitialising : ", initObj);
-    for (let key in initObj) {
-      //console.log(attribute.key, attribute.value);
-      newNode[key] = initObj[key];   // Set initial attributes
-    }
-  }
-  else {
-    console.log("NEW NODE INVENTORY", newNode.resourceInventory);
-  }
-
-  gameState.nodes.push(newNode);
-  gameState.spawnedUnitsCount += 1;
-  if (emit) { socket.emit("update-building", newNode); }
-  logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
-  console.log(newNode);
-  return newNode;
+// Function to check if a node exists at the given position
+function isCellOccupied(x, y) {
+  return gameState.nodes.some((node) => {
+    return node.x === x && node.y === y;
+  });
 }

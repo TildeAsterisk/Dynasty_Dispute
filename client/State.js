@@ -396,12 +396,12 @@ class AtHome_State extends State {
           console.log(context.id + " is at home hungry, going to gather food.");
           context.setNewTarget(newTargetQuery);
           context.exitNode();
-          context.changeBehaviourState(new Gathering_State());
+          context.changeBehaviourState( new Gathering_State() );
           return;
         }
         else {
-          console.log(context.id + " ran out of resources and died at home.");
-          //context.exitNode();
+          context.exitNode();
+          //console.log(context.id + " ran out of resources and died at home.");
           context.die();
           return;
         }

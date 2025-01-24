@@ -478,3 +478,18 @@ function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
   gameState.spawnedUnitsCount += 1;
   return newAgent;
 }
+
+function calculateTotalLiveAgents() {
+  return gameState.agents.length;
+}
+
+// Function to train agents
+function trainAgents() {
+  const numberOfAgents = document.getElementById("agentNumber").value;
+  if (numberOfAgents) {
+    console.log(`Training ${numberOfAgents} agents...`);
+    // Add your logic here to train the agents
+  } else {
+    console.log("Please enter the number of agents.");
+  }
+}
