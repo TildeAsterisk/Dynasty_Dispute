@@ -104,15 +104,15 @@ class Agent {
     return closestResourceNode;
   }
 
-  moveToTarget() {
-    /*
-    Moves Agent towards target
-    */
-    if (!this.target) { console.error("Theres no target to move to"); return; }
+  moveToTarget(bsTarget = this.target) {
+    if (!bsTarget) { console.error("Theres no target to move to"); return; }
+    //const bsTargetCentre = { x: bsTarget.x + GRID_SIZE / 2, y: bsTarget.y + GRID_SIZE / 2 };
+    // Instead of changing target to centre, draw cells with offset
+
 
     // Calulcate distance to target
-    const dx = this.target.x - this.x;
-    const dy = this.target.y - this.y;
+    const dx = bsTarget.x - this.x;
+    const dy = bsTarget.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // If not already close to target then move directly towards target
@@ -122,8 +122,8 @@ class Agent {
       this.y += (dy / distance) * this.speed;
     }
     else {
-      //console.error(this.id+" Cannot walk to target "+this.target);
-      //console.log(this.target);
+      //console.error(this.id+" Cannot walk to target "+bsTarget);
+      //console.log(bsTarget);
     }
   }
 

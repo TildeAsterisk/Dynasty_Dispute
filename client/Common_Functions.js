@@ -34,6 +34,10 @@ function drawText(text, x, y, size = 11, colour = "white", outlineColour = "blac
 
 // Draw rect on the canvas
 function drawRect(x, y, width, height, colour, fillPercent) {
+  // Offset the x and y to center the rectangle
+  x -= width / 2;
+  y -= height / 2;
+
   const lineWidth = 5;
   // Draw the outline
   if (fillPercent != undefined) {
@@ -56,6 +60,10 @@ function drawRect(x, y, width, height, colour, fillPercent) {
 }
 
 function drawASCIIartInRect(x, y, width, height, colour) {
+  // Offset the x and y to center the rectangle
+  x -= width / 2;
+  y -= height / 2;
+
   const asciiArt = `[↟_↟_↟_↟]
 [_↟_↟_↟_]
 [↟_↟_↟_↟]
@@ -94,6 +102,8 @@ function getGridCoordinates(worldX, worldY) {
 
 // Utility function to check if a point is within a rectangle
 function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
+  rectX -= rectWidth / 2;
+  rectY -= rectHeight / 2;
   return px >= rectX && px <= rectX + rectWidth &&
     py >= rectY && py <= rectY + rectHeight;
 }
