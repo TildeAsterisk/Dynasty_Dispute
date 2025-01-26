@@ -35,6 +35,7 @@ class Agent {
     this.type = type;
     this.resourceHunger = 0.01;  // Amount of resources consumed per iteration
     this.searchRadius = GRID_SIZE * 7
+    this.path = [];
 
     // Combat properties
     this.health = 100; // Agent's health
@@ -105,7 +106,11 @@ class Agent {
   }
 
   /**
-   * Agent moves to to target
+   * #### Agent moves to to target.
+   * - If has path:
+   *   - Move to next cell in path
+   * - If no path:
+   *   - Move directly to cell
    * 
    * @param {*} bsTarget - Behaviour State Target
    * @param {*} path - Path to target
@@ -116,10 +121,13 @@ class Agent {
     //const bsTargetCentre = { x: bsTarget.x + GRID_SIZE / 2, y: bsTarget.y + GRID_SIZE / 2 };
     // Instead of changing target to centre, draw cells with offset
 
-    if(path && path.length > 0){
-      bsTarget = path[0];
+    if(path && path.length > 0){  // If agent has path
+      // TO DO: Follow path....
+      // move to next point in path
+      // if reached point in path, move to next point in path
+      // if reached end of path, set path to empty
     }
-    else {
+    else {  // Agent has no path
       // Calulcate distance to target
       const dx = bsTarget.x - this.x;
       const dy = bsTarget.y - this.y;
@@ -441,11 +449,13 @@ class Agent {
     }
   }
 
+  /** 
+   * #### Sets a new target for the agent.
+   * If the current target is a unit with a valid ID then set previousUnitTarget before setting new target.
+   * @param {*} newTarget - New target to set.
+  */
   setNewTarget(newTarget) {
-    /*
-    Set a new target for the Agent.
-    If the previoustarget is a unit with a valid ID then set previous target
-    */
+    this.path = findPath(this, newTarget);  //Find a path to the new target.
     if (this.target) {
       this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
     }
@@ -485,7 +495,6 @@ class Agent {
     }
     console.log(this.id, " is leaving node ", this.home.id);
   }
-
 
 }
 

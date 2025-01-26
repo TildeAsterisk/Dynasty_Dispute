@@ -83,8 +83,9 @@ canvas.addEventListener("click", (event) => {
   const worldY = (event.clientY - rect.top) / camera.scale + camera.y;
 
   // Snap coordinates to the nearest grid cell
-  const snappedX = Math.floor(worldX / GRID_SIZE) * GRID_SIZE;
-  const snappedY = Math.floor(worldY / GRID_SIZE) * GRID_SIZE;
+  const gridCoords = getGridCoordinates(worldX, worldY);
+  const snappedX = gridCoords[0];
+  const snappedY = gridCoords[1];
 
 
   // Ensure a type is selected
