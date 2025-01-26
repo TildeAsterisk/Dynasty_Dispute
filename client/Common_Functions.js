@@ -178,9 +178,8 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
 
     openSet.delete(current);
     current.neighbors = getNeighbors(current);
-    //console.log(current.neighbors);
     for (let neighbor of current.neighbors) {
-      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1
+      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1. ADD COST
 
       if (tentative_gScore < gScore.get(neighbor)) {
         cameFrom.set(neighbor, current);

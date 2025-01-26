@@ -331,7 +331,7 @@ class GoingHome_State extends State {
     this.checkForEnemy(context);
     //execute
     context.home = context.findHome(context.searchRadius);
-    if (context.home) { context.setNewTarget(context.home); }
+    if (context.home && context.target.type.key !== Node.types.home.key) { context.setNewTarget(context.home); }
     else {
       context.changeBehaviourState(new Roaming_State());
       return;
