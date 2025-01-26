@@ -155,44 +155,70 @@ function heuristic(nodeA, nodeB) {
   return Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y);
 }
 
+/**
+ * Find the shortest path between two nodes using the A* algorithm
+ * 
+ * @param   {*}     startNode 
+ * @param   {*}     endNode 
+ * @param   {*}     gridNodes 
+ * @returns {Array} path
+ */
 function findPath(startNode, endNode, gridNodes = gameState.nodes) {
+  // Initialize the open set with the start node
   let openSet = new Set([startNode]);
+  // Map to keep track of the most efficient previous step to reach each node
   let cameFrom = new Map();
+  // Map to keep track of the cost of the cheapest path from start to each node
   let gScore = new Map(gridNodes.map(node => [node, Infinity]));
+  // Map to keep track of the estimated cost from start to end passing through each node
   let fScore = new Map(gridNodes.map(node => [node, Infinity]));
 
+  // The cost of the start node is 0
   gScore.set(startNode, 0);
+  // The estimated cost from start to end through the start node
   fScore.set(startNode, heuristic(startNode, endNode));
 
+  // Initialize the path as an empty array
+  let path = [];
+
+  // While there are nodes to evaluate in the open set
   while (openSet.size > 0) {
+    // Get the node in the open set with the lowest fScore value
     let current = [...openSet].reduce((a, b) => fScore.get(a) < fScore.get(b) ? a : b);
 
+    // If the current node is the end node, reconstruct the path
     if (current === endNode) {
-      let path = [];
       while (current) {
         path.unshift({ x: current.x, y: current.y });
         current = cameFrom.get(current);
       }
-      return path;
+      return path; // Return the reconstructed path
     }
 
+    // Remove the current node from the open set
     openSet.delete(current);
+    // Get the neighbors of the current node
     current.neighbors = getNeighbors(current);
     for (let neighbor of current.neighbors) {
-      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1. ADD COST
+      // Calculate the tentative gScore for the neighbor
+      // TODO: GetNodePathfindingScore??
+      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1
 
+      // If the tentative gScore is better, update the path
       if (tentative_gScore < gScore.get(neighbor)) {
+        // This path is the best until now. Record it!
         cameFrom.set(neighbor, current);
         gScore.set(neighbor, tentative_gScore);
         fScore.set(neighbor, gScore.get(neighbor) + heuristic(neighbor, endNode));
+        // If the neighbor is not in the open set, add it
         if (!openSet.has(neighbor)) {
           openSet.add(neighbor);
         }
       }
     }
   }
-
-  return []; // Return an empty array if no path is found
+  path = [];
+  return path; // Return an empty array if no path is found
 }
 
 
