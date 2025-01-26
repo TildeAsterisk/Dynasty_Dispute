@@ -59,6 +59,14 @@ function drawRect(x, y, width, height, colour, fillPercent) {
   //drawASCIIartInRect(x,y,width,height,colour);
 }
 
+function drawSprite(x, y, width, height, loadingUnitImg) {
+  if (!loadingUnitImg) {
+    return false;
+  }
+  ctx.drawImage(loadingUnitImg, x, y, width, height);
+  return true;
+}
+
 function drawASCIIartInRect(x, y, width, height, colour) {
   // Offset the x and y to center the rectangle
   //x -= width / 2;

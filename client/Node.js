@@ -8,7 +8,9 @@ class Node {
       colour: "brown",
       description: "A repository for resources. Cost: 50",
       cost: 50,
-      symbol: "📦"
+      symbol: "📦",
+      imgSrc: "Graphics/storage_node.png",
+      loadedImg: null
     },
     home:
     {
@@ -17,7 +19,9 @@ class Node {
       description: "A central hub for agents. Cost: 50",
       colour: "grey",
       cost: 50,
-      symbol: "🏠"
+      symbol: "🏠",
+      imgSrc: "Graphics/home.png",
+      loadedImg: null
     },
     resource_Node:
     {
@@ -26,7 +30,9 @@ class Node {
       colour: "green",
       description: "Contains resources to be extracted.  Cost: 100",
       cost: 100,
-      symbol: "🏭"
+      symbol: "🏭",
+      imgSrc: "Graphics/resource_node.png",
+      loadedImg: null
     },
     barracks_Node:
     {
@@ -35,7 +41,9 @@ class Node {
       colour: "orange",
       description: "Houses and trains Agents for defence.  Cost: 1000",
       cost: 50,
-      symbol: "🏰"
+      symbol: "🏰",
+      imgSrc: "Graphics/barracks_node.png",
+      loadedImg: null
 
     },
     path_Node : {
@@ -44,7 +52,9 @@ class Node {
       colour: "rgb(200, 200, 200)",
       description: "A path for agents to travel on. Cost: 10",
       cost: 10,
-      symbol: "🛤️"
+      symbol: "🛤️",
+      imgSrc: "Graphics/path_node.png",
+      loadedImg: null
     }
   }
 
@@ -111,14 +121,17 @@ class Node {
     }); //calculate fill percentage for each resource and add them up
     totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
 
-    drawRect(
-      screenX,
-      screenY,
-      GRID_SIZE * camera.scale,
-      GRID_SIZE * camera.scale,
-      this.type.colour,
-      totalResInvFillPct * 100  // Fill percentage
-    );
+    if(!drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, this.type.loadedImg)){
+      drawRect(
+        screenX,
+        screenY,
+        GRID_SIZE * camera.scale,
+        GRID_SIZE * camera.scale,
+        this.type.colour,
+        totalResInvFillPct * 100  // Fill percentage
+      );
+    }
+    /**/
     /*drawText(
       this.type.key,
       screenX + 5,

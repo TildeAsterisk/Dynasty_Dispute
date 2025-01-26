@@ -53,6 +53,16 @@ let gameState = {
   networkState: { nodes: [], agents: [], players: [] }
 };
 
+function preloadImages() {
+  console.log("PRELOADING GRAPHICAL ASSETS...");
+  Object.values(Node.types).forEach((nodeType) => {
+    console.log("Preloading image for node type: " + nodeType.key);
+    nodeType.loadedImg = new Image();
+    nodeType.loadedImg.src = nodeType.imgSrc;
+  });
+}
+preloadImages();
+
 //#endregion
 
 
