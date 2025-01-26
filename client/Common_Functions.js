@@ -151,12 +151,43 @@ function drawGrid() {
   }
 }
 
-function findPath(startNode, endNode) {
-  // Create a new pathfinder instance
-  //const pathfinder = new Pathfinder(gameState.nodes, startNode, endNode);
-  // Find the path
-  const path = [];
-  return path;
+function findPath(startNode, endNode, gridNodes = gameState.nodes) {
+  let openSet = new Set([startNode]);
+  let cameFrom = new Map();
+  let gScore = new Map(gridNodes.map(node => [node, Infinity]));
+  let fScore = new Map(gridNodes.map(node => [node, Infinity]));
+
+  gScore.set(startNode, 0);
+  fScore.set(startNode, heuristic(startNode, endNode));
+
+  while (openSet.size > 0) {
+    let current = [...openSet].reduce((a, b) => fScore.get(a) < fScore.get(b) ? a : b);
+
+    if (current === endNode) {
+      let path = [];
+      while (current) {
+        path.unshift({ x: current.x, y: current.y });
+        current = cameFrom.get(current);
+      }
+      return path;
+    }
+
+    openSet.delete(current);
+    for (let neighbor of current.neighbors) {
+      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1
+
+      if (tentative_gScore < gScore.get(neighbor)) {
+        cameFrom.set(neighbor, current);
+        gScore.set(neighbor, tentative_gScore);
+        fScore.set(neighbor, gScore.get(neighbor) + heuristic(neighbor, endNode));
+        if (!openSet.has(neighbor)) {
+          openSet.add(neighbor);
+        }
+      }
+    }
+  }
+
+  return []; // Return an empty array if no path is found
 }
 
 
