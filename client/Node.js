@@ -129,23 +129,23 @@ class Node {
       //console.log(this,this.neighbors);
       //find neighbor that id contains path_Node
       const connectedNodes = this.neighbors.filter(neighbor => neighbor.id );
-      if ((Array.isArray(this.neighbors) &&
+      /*if ((Array.isArray(this.neighbors) &&
         this.neighbors[0] && this.neighbors[0].id &&
         this.neighbors[1] && this.neighbors[1].id &&
         this.neighbors[3] && this.neighbors[3].id) || connectedNodes.length == 3) {  // If connected to North East and West
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
       }
-      else if(this.neighbors[1] && this.neighbors[1].id && 
+      else */if(connectedNodes.length == 2 && this.neighbors[1] && this.neighbors[1].id && 
         this.neighbors[3] && this.neighbors[3].id) {  // If connected to East and West
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-E_W.png";
       }
-      else if(this.neighbors[0] && this.neighbors[0].id && this.neighbors[1] && this.neighbors[1].id) {  // If connected to North and East
+      /*else if(connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[1] && this.neighbors[1].id) {  // If connected to North and East
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_E.png";
-      }
-      else if(this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
+      }*/
+      else if(connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_S.png";
         //Rotate 90 degrees
@@ -247,12 +247,9 @@ function addNode(x, y, typeKey, emit = true, initObj) {
 
   //Update neighbors
   newNode.neighbors = getNeighbors(newNode, gameState.nodes);
-  /*gameState.nodes.forEach(node => {
-    if (node !== newNode && calculateDistance(newNode, node) < GRID_SIZE * 1.5) {
-      newNode.neighbors.push(node);
-      node.neighbors.push(newNode);
-    }
-  });*/
+  gameState.nodes.forEach(node => {
+    node.neighbors = getNeighbors(node, gameState.nodes);
+  });
 
   return newNode;
 }
