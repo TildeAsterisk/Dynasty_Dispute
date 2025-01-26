@@ -126,6 +126,26 @@ class Agent {
       // move to next point in path
       // if reached point in path, move to next point in path
       // if reached end of path, set path to empty
+
+      const nextNode = path[0]; // Get the next node in the path
+
+      // Calculate distance to the next node
+      const dx = nextNode.x - this.x;
+      const dy = nextNode.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // If not already close to the next node, move directly towards it
+      if (distance > this.speed) {
+        this.x += (dx / distance) * this.speed;
+        this.y += (dy / distance) * this.speed;
+      } 
+      else {
+        // Move to the next node and remove it from the path
+        //this.x = nextNode.x;
+        //this.y = nextNode.y;
+        path = path.shift(); // Shift removes the first element from an array and returns it
+        this.path = path; //Set Agent path to the new path
+      }
     }
     else {  // Agent has no path
       // Calulcate distance to target
