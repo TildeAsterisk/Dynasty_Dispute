@@ -59,12 +59,12 @@ function drawRect(x, y, width, height, colour, fillPercent) {
   //drawASCIIartInRect(x,y,width,height,colour);
 }
 
-function drawSprite(x, y, width, height, loadingUnitImg) {
-  if (!loadingUnitImg || loadingUnitImg.width == 0) {
+function drawSprite(x, y, width, height, loadedUnitImg) {
+  if (!loadedUnitImg || loadedUnitImg.width == 0) {
     return false;
   }
 
-  ctx.drawImage(loadingUnitImg, x, y, width, height);
+  ctx.drawImage(loadedUnitImg, x, y, width, height);
   return true;
 }
 

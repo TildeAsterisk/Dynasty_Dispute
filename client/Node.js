@@ -111,8 +111,9 @@ class Node {
   }
 
   draw() {
-    const screenX = (this.x - camera.x) * camera.scale;
-    const screenY = (this.y - camera.y) * camera.scale;
+    // Draw node so its origin is in centre
+    const screenX = ((this.x - camera.x) * camera.scale);// - GRID_SIZE / 2;
+    const screenY = ((this.y - camera.y) * camera.scale);// - GRID_SIZE / 2;
     //calculate percentage of fill
     let totalResInvFillPct = 0;
     this.resourceInventory.forEach(invResource => {
@@ -122,14 +123,42 @@ class Node {
     totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
 
     //Determine nodeImg to draw
-    let loadedUnitImg = Node.types[this.type.key].loadedImg;
+    let loadedUnitImg = undefined;//Node.types[this.type.key].loadedImg;
     if(this.type.key == Node.types.path_Node.key){
       // Get load unit img based on connections
       //console.log(this,this.neighbors);
       //find neighbor that id contains path_Node
-      const connectedPaths = this.neighbors.filter(neighbor => neighbor.id );
-      switch (connectedPaths.length) {
-        case 1 || 2:
+      const connectedNodes = this.neighbors.filter(neighbor => neighbor.id );
+      if ((Array.isArray(this.neighbors) &&
+        this.neighbors[0] && this.neighbors[0].id &&
+        this.neighbors[1] && this.neighbors[1].id &&
+        this.neighbors[3] && this.neighbors[3].id) || connectedNodes.length == 3) {  // If connected to North East and West
+        loadedUnitImg = new Image();
+        loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
+      }
+      else if(this.neighbors[1] && this.neighbors[1].id && 
+        this.neighbors[3] && this.neighbors[3].id) {  // If connected to East and West
+        loadedUnitImg = new Image();
+        loadedUnitImg.src = "Graphics/path_Node-E_W.png";
+      }
+      else if(this.neighbors[0] && this.neighbors[0].id && this.neighbors[1] && this.neighbors[1].id) {  // If connected to North and East
+        loadedUnitImg = new Image();
+        loadedUnitImg.src = "Graphics/path_Node-N_E.png";
+      }
+      else if(this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
+        loadedUnitImg = new Image();
+        loadedUnitImg.src = "Graphics/path_Node-N_S.png";
+        //Rotate 90 degrees
+      }
+      else{
+        loadedUnitImg = new Image();
+        loadedUnitImg.src = "Graphics/path_Node-All.png";
+      }
+
+
+      /*switch (connectedNodes.length) {
+        case 1:
+        case 2:
           // Straight path
           loadedUnitImg = new Image();
           loadedUnitImg.src = "Graphics/path_Node-E_W.png";
@@ -140,11 +169,12 @@ class Node {
           loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
           break;
         default:
+          console.log("4 way junction",connectedNodes.length);
           // 4 way junction
           loadedUnitImg = new Image();
           loadedUnitImg.src = "Graphics/path_Node-All.png";
           break;
-      }
+      }*/
     }
     
     // Try to draw sprite, if not draw rectangle
