@@ -147,10 +147,15 @@ class Agent {
     }
   }
 
-  reachedTarget() {
-    const dx = this.target.x - this.x;
-    const dy = this.target.y - this.y;
-    return Math.abs(dx) < 5 && Math.abs(dy) < 5;
+  /**
+   * Evaluates if agent had reached target.
+   * @param {*} target - The target to reach. Defaults to Agent.target.
+   * @returns 
+   */
+  reachedTarget(target = this.target) {
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    return Math.abs(dx) < this.speed && Math.abs(dy) < this.speed;
   }
 
   addResourceToInventory(resourceTypeKey, amount) {
