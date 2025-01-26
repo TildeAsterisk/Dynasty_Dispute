@@ -104,26 +104,38 @@ class Agent {
     return closestResourceNode;
   }
 
-  moveToTarget(bsTarget = this.target) {
+  /**
+   * Agent moves to to target
+   * 
+   * @param {*} bsTarget - Behaviour State Target
+   * @param {*} path - Path to target
+   * @returns 
+   */
+  moveToTarget(bsTarget = this.target, path = []) {
     if (!bsTarget) { console.error("Theres no target to move to"); return; }
     //const bsTargetCentre = { x: bsTarget.x + GRID_SIZE / 2, y: bsTarget.y + GRID_SIZE / 2 };
     // Instead of changing target to centre, draw cells with offset
 
-
-    // Calulcate distance to target
-    const dx = bsTarget.x - this.x;
-    const dy = bsTarget.y - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // If not already close to target then move directly towards target
-    if (distance > this.speed) {
-      //console.log("Waking to target");
-      this.x += (dx / distance) * this.speed;
-      this.y += (dy / distance) * this.speed;
+    if(path && path.length > 0){
+      bsTarget = path[0];
     }
     else {
-      //console.error(this.id+" Cannot walk to target "+bsTarget);
-      //console.log(bsTarget);
+      // Calulcate distance to target
+      const dx = bsTarget.x - this.x;
+      const dy = bsTarget.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // If not already close to target then move directly towards target
+      if (distance > this.speed) {
+        //console.log("Waking to target");
+        this.x += (dx / distance) * this.speed;
+        this.y += (dy / distance) * this.speed;
+        // return false; still walking to target
+      }
+      else {
+        // console.error(this.id+" has reached target "+bsTarget);
+        // return true; reached target
+      }
     }
   }
 

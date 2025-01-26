@@ -187,8 +187,7 @@ class Roaming_State extends State {
       if (context.target) { // has target, move to it
         context.moveToTarget();
         if (context.reachedTarget()) { // Has target and reached it.
-          context.setRandomRoamPosition();  // move to new target
-          context.moveToTarget();
+          context.setRandomRoamPosition();  // set new random target
           return;
         }
         else {
