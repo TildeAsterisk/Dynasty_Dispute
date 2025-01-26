@@ -56,7 +56,7 @@ let gameState = {
 function preloadImages() {
   console.log("PRELOADING GRAPHICAL ASSETS...");
   Object.values(Node.types).forEach((nodeType) => {
-    console.log("Preloading image for node type: " + nodeType.key);
+    console.log("Preloading image for node type: " + nodeType.imgSrc);
     nodeType.loadedImg = new Image();
     nodeType.loadedImg.src = nodeType.imgSrc;
   });

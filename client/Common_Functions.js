@@ -60,9 +60,10 @@ function drawRect(x, y, width, height, colour, fillPercent) {
 }
 
 function drawSprite(x, y, width, height, loadingUnitImg) {
-  if (!loadingUnitImg) {
+  if (!loadingUnitImg || loadingUnitImg.width == 0) {
     return false;
   }
+
   ctx.drawImage(loadingUnitImg, x, y, width, height);
   return true;
 }

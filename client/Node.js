@@ -121,7 +121,34 @@ class Node {
     }); //calculate fill percentage for each resource and add them up
     totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
 
-    if(!drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, this.type.loadedImg)){
+    //Determine nodeImg to draw
+    let loadedUnitImg = Node.types[this.type.key].loadedImg;
+    if(this.type.key == Node.types.path_Node.key){
+      // Get load unit img based on connections
+      //console.log(this,this.neighbors);
+      //find neighbor that id contains path_Node
+      const connectedPaths = this.neighbors.filter(neighbor => neighbor.id );
+      switch (connectedPaths.length) {
+        case 1 || 2:
+          // Straight path
+          loadedUnitImg = new Image();
+          loadedUnitImg.src = "Graphics/path_Node-E_W.png";
+          break;
+        case 3:
+          // T junction
+          loadedUnitImg = new Image();
+          loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
+          break;
+        default:
+          // 4 way junction
+          loadedUnitImg = new Image();
+          loadedUnitImg.src = "Graphics/path_Node-All.png";
+          break;
+      }
+    }
+    
+    // Try to draw sprite, if not draw rectangle
+    if(!drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, loadedUnitImg)){
       drawRect(
         screenX,
         screenY,
