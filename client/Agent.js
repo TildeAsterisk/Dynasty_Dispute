@@ -166,10 +166,10 @@ class Agent {
         this.y += (dy / distance) * this.speed;
         // return false; still walking to target
       }
-      else {
+      /*else {
         console.log(this.id+" has reached target "+bsTarget);
         // return true; reached target
-      }
+      }*/
     }
   }
 
@@ -181,7 +181,7 @@ class Agent {
   reachedTarget(target = this.target) {
     const dx = target.x - this.x;
     const dy = target.y - this.y;
-    return Math.abs(dx) < this.speed && Math.abs(dy) < this.speed;
+    return Math.abs(dx) <= this.speed && Math.abs(dy) <= this.speed;
   }
 
   addResourceToInventory(resourceTypeKey, amount) {

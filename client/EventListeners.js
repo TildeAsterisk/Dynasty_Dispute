@@ -2,19 +2,18 @@
 //#region Canvas Events
 // Event handler for selecting a unit
 canvas.addEventListener("click", (event) => {
-  const rect = canvas.getBoundingClientRect();
-  const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
-  const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
+  //const rect = canvas.getBoundingClientRect();
+  // Get Screen to World Coords
+  const mouseToWorldCoords = screenToWorldCoordinates(event.clientX, event.clientY,0);
+  //const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
+  //const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
 
   const gameObjectsArray = gameState.nodes.concat(gameState.agents);
 
   // Check for clicked node
   for (const gameObject of gameObjectsArray) {
-    const nodeScreenX = (gameObject.x - camera.x) * camera.scale;
-    const nodeScreenY = (gameObject.y - camera.y) * camera.scale;
-    const nodeSize = GRID_SIZE * camera.scale;
 
-    if (isPointInRect(mouseX, mouseY, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
+    if (isPointInRect(mouseToWorldCoords.x, mouseToWorldCoords.y, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
       // Display gameObject info
       updateUnitInfo(gameObject);
       gameState.selectedUnit = gameObject;
@@ -79,11 +78,10 @@ canvas.addEventListener("click", (event) => {
   const rect = canvas.getBoundingClientRect();
 
   // Convert screen coordinates to world coordinates
-  const worldX = (event.clientX - rect.left) / camera.scale + camera.x;
-  const worldY = (event.clientY - rect.top) / camera.scale + camera.y;
+  const worldsCoords = screenToWorldCoordinates(event.clientX, event.clientY, GRID_SIZE/2);
 
   // Snap coordinates to the nearest grid cell
-  const gridCoords = getGridCoordinates(worldX, worldY);
+  const gridCoords = getGridCoordinates(worldsCoords.x, worldsCoords.y);
   const snappedX = gridCoords[0];
   const snappedY = gridCoords[1];
 

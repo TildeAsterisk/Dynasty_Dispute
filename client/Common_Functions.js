@@ -35,8 +35,8 @@ function drawText(text, x, y, size = 11, colour = "white", outlineColour = "blac
 // Draw rect on the canvas
 function drawRect(x, y, width, height, colour, fillPercent) {
   // Offset the x and y to center the rectangle
-  //x -= width / 2;
-  //y -= height / 2;
+  x -= width / 2;
+  y -= height / 2;
 
   const lineWidth = 5;
   // Draw the outline
@@ -63,15 +63,17 @@ function drawSprite(x, y, width, height, loadedUnitImg) {
   if (!loadedUnitImg || loadedUnitImg.width == 0) {
     return false;
   }
-
+  // Offset the x and y to center the rectangle
+  x -= width / 2;
+  y -= height / 2;
   ctx.drawImage(loadedUnitImg, x, y, width, height);
   return true;
 }
 
 function drawASCIIartInRect(x, y, width, height, colour) {
   // Offset the x and y to center the rectangle
-  //x -= width / 2;
-  //y -= height / 2;
+  x -= width / 2;
+  y -= height / 2;
 
   const asciiArt = `[↟_↟_↟_↟]
 [_↟_↟_↟_]
@@ -109,10 +111,19 @@ function getGridCoordinates(worldX, worldY) {
   return [gridX, gridY]; // Return as a unique key for the cell
 }
 
+function screenToWorldCoordinates(screenX, screenY, offset){
+  const rect = canvas.getBoundingClientRect();
+  let worldCoords = {};
+  worldCoords.x = ((screenX - rect.left) / camera.scale + camera.x) + offset;
+  worldCoords.y = ((screenY - rect.top) / camera.scale + camera.y) + offset;
+  return worldCoords;
+}
+
 // Utility function to check if a point is within a rectangle
 function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
-  //rectX -= rectWidth / 2;
-  //rectY -= rectHeight / 2;
+  // Centre coords in drawn rect
+  rectX -= rectWidth / 2;
+  rectY -= rectHeight / 2;
   return px >= rectX && px <= rectX + rectWidth &&
     py >= rectY && py <= rectY + rectHeight;
 }
