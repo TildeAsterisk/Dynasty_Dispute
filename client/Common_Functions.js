@@ -189,8 +189,8 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
     // If the current node is the end node, reconstruct the path
     if (current === endNode) {
       while (current) {
-        const currentPathCost = getNodePathfindingScore(current);
-        path.unshift({ x: current.x, y: current.y, currentPathCost });
+        const pathfindingScore = getNodePathfindingScore(current);
+        path.unshift({ id:current.id, x: current.x, y: current.y, pathfindingScore });
         current = cameFrom.get(current);
       }
       return path; // Return the reconstructed path
@@ -243,7 +243,7 @@ function getNeighbors(node = this, grid = gameState.nodes) {
       neighbors.push(neighborNode);
     }
     else{
-      neighbors.push({x: neighborX, y: neighborY, pathfindingScore:5}); // Add the coordinates of the neighbor node
+      neighbors.push({x: neighborX, y: neighborY, pathfindingScore:defaultPathfindingCost}); // Add the coordinates of the neighbor node
     }
   }
 
@@ -257,11 +257,11 @@ function getNodePathfindingScore(node){
   else{ // node doesnt have a pathfinding score
     if(node.id){
       //Set cost based on Node ID
-      node.pathfindingScore = 5;
+      node.pathfindingScore = defaultPathfindingCost;
     }
     else{
-      // Node doesnt have id, set cost 2. Greather than a path.
-      node.pathfindingScore = 2;
+      // Node doesnt have id, set cost one less than default. Greather than a path.
+      node.pathfindingScore = defaultPathfindingCost - 1;
     }
 
   }

@@ -128,6 +128,8 @@ class Agent {
       // if reached end of path, set path to empty
       //console.log(this.id, " IF FOLLOWING PATH ", path[0]);
       const nextNode = path[0]; // Get the next node in the path
+      bsTarget = nextNode;
+      
 
       // Calculate distance to the next node
       const dx = nextNode.x - this.x;
@@ -135,7 +137,8 @@ class Agent {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       // If not already close to the next node, move directly towards it
-      if (distance > this.speed) {
+      if (distance >= this.speed) {
+        //console.log(this.id,"moving to path node",nextNode);
         this.x += (dx / distance) * this.speed;
         this.y += (dy / distance) * this.speed;
       } 
@@ -143,8 +146,11 @@ class Agent {
         // Move to the next node and remove it from the path
         //this.x = nextNode.x;
         //this.y = nextNode.y;
-        path = path.shift(); // Shift removes the first element from an array and returns it
+        //console.log("Next node in path is", nextNode,path);
+        path.shift(); // Shift removes the first element from an array and returns it
         this.path = path; //Set Agent path to the new path
+        //console.log(this.id,"arrived at",nextNode,"in",path,"next is",path[1]);
+        //newpath set, move to next node in path
       }
     }
     else {  // Agent has no path
@@ -161,7 +167,7 @@ class Agent {
         // return false; still walking to target
       }
       else {
-        // console.error(this.id+" has reached target "+bsTarget);
+        console.log(this.id+" has reached target "+bsTarget);
         // return true; reached target
       }
     }

@@ -38,6 +38,8 @@ const camera = {
   scale: 1,
 };
 
+const defaultPathfindingCost = 5;
+
 // Initialise Game State
 let gameState = {
   nodes: [],

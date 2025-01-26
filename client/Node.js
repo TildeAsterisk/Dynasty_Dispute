@@ -68,7 +68,7 @@ class Node {
 
     this.neighbors = [];
 
-    this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : 5 ; // 
+    this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : defaultPathfindingCost ;
 
   }
 
