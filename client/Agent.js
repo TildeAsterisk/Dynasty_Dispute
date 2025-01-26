@@ -483,7 +483,7 @@ class Agent {
     let thisGridCoords = getGridCoordinates(this.x, this.y);
     thisGridCoords = { x: thisGridCoords[0], y: thisGridCoords[1] };
     this.path = findPath(thisGridCoords, newTarget);  //Find a path to the new target.
-    //console.log(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
+    console.log(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
     if (this.target) {
       this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
     }
