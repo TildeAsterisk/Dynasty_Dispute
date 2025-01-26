@@ -68,6 +68,8 @@ class Node {
 
     this.neighbors = [];
 
+    this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : 5 ; // 
+
   }
 
   update() {

@@ -189,7 +189,8 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
     // If the current node is the end node, reconstruct the path
     if (current === endNode) {
       while (current) {
-        path.unshift({ x: current.x, y: current.y });
+        const currentPathCost = getNodePathfindingScore(current);
+        path.unshift({ x: current.x, y: current.y, currentPathCost });
         current = cameFrom.get(current);
       }
       return path; // Return the reconstructed path
@@ -202,7 +203,8 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
     for (let neighbor of current.neighbors) {
       // Calculate the tentative gScore for the neighbor
       // TODO: GetNodePathfindingScore??
-      let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1
+      neighbor.pathfindingScore = getNodePathfindingScore(neighbor);
+      let tentative_gScore = gScore.get(current) + neighbor.pathfindingScore; // Assuming each move has a cost of 1
 
       // If the tentative gScore is better, update the path
       if (tentative_gScore < gScore.get(neighbor)) {
@@ -237,15 +239,34 @@ function getNeighbors(node = this, grid = gameState.nodes) {
 
     // Find a node in the grid that matches the neighbor's coordinates
     const neighborNode = grid.find(node => node.x === neighborX && node.y === neighborY);
-    if (neighborNode && !neighborNode.isWall) { // If a node is found and it is not a wall, add it to the neighbors array
+    if (neighborNode && !neighborNode.isWall) { // If a node is found and it is not a wall, add it to the neighbors array TODO: node.isWall?
       neighbors.push(neighborNode);
     }
     else{
-      neighbors.push({x: neighborX, y: neighborY}); // Add the coordinates of the neighbor node
+      neighbors.push({x: neighborX, y: neighborY, pathfindingScore:5}); // Add the coordinates of the neighbor node
     }
   }
 
   return neighbors;
+}
+
+function getNodePathfindingScore(node){
+  if(node.pathfindingScore){
+    return node.pathfindingScore;
+  }
+  else{ // node doesnt have a pathfinding score
+    if(node.id){
+      //Set cost based on Node ID
+      node.pathfindingScore = 5;
+    }
+    else{
+      // Node doesnt have id, set cost 2. Greather than a path.
+      node.pathfindingScore = 2;
+    }
+
+  }
+
+  return node.pathfindingScore;
 }
 
 
