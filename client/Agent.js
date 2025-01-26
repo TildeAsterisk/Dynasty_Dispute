@@ -116,7 +116,7 @@ class Agent {
    * @param {*} path - Path to target
    * @returns 
    */
-  moveToTarget(bsTarget = this.target, path = []) {
+  moveToTarget(bsTarget = this.target, path = this.path) {
     if (!bsTarget) { console.error("Theres no target to move to"); return; }
     //const bsTargetCentre = { x: bsTarget.x + GRID_SIZE / 2, y: bsTarget.y + GRID_SIZE / 2 };
     // Instead of changing target to centre, draw cells with offset
@@ -126,7 +126,7 @@ class Agent {
       // move to next point in path
       // if reached point in path, move to next point in path
       // if reached end of path, set path to empty
-
+      //console.log(this.id, " IF FOLLOWING PATH ", path[0]);
       const nextNode = path[0]; // Get the next node in the path
 
       // Calculate distance to the next node
@@ -480,7 +480,10 @@ class Agent {
    * @param {*} newTarget - New target to set.
   */
   setNewTarget(newTarget) {
-    this.path = findPath(this, newTarget);  //Find a path to the new target.
+    let thisGridCoords = getGridCoordinates(this.x, this.y);
+    thisGridCoords = { x: thisGridCoords[0], y: thisGridCoords[1] };
+    this.path = findPath(thisGridCoords, newTarget);  //Find a path to the new target.
+    //console.log(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
     if (this.target) {
       this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
     }

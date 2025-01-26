@@ -174,12 +174,13 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   console.log(newNode);
 
   //Update neighbors
-  gameState.nodes.forEach(node => {
+  newNode.neighbors = getNeighbors(newNode, gameState.nodes);
+  /*gameState.nodes.forEach(node => {
     if (node !== newNode && calculateDistance(newNode, node) < GRID_SIZE * 1.5) {
       newNode.neighbors.push(node);
       node.neighbors.push(newNode);
     }
-  });
+  });*/
 
   return newNode;
 }

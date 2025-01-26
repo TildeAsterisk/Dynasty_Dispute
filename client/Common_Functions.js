@@ -151,6 +151,10 @@ function drawGrid() {
   }
 }
 
+function heuristic(nodeA, nodeB) {
+  return Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y);
+}
+
 function findPath(startNode, endNode, gridNodes = gameState.nodes) {
   let openSet = new Set([startNode]);
   let cameFrom = new Map();
@@ -173,6 +177,7 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
     }
 
     openSet.delete(current);
+    current.neighbors = getNeighbors(current);
     for (let neighbor of current.neighbors) {
       let tentative_gScore = gScore.get(current) + 1; // Assuming each move has a cost of 1
 
@@ -190,6 +195,32 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
   return []; // Return an empty array if no path is found
 }
 
+
+function getNeighbors(node = this, grid = gameState.nodes) {
+  const neighbors = [];
+  const directions = [
+      { x: 0, y: -1 }, // up
+      { x: 1, y: 0 },  // right
+      { x: 0, y: 1 },  // down
+      { x: -1, y: 0 }  // left
+  ];
+
+  for (const direction of directions) {
+    const neighborX = node.x + (direction.x * GRID_SIZE);
+    const neighborY = node.y + (direction.y * GRID_SIZE);
+
+    // Find a node in the grid that matches the neighbor's coordinates
+    const neighborNode = grid.find(node => node.x === neighborX && node.y === neighborY);
+    if (neighborNode && !neighborNode.isWall) { // If a node is found and it is not a wall, add it to the neighbors array
+      neighbors.push(neighborNode);
+    }
+    else{
+      neighbors.push({x: neighborX, y: neighborY}); // Add the coordinates of the neighbor node
+    }
+  }
+
+  return neighbors;
+}
 
 
 //#endregion
