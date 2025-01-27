@@ -27,7 +27,7 @@ canvas {
     z-index: 1000;
 }
 
-#menu button {
+/*#menu button {
     display: block;
     margin: 5px 0;
     padding: 5px 10px;
@@ -41,7 +41,7 @@ canvas {
 #menu button:hover {
     background: lightgray;
     color: black;
-}
+}*/
 
 /* Build Menu Grid */
 .grid-panel {

@@ -330,12 +330,14 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    context.home = context.findHome(context.searchRadius);
-    if (context.home && context.target.type.key !== Node.types.home.key) { context.setNewTarget(context.home); }
-    else {
-      context.changeBehaviourState(new Roaming_State());
-      return;
+    if(!context.home || context.home.type.key !== Node.types.home.key){
+      context.home = context.findHome(context.searchRadius);
     }
+    if (context.home) { context.setNewTarget(context.home); }
+    /*else {
+      //context.changeBehaviourState(new Roaming_State());
+      //return;
+    }*/
 
 
     context.moveToTarget();
@@ -351,9 +353,9 @@ class GoingHome_State extends State {
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
-      context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE * 3));
-      context.changeBehaviourState(new Roaming_State());
-      return;
+      //context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE * 3));
+      //context.changeBehaviourState(new Roaming_State());
+      //return;
     }
   }
 }

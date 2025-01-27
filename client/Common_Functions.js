@@ -2,7 +2,9 @@
 // Draw text on the canvas
 function drawText(text, x, y, size = 11, colour = "white", outlineColour = "black", textAlign = null) {
   if (typeof text != "string") { console.error("text is not a string"); console.log(text); return; }
-
+  //Centre text to cell
+  x-= size/2;
+  y-=size/2;
   ctx.font = size.toString() + "px Arial";
   if (textAlign == "center") {
     ctx.textAlign = 'center';

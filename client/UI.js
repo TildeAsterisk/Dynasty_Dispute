@@ -25,7 +25,6 @@ function updateUnitInfo(object = null) {
     return;
   }
 
-
   // Create table element
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
@@ -72,6 +71,18 @@ function updateUnitInfo(object = null) {
 
   // Set the inner HTML of the div and append the table
   unitInfoDiv.innerHTML = `<b>${object.id}</b>`;
+  // Create a button element
+  const button = document.createElement('button');
+  // Set the button's properties
+  button.innerText = 'Destroy';
+  button.id = 'myButton';
+  button.style = 'margin-left:5px;';
+  // Optionally, add event listeners to the button
+  button.addEventListener('click', function() {
+    alert('Button clicked!');
+  });
+  // Append the button to your div
+  unitInfoDiv.appendChild(button);
   unitInfoDiv.appendChild(table);
   //unitInfoDiv.innerHTML += `<br>`;
 }

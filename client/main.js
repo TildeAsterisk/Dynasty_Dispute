@@ -103,7 +103,7 @@ function initializeGameObjects() {
 
     addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
     addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
-    addNode(nodeCoords[0], nodeCoords[1], "home");
+    //addNode(nodeCoords[0], nodeCoords[1], "home");
   }
 
   // Initialize agents from the network state
