@@ -46,7 +46,7 @@ class Node {
       loadedImg: null
 
     },
-    path_Node : {
+    path_Node: {
       key: "path_Node",
       name: "Path Node",
       colour: "rgb(200, 200, 200)",
@@ -78,7 +78,7 @@ class Node {
 
     this.neighbors = [];
 
-    this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : defaultPathfindingCost ;
+    this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : defaultPathfindingCost;
 
   }
 
@@ -123,12 +123,12 @@ class Node {
     totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
 
     //Determine nodeImg to draw
-    let loadedUnitImg = undefined;//Node.types[this.type.key].loadedImg;
-    if(this.type.key == Node.types.path_Node.key){
+    let loadedUnitImg = Node.types[this.type.key].loadedImg;
+    if (this.type.key == Node.types.path_Node.key) {
       // Get load unit img based on connections
       //console.log(this,this.neighbors);
       //find neighbor that id contains path_Node
-      const connectedNodes = this.neighbors.filter(neighbor => neighbor.id );
+      const connectedNodes = this.neighbors.filter(neighbor => neighbor.id);
       /*if ((Array.isArray(this.neighbors) &&
         this.neighbors[0] && this.neighbors[0].id &&
         this.neighbors[1] && this.neighbors[1].id &&
@@ -136,7 +136,7 @@ class Node {
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
       }
-      else */if(connectedNodes.length == 2 && this.neighbors[1] && this.neighbors[1].id && 
+      else */if (connectedNodes.length == 2 && this.neighbors[1] && this.neighbors[1].id &&
         this.neighbors[3] && this.neighbors[3].id) {  // If connected to East and West
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-E_W.png";
@@ -145,12 +145,12 @@ class Node {
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_E.png";
       }*/
-      else if(connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
+      else if (connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-N_S.png";
         //Rotate 90 degrees
       }
-      else{
+      else {
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/path_Node-All.png";
       }
@@ -176,9 +176,12 @@ class Node {
           break;
       }*/
     }
-    
+
     // Try to draw sprite, if not draw rectangle
-    if(!drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, loadedUnitImg)){
+    if (loadedUnitImg && loadedUnitImg.src && loadedUnitImg.width > 0) {
+      drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, loadedUnitImg);
+    }
+    else {
       drawRect(
         screenX,
         screenY,
@@ -208,7 +211,7 @@ class Node {
       return true;
     }
     else {
-      if ( (this.resourceInventory[0].amount + regenPerTick)  <= this.maxCapacity && this.resourceInventory[0].amount > 0 ) {
+      if ((this.resourceInventory[0].amount + regenPerTick) <= this.maxCapacity && this.resourceInventory[0].amount > 0) {
         this.resourceInventory[0].amount += regenPerTick;
       }
       return false;

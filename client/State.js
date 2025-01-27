@@ -334,10 +334,10 @@ class GoingHome_State extends State {
       context.home = context.findHome(context.searchRadius);
     }
     if (context.home) { context.setNewTarget(context.home); }
-    /*else {
-      //context.changeBehaviourState(new Roaming_State());
-      //return;
-    }*/
+    else {
+      context.changeBehaviourState(new Roaming_State());
+      return;
+    }
 
 
     context.moveToTarget();
@@ -353,9 +353,9 @@ class GoingHome_State extends State {
     //If no home then wander about
     if (!context.home) {
       // Set target, change state
-      //context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE * 3));
-      //context.changeBehaviourState(new Roaming_State());
-      //return;
+      context.setNewTarget(getRandomPositionInRange(context, GRID_SIZE * 3));
+      context.changeBehaviourState(new Roaming_State());
+      return;
     }
   }
 }
