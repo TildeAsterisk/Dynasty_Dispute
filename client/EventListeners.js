@@ -172,10 +172,10 @@ document.addEventListener('dragstart', function (event) {
 
 //#region WebSocket Event Listeners
 socket.on("game-state", (state) => {
+  client_LogMessage("Received initial game state",state);
+  gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
   gameState.networkState = state;
-  gameState.playerSocketId = state.playerSocketId;
-  //client_LogMessage(state);
-  client_LogMessage("Received initial game state");
+  //client_LogMessage("modified initial state",gameState);
   initializeGameObjects(state);
   //renderGame();
 });

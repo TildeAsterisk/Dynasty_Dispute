@@ -82,12 +82,18 @@ client_LogMessage("Game Started");
 updateUnitInfo();
 
 function initializeGameObjects(initialNetworkGameState = undefined) {
+  gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
+  gameState.networkState = initialNetworkGameState;
+  //client_LogMessage("modified initial state",gameState);
+
   // Clear existing game objects
   gameState.nodes = [];
   gameState.agents = [];
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
   //if (initialNetworkGameState.players.)
+  initialNetworkGameState.playerData = {sid:gameState.playerData.sid, username:gameState.playerUsername};
+  client_LogMessage("Updated network game state with username");
   client_LogMessage("NETWORK STATE INIT",initialNetworkGameState);
 
   // Initialize nodes from the network state
@@ -176,7 +182,8 @@ function gameLoop() {
     //drawRect(cursorWorldPos.x, cursorWorldPos.y, 5,5,"orange", undefined );
     //drawText(cursors[cursor].id,cursorWorldPos.x, cursorWorldPos.y);
     drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
-    drawText(cursors[cursor].id,cursors[cursor].x, cursors[cursor].y);
+    const playerCursorText = gameState.networkState.players[cursors[cursor].id] ? gameState.networkState.players[cursors[cursor].id].username : cursors[cursor].id ;
+    drawText(playerCursorText,cursors[cursor].x, cursors[cursor].y);
   }
 
   // Draw quest log

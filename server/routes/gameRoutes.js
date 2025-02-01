@@ -26,7 +26,7 @@ function handleSocketConnection(io) {
     // Initialize player data if not already present
     if (!gameState.players[socket.id]) {
       gameState.players[socket.id] = {
-        resources: {
+        /*resources: {
           wood: 0,
           stone: 0,
           food: 0,
@@ -39,9 +39,11 @@ function handleSocketConnection(io) {
         selectedUnit : null,
         totalStoredResources : 0,
         gameTick : 0,
-        networkState : {nodes: [], agents: [], players: []}
+        networkState : {nodes: [], agents: [], players: []},
+        playerData : {sid:socket.id, username:undefined}*/
+        sid:socket.id, username:"Anonymous Guest"
       };
-      gameState.playerSocketId = socket.id;
+      gameState.playerData = {sid:socket.id, username:undefined};
     }
 
     // Send initial game state to the player
