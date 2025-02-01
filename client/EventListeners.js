@@ -143,9 +143,18 @@ socket.on("game-state", (state) => {
   //renderGame();
 });
 
-socket.on("map-update", (updatedMap) => {
-  gameState.networkState.nodes = updatedMap;
-  logMessage("Map updated " + Date.now());
+socket.on("map-update", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.
+  //gameState.networkState.nodes = updatedMap;
+  // Update the map with the new building data
+  //updateMapWithNodeData(nodeData);
+  // Logic to update the map with the new building data
+  // For example, you might update the DOM elements representing the buildings
+  //gameState.nodes.push(buildingData);
+  addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
+  //io.emit("map-update", gameState.nodes); // Broadcast to all clients
+  logMessage('Building data updated:', nodeData);
+  //logMessage("Map updated " + Date.now());
+  // Add your map update logic here
   //renderGame();
 });
 
@@ -164,17 +173,8 @@ socket.on("reconnect_attempt", () => {
   logMessage("Attempting to reconnect...");
 });
 
-socket.on('update-building', (buildingData) => {
-  // Update the map with the new building data
-  updateMapWithBuildingData(buildingData);
+socket.on('update-node', (nodeData) => {
+  logMessage("Received update-node from server.");
 });
 
-function updateMapWithBuildingData(buildingData) {
-  // Logic to update the map with the new building data
-  // For example, you might update the DOM elements representing the buildings
-  gameState.nodes.push(buildingData);
-  io.emit("map-update", gameState.nodes); // Broadcast to all clients
-  console.log('Building data updated:', buildingData);
-  // Add your map update logic here
-}
 //#endregion

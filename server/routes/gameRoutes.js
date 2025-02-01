@@ -39,9 +39,9 @@ function handleSocketConnection(io) {
     socket.emit("game-state", gameState);
 
     // Handle building updates
-    socket.on("update-building", (data) => {
-      gameState.nodes.push(data);
-      io.emit("map-update", gameState.nodes); // Broadcast to all clients
+    socket.on("update-node", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
+      //gameState.nodes.push(nodeData);
+      io.emit("map-update", nodeData); // Flow #10 c - Broadcast to all clients
     });
 
     // Handle disconnection

@@ -288,7 +288,7 @@ class Agent {
       }
     });
 
-    if (!foundStorageNode) { console.log("Canot find storage node"); }
+    if (!foundStorageNode) { console.log(this.id,"Canot find storage node"); }
     return foundStorageNode;
   }
 

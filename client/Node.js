@@ -244,7 +244,7 @@ function addNode(x, y, typeKey, emit = true, initObj) {
 
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
-  if (emit) { socket.emit("update-building", newNode); }
+  if (emit) { socket.emit("update-node", newNode); }  // Flow #10 a - A client adds a node (emit=true)
   logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
   console.log(newNode);
 
