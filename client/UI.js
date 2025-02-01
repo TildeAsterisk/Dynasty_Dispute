@@ -1,7 +1,24 @@
 function client_LogMessage(...args) {
-  const stamp = ``;
-  if (stamp=="")  { console.log(...args); }
-  else            { console.log(stamp,...args); }
+  const verboseDebug = false;
+  let stamp = '';
+  const stack = new Error().stack.split('\n');
+  if(verboseDebug){
+    stamp = [stack[1] , stack[2]];
+    // Process Stack Strings...
+    stamp[0] = stamp[0] ? stamp[0].replace(/@.*\//, '@') : "";
+    stamp[1] = stamp[1] ? stamp[1].replace(/@.*\//, '@') : "";
+    stamp = `Source:\n    ${stamp[1]}\n    ${stamp[0]}`;
+  }
+  else{
+    stamp = stack[1] ? stack[1].replace(/@.*/, '') : "";
+  }
+
+  if (stamp == "") {
+    console.log(...args);
+  } else {
+    console.log(...args, `[SOURCE:${stamp}]`);
+  }
+
   //const logEntry = document.createElement("div");
   //logEntry.textContent = message;
 
