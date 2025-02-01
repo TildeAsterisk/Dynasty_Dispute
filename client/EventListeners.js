@@ -147,15 +147,6 @@ socket.on("cursor-remove", (data) => {
     }
 });
 
-/* Track this player's mouse movements and emit to the backend
-document.addEventListener("mousemove", (event) => {
-    const x = event.clientX;
-    const y = event.clientY;
-
-    // Send cursor position to the server
-    socket.emit("cursor-move", { x, y });
-});
-*/
 let pCursorlastEmitTime = 0;
 const pCursorThrottleInterval = 50; // Emit every 50ms
 //Track this player's mouse movements and emit to the backend
@@ -169,7 +160,7 @@ document.addEventListener("mousemove", (event) => {
     }
 });
 
-/* // HTML UI Event Listeners
+// HTML UI Event Listeners
 // Prevent right-click context menu
 document.addEventListener('contextmenu', function (event) {
   event.preventDefault();
@@ -182,7 +173,7 @@ document.addEventListener('selectstart', function (event) {
 document.addEventListener('dragstart', function (event) {
   event.preventDefault();
 });
-*/
+
 
 //#endregion
 
