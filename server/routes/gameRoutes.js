@@ -49,7 +49,7 @@ function handleSocketConnection(io) {
 
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
-      //gameState.nodes.push(nodeData);
+      gameState.nodes.push(nodeData); // Update server gameState with new node. (Inits from gamestate when page refreshes)
       io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });
 

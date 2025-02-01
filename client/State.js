@@ -330,13 +330,27 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
+    // Check if there is no target or target is not home. Find and set a home.
     if(!context.target || context.target.type.key !== Node.types.home.key){
       context.home = context.findHome(context.searchRadius);
-      context.setNewTarget(context.home);
+      if(context.home){
+        context.setNewTarget(context.home);
+      }
+      else{
+        // go roaming or try to find home again?
+      }
     }
     else{
       context.moveToTarget();
     }
+    
+    /* If there is no target ir tg
+    if(!context.target || context.target.type.key !== Node.types.home.key) {
+      context.home = context.findHome(context.searchRadius);
+      context.setNewTarget(context.home);
+    }*/
+
+    
 
     if (context.reachedTarget()) {
       // If agent reached home and its not full
