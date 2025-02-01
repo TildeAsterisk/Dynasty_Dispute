@@ -77,7 +77,7 @@ class Agent {
   findResourceNode(range = Infinity, resourceTypeKey = undefined, resourceToExcludeKey = undefined) {
     let closestResourceNode = null;
     let shortestDistance = range;
-    console.log(this.id, "Looking for", resourceTypeKey);
+    client_LogMessage(this.id, "Looking for", resourceTypeKey);
 
     gameState.nodes.forEach((b) => {
       const isEmpty = b.getResourceInInventory(resourceTypeKey).amount <= 0;
@@ -92,7 +92,7 @@ class Agent {
         }
 
         if (soughtResource) {
-          console.log(this.id, "Found", soughtResource);
+          client_LogMessage(this.id, "Found", soughtResource);
           const distance = calculateDistance(this, b);
           if (distance < shortestDistance) {
             shortestDistance = distance;
@@ -126,7 +126,7 @@ class Agent {
       // move to next point in path
       // if reached point in path, move to next point in path
       // if reached end of path, set path to empty
-      //console.log(this.id, " IF FOLLOWING PATH ", path[0]);
+      //client_LogMessage(this.id, " IF FOLLOWING PATH ", path[0]);
       const nextNode = path[0]; // Get the next node in the path
       bsTarget = nextNode;
       
@@ -138,7 +138,7 @@ class Agent {
 
       // If not already close to the next node, move directly towards it
       if (distance >= this.speed) {
-        //console.log(this.id,"moving to path node",nextNode);
+        //client_LogMessage(this.id,"moving to path node",nextNode);
         this.x += (dx / distance) * this.speed;
         this.y += (dy / distance) * this.speed;
       } 
@@ -146,10 +146,10 @@ class Agent {
         // Move to the next node and remove it from the path
         //this.x = nextNode.x;
         //this.y = nextNode.y;
-        //console.log("Next node in path is", nextNode,path);
+        //client_LogMessage("Next node in path is", nextNode,path);
         path.shift(); // Shift removes the first element from an array and returns it
         this.path = path; //Set Agent path to the new path
-        //console.log(this.id,"arrived at",nextNode,"in",path,"next is",path[1]);
+        //client_LogMessage(this.id,"arrived at",nextNode,"in",path,"next is",path[1]);
         //newpath set, move to next node in path
       }
     }
@@ -161,13 +161,13 @@ class Agent {
 
       // If not already close to target then move directly towards target
       if (distance > this.speed) {
-        //console.log("Waking to target");
+        //client_LogMessage("Waking to target");
         this.x += (dx / distance) * this.speed;
         this.y += (dy / distance) * this.speed;
         // return false; still walking to target
       }
       /*else {
-        console.log(this.id+" has reached target "+bsTarget);
+        client_LogMessage(this.id+" has reached target "+bsTarget);
         // return true; reached target
       }*/
     }
@@ -239,12 +239,12 @@ class Agent {
 
         //resourceToGather.amount--;
         //Subtract from target inventory
-        console.log(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
-        //console.log(this.resourceInventory);
+        client_LogMessage(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
+        //client_LogMessage(this.resourceInventory);
         return true;
       }
       else {
-        console.log(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
+        client_LogMessage(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
         return false;
       }
     }
@@ -271,7 +271,7 @@ class Agent {
         }
       }
     });
-    if (!foundStorageNode) { console.log(this.id, "Canot find empty storage node"); }
+    if (!foundStorageNode) { client_LogMessage(this.id, "Canot find empty storage node"); }
     return foundStorageNode;
   }
 
@@ -288,7 +288,7 @@ class Agent {
       }
     });
 
-    if (!foundStorageNode) { console.log(this.id,"Canot find storage node"); }
+    if (!foundStorageNode) { client_LogMessage(this.id,"Canot find storage node"); }
     return foundStorageNode;
   }
 
@@ -333,7 +333,7 @@ class Agent {
       const wouldOverflow = ((totalResourceAmount + resourceInAgentInv.amount) >= this.target.maxCapacity);
       //check if would overflow
       if (wouldOverflow) {
-        //console.log("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
+        //client_LogMessage("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
         //this.targetResourceTypeKey = undefined;
         return false;
       }
@@ -356,7 +356,7 @@ class Agent {
       }
     }
     else {
-      console.log(this, "depositing all resources");
+      client_LogMessage(this, "depositing all resources");
       this.resourceInventory.forEach(resource => {
         let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
         if (targetResource) {
@@ -366,7 +366,7 @@ class Agent {
           targetResource = new Resource(resource.type.key, resource.amount);
           this.target.resourceInventory.push(targetResource);
         }
-        //console.log(this, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
+        //client_LogMessage(this, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
       });
       this.resourceInventory = [];
     }
@@ -386,8 +386,8 @@ class Agent {
 
   getResourceInInventory(resourceTypeKey) {
     //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
-    //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
-    //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
+    //client_LogMessage("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
+    //client_LogMessage(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
     return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) : new Resource(resourceTypeKey, 0);
   }
 
@@ -399,23 +399,23 @@ class Agent {
   consumeResources(resourceTypeKey) {
     //define Agents inventory resource to consume
     let agentInvResource = this.getResourceInInventory(resourceTypeKey);// ? this.getResourceInInventory(resourceTypeKey) : this.resourceInventory[0];
-    //console.log(this.resourceInventory, agentInvResource);
+    //client_LogMessage(this.resourceInventory, agentInvResource);
 
     if (!agentInvResource) {
-      //console.log(this.resourceInventory, agentInvResource);
+      //client_LogMessage(this.resourceInventory, agentInvResource);
       agentInvResource = { type: Resource.types.food, amount: 0 };
     }
 
     if (agentInvResource.amount >= this.resourceHunger) {
       agentInvResource.amount -= this.resourceHunger;
-      //console.log(this.id, " consumed ", this.resourceHunger, resourceTypeKey);
+      //client_LogMessage(this.id, " consumed ", this.resourceHunger, resourceTypeKey);
       return true;
     }
     else {  //Agent need to ead and cannot
-      //console.log(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
+      //client_LogMessage(this.id + " has no " + resourceTypeKey + " to consume.", this.resourceInventory);
       return false;
       //this.die();
-      //console.log(this.id+" has died due to lack of resources.");
+      //client_LogMessage(this.id+" has died due to lack of resources.");
     }
   }
 
@@ -424,7 +424,7 @@ class Agent {
   }
 
   die() {
-    console.log(`${this.id} has died.`);
+    client_LogMessage(`${this.id} has died.`);
     gameState.agents = gameState.agents.filter((agent) => agent !== this);
 
     //if is at home then remove from home capacity
@@ -461,11 +461,11 @@ class Agent {
     const now = gameState.gameTick;
     if (now - this.lastAttackTime >= this.attackCooldown * 60) {
       if (this.target && this.target.health > 0) {
-        console.log(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
+        client_LogMessage(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
         this.target.health -= this.attackPower;
 
         if (this.target.health <= 0) {
-          console.log(`${this.target.id} has been defeated.`);
+          client_LogMessage(`${this.target.id} has been defeated.`);
           this.target.die();
           this.setNewTarget(null); // Reset target after defeat
           this.changeBehaviourState(new GoingHome_State());
@@ -474,7 +474,7 @@ class Agent {
         this.lastAttackTime = now;
       }
       else {
-        console.log(`${this.id} has no valid target to attack.`);
+        client_LogMessage(`${this.id} has no valid target to attack.`);
         this.changeBehaviourState(new GoingHome_State());
       }
     }
@@ -489,7 +489,7 @@ class Agent {
     let thisGridCoords = getGridCoordinates(this.x, this.y);
     thisGridCoords = { x: thisGridCoords[0], y: thisGridCoords[1] };
     this.path = findPath(thisGridCoords, newTarget);  //Find a path to the new target.
-    console.log(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
+    client_LogMessage(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
     if (this.target) {
       this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
     }
@@ -500,14 +500,14 @@ class Agent {
     let focus;
     const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
     if (this.target && this.target.id) {   // If target has ID (not random position)
-      //console.log("TARGET HAS ID");
+      //client_LogMessage("TARGET HAS ID");
       focus = this.target;  // Set focus for random position range
     }
     else if (this.previousUnitTarget) {  // Target doesnt have ID
       focus = this.previousUnitTarget;
     }
     else {
-      console.log("no target or id or prev");
+      client_LogMessage("no target or id or prev");
       focus = this;
     }
 
@@ -519,7 +519,7 @@ class Agent {
       this.target.agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
     }
     this.target.agentCapacity.push(this);
-    console.log(this.id, " is entering node ", this.home.id);
+    client_LogMessage(this.id, " is entering node ", this.home.id);
   }
 
   exitNode() {
@@ -527,7 +527,7 @@ class Agent {
     if (this.target.agentCapacity.length == 0) {
       this.target.agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
     }
-    console.log(this.id, " is leaving node ", this.home.id);
+    client_LogMessage(this.id, " is leaving node ", this.home.id);
   }
 
 }
@@ -548,9 +548,9 @@ function calculateTotalLiveAgents() {
 function trainAgents() {
   const numberOfAgents = document.getElementById("agentNumber").value;
   if (numberOfAgents) {
-    console.log(`Training ${numberOfAgents} agents...`);
+    client_LogMessage(`Training ${numberOfAgents} agents...`);
     // Add your logic here to train the agents
   } else {
-    console.log("Please enter the number of agents.");
+    client_LogMessage("Please enter the number of agents.");
   }
 }

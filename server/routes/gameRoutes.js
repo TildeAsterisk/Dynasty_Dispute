@@ -10,10 +10,18 @@ const gameState = {
   nodes: [],
 };
 
+// Emit log messages to clients
+function server_LogMessage(...args) {
+  const stamp = "";
+  if (stamp=="")  { console.log(...args); }
+  else            { console.log(stamp,...args); }
+  //io.emit("log-message", ...args);
+}
+
 // Handle WebSocket connections
 function handleSocketConnection(io) {
   io.on("connection", (socket) => {
-    console.log(`Player connected: ${socket.id}`);
+    server_LogMessage(`Player connected: ${socket.id}`);
 
     // Initialize player data if not already present
     if (!gameState.players[socket.id]) {
@@ -47,7 +55,7 @@ function handleSocketConnection(io) {
 
     // Handle disconnection
     socket.on("disconnect", () => {
-      console.log(`Player disconnected: ${socket.id}`);
+      server_LogMessage(`Player disconnected: ${socket.id}`);
       delete gameState.players[socket.id];
 
       // Notify others to remove this player's cursor
@@ -56,7 +64,7 @@ function handleSocketConnection(io) {
 
     // Listen for log messages from the client
     socket.on("client-log", (message) => {
-      console.log(`Client log [${socket.id}]: ${message}`);
+      server_LogMessage(`Client log [${socket.id}]: ${message}`);
     });
 
     // Listen for cursor movement from a player
@@ -67,4 +75,4 @@ function handleSocketConnection(io) {
   });
 }
 
-module.exports = { router, handleSocketConnection };
+module.exports = { router, handleSocketConnection, server_LogMessage };

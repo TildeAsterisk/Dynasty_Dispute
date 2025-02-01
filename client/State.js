@@ -7,7 +7,7 @@ class State {
 
   enter(context) {
     // Code executed when entering the state
-    console.log(`${context.id} enters ${this.constructor.name}.`);
+    client_LogMessage(`${context.id} enters ${this.constructor.name}.`);
   }
   execute(context) {
     // Code executed on each update/tick
@@ -18,14 +18,14 @@ class State {
   }
   exit(context) {
     // Code executed when leaving the state
-    //console.log(`${context.id} stops  ${this.constructor.name}.`);
+    //client_LogMessage(`${context.id} stops  ${this.constructor.name}.`);
   }
 
   checkForEnemy(context) {
     // Check for nearby enemies
     const enemy = context.findEnemy(context.searchRadius);
     if (enemy) {
-      console.log(`${context.id} found an enemy: ${enemy.id}`);
+      client_LogMessage(`${context.id} found an enemy: ${enemy.id}`);
       context.setNewTarget(enemy);
       context.changeBehaviourState(new Combat_State());
     }
@@ -69,13 +69,13 @@ class Idle_State extends State {
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
         if (newTargetQuery) {
-          //console.log(context.id, "is retrieving food from storage", context.target.id);
+          //client_LogMessage(context.id, "is retrieving food from storage", context.target.id);
           context.setNewTarget(newTargetQuery);
           context.changeBehaviourState(new Gathering_State());
           return;
         }
         else {
-          console.log(context.id + " ran out of resources while Idle.");
+          client_LogMessage(context.id + " ran out of resources while Idle.");
           context.die();
           return;
         }
@@ -83,7 +83,7 @@ class Idle_State extends State {
     }
     else { // Is idle and just consumed food. Find work to do...
       //context.changeBehaviourState(new Idle_State());
-      console.log(context.id," just consumed food, looking for work.");
+      client_LogMessage(context.id," just consumed food, looking for work.");
 
       // try to find resource node with raw materials
       context.targetResourceTypeKey = Resource.types.rawMaterials.key;
@@ -101,7 +101,7 @@ class Idle_State extends State {
         return;
       }
       else {
-        console.log(context.id + " no work to do, going home.");
+        client_LogMessage(context.id + " no work to do, going home.");
         context.changeBehaviourState(new GoingHome_State());
         return;
       }
@@ -119,7 +119,7 @@ class Idle_State extends State {
           return;
         }
         else{
-          console.log(context.id+" No work to be done (Storage full). Go home, or roam or chill...");
+          client_LogMessage(context.id+" No work to be done (Storage full). Go home, or roam or chill...");
           context.changeBehaviourState(new GoingHome_State());
           return;
         }
@@ -170,13 +170,13 @@ class Roaming_State extends State {
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
         if (newTargetQuery) {
-          //console.log(context.id, "is retrieving food from storage", context.target.id);
+          //client_LogMessage(context.id, "is retrieving food from storage", context.target.id);
           context.setNewTarget(newTargetQuery);
           context.changeBehaviourState(new Gathering_State());
           return;
         }
         else {
-          console.log(context.id + " ran out of resources while Roaming.");
+          client_LogMessage(context.id + " ran out of resources while Roaming.");
           context.die();
           return;
         }
@@ -230,16 +230,16 @@ class Gathering_State extends State {
     }
 
     if (context.reachedTarget()) {  // Reached Resource?
-      //console.log("REACHED",context.target);
+      //client_LogMessage("REACHED",context.target);
       if (context.gatherResources(context.targetResourceTypeKey)) { // If Target reached and resources gathered
-        //console.log(context.id, "Gathering resources ",context.target.id);
+        //client_LogMessage(context.id, "Gathering resources ",context.target.id);
         // Set Node typealliance 
         context.target.agentTypeAllianceKey = context.type.key;
         return;
       }
       else { // If cannot gather anymore
         // iff gathered from resource, then store it. If gathered from stroage then go home
-        console.log(context.id, "Cannot gather " + context.targetResourceTypeKey + " from ", context.target.id);
+        client_LogMessage(context.id, "Cannot gather " + context.targetResourceTypeKey + " from ", context.target.id);
 
         if (context.target.id && context.target.type.key == Node.types.resource_Node.key) {
           const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
@@ -250,7 +250,7 @@ class Gathering_State extends State {
             return;
           }
           else { // No storage found
-            console.log(context.id, "finished gathering from resource node and no storage found to put it away. Idle, looking for work.");
+            client_LogMessage(context.id, "finished gathering from resource node and no storage found to put it away. Idle, looking for work.");
             context.changeBehaviourState(new Idle_State());
             return;
           }
@@ -258,7 +258,7 @@ class Gathering_State extends State {
 
         else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {
           // Finished gathering from storage. Idle, look for some work
-          console.log(context.id, "finished taking from storage. Idle, going to look for some work");
+          client_LogMessage(context.id, "finished taking from storage. Idle, going to look for some work");
           context.changeBehaviourState(new Idle_State());
           return;
         }
@@ -293,7 +293,7 @@ class Depositing_State extends State {
     //Dont eat when depositing resources, theres no point. Inventory will likely be empty right after. Don't get high on your own supply.
 
     //if(context.target.getResourceInInventory(Resource.types.food.key).amount < context.resourceHunger){
-      //console.log(context.id,"has food to consume");
+      //client_LogMessage(context.id,"has food to consume");
       //context.consumeResources(Resource.types.food.key); // Consume food
     //}
 
@@ -305,7 +305,7 @@ class Depositing_State extends State {
       }
       else {
         // If cannot deposit resources, go home
-        console.log(context.id, "cannot deposit resources, storage would overflow, looking for work.");
+        client_LogMessage(context.id, "cannot deposit resources, storage would overflow, looking for work.");
         context.targetResourceTypeKey = Resource.types.food.key;
         context.changeBehaviourState(new Idle_State()); // go look for work to do
       }
@@ -384,7 +384,7 @@ class AtHome_State extends State {
       context.targetResourceTypeKey = Resource.types.food.key;
       newTargetQuery = context.findResourceNode(context.searchRadius * 2, Resource.types.food.key);
       if (newTargetQuery) { // If food found, gather
-        console.log(context.id, "ran out of food at home.")
+        client_LogMessage(context.id, "ran out of food at home.")
         context.setNewTarget(newTargetQuery);
         context.exitNode();
         context.changeBehaviourState(new Gathering_State());
@@ -394,7 +394,7 @@ class AtHome_State extends State {
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
         if (newTargetQuery) {
-          console.log(context.id + " is at home hungry, going to gather food.");
+          client_LogMessage(context.id + " is at home hungry, going to gather food.");
           context.setNewTarget(newTargetQuery);
           context.exitNode();
           context.changeBehaviourState( new Gathering_State() );
@@ -402,7 +402,7 @@ class AtHome_State extends State {
         }
         else {
           context.exitNode();
-          //console.log(context.id + " ran out of resources and died at home.");
+          //client_LogMessage(context.id + " ran out of resources and died at home.");
           context.die();
           return;
         }
@@ -427,19 +427,19 @@ class Combat_State extends State {
     super(); this.symbol = "⚔";
   }
   enter(agent) {
-    console.log(`${agent.id} is entering combat.`);
+    client_LogMessage(`${agent.id} is entering combat.`);
   }
 
   execute(agent) {
     if (!agent.target || agent.target.health <= 0) {
-      console.log(`${agent.id} has no valid target.`);
+      client_LogMessage(`${agent.id} has no valid target.`);
       agent.changeBehaviourState(new Roaming_State());
       return;
     }
 
     const distance = calculateDistance(agent, agent.target);
     if (distance > agent.attackRange) {
-      //console.log(`${agent.id} is chasing ${agent.target.id}.`);
+      //client_LogMessage(`${agent.id} is chasing ${agent.target.id}.`);
       agent.moveToTarget(); // Move closer to the target
     } else {
       agent.attackTarget();
@@ -447,7 +447,7 @@ class Combat_State extends State {
   }
 
   exit(agent) {
-    console.log(`${agent.id} is exiting combat.`);
+    client_LogMessage(`${agent.id} is exiting combat.`);
   }
 }
 

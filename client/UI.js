@@ -1,12 +1,14 @@
 function client_LogMessage(...args) {
+  const stamp = "";
+  if (stamp=="")  { console.log(...args); }
+  else            { console.log(stamp,...args); }
   //const logEntry = document.createElement("div");
   //logEntry.textContent = message;
 
   //log.appendChild(logEntry);
   //log.scrollTop = log.scrollHeight;
 
-  console.log(...args);
-  socket.emit("client-log", ...args ); // Emit log message to the server
+  //socket.emit("client-log", ...args ); // Emit log message to the server
 }
 
 function clearLog() {
@@ -46,11 +48,11 @@ function updateUnitInfo(object = null) {
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round*/
     //let tmpSymbol = value.symbol ? value.symbol : value.type.symbol;
     if (value && typeof value == 'object') {
-      //console.log("OBJECT ATTRIBNUTE", key, value);
+      //client_LogMessage("OBJECT ATTRIBNUTE", key, value);
       if (value.symbol) { roundedValue = value.symbol; }
       else if (typeof value.type == 'object' && value.type.symbol) { roundedValue = value.type.symbol; }
       else {
-        //console.log(Object.entries(value));
+        //client_LogMessage(Object.entries(value));
         for (const [skey, stat] of Object.entries(value)) {
           let newStat = stat.type ? stat.type : stat;
           roundedValue = newStat.key ? newStat.key : undefined;
@@ -100,7 +102,7 @@ document.querySelectorAll('.grid-item').forEach(item => {
     item.classList.add('selected');
     // Find node type by name
     displayDetails(item.dataset.value);
-    console.log(item.dataset.initobj);
+    client_LogMessage(item.dataset.initobj);
     let initObj = item.dataset.initobj ? JSON.parse(item.dataset.initobj) : undefined;
     selectType(item.dataset.value, initObj ? initObj : undefined);
   });
@@ -111,12 +113,12 @@ function selectType(typeKey, initObj) {
     gameState.selectedType = buildTypes[typeKey];
     gameState.selectedType.initObj = initObj;
     //gameState.selectedType.initObj = bui
-    console.log(`Selected type: ${buildTypes[typeKey].key}`);
+    client_LogMessage(`Selected type: ${buildTypes[typeKey].key}`);
   }
   else {
     gameState.selectedType = null;
     //console.error(`Invalid type selected: ${type}`);
-    console.log(`Invalid node type selected: ${typeKey}`);
+    client_LogMessage(`Invalid node type selected: ${typeKey}`);
     return;
   }
 }
@@ -185,14 +187,14 @@ function drawCivStatusBarUI() {
 
   /*totalCivResourceArray.forEach(resource => {
     // Display the total amount of each resource on the UI
-    //console.log("LETS GOOOOOO",resource);
+    //client_LogMessage("LETS GOOOOOO",resource);
     civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
     drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
     uiPosX += textSize * statSpacing;
   });*/
   
   // Display the total amount of the resource on the UI
-  //console.log("LETS GOOOOOO",resource);
+  //client_LogMessage("LETS GOOOOOO",resource);
 
   // display TOTAL food
   let resource = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);

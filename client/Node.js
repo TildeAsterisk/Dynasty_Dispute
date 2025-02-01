@@ -91,7 +91,7 @@ class Node {
     if (this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance) == 1 && enoughHomes) {
       //Random change to give birth to a new agent
       addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2), this.agentCapacity[0].type.key);
-      console.log("New Agent Spawned!!!"); //newborn
+      client_LogMessage("New Agent Spawned!!!"); //newborn
     }
 
 
@@ -126,7 +126,7 @@ class Node {
     let loadedUnitImg = Node.types[this.type.key].loadedImg;
     if (this.type.key == Node.types.path_Node.key) {
       // Get load unit img based on connections
-      //console.log(this,this.neighbors);
+      //client_LogMessage(this,this.neighbors);
       //find neighbor that id contains path_Node
       const connectedNodes = this.neighbors.filter(neighbor => neighbor.id);
       /*if ((Array.isArray(this.neighbors) &&
@@ -169,7 +169,7 @@ class Node {
           loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
           break;
         default:
-          console.log("4 way junction",connectedNodes.length);
+          client_LogMessage("4 way junction",connectedNodes.length);
           // 4 way junction
           loadedUnitImg = new Image();
           loadedUnitImg.src = "Graphics/path_Node-All.png";
@@ -220,8 +220,8 @@ class Node {
 
   getResourceInInventory(resourceTypeKey) {
     //return this.resourceInventory.reduce((total, resource) => total + resource.amount, 0);
-    //console.log("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
-    //console.log(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
+    //client_LogMessage("GETTING RESOURCE "+resourceTypeKey, this.resourceInventory);
+    //client_LogMessage(this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? "ok" : this.resourceInventory[0]);
     return this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) ? this.resourceInventory.find(resource => resource.type.key === resourceTypeKey) : new Resource(resourceTypeKey, 0);
   }
 
@@ -232,21 +232,21 @@ function addNode(x, y, typeKey, emit = true, initObj) {
 
   // If initObj is given, initialise the new node with the given attributes
   if (initObj) {
-    console.log("INitialising : ", initObj);
+    client_LogMessage("INitialising : ", initObj);
     for (let key in initObj) {
-      //console.log(attribute.key, attribute.value);
+      //client_LogMessage(attribute.key, attribute.value);
       newNode[key] = initObj[key];   // Set initial attributes
     }
   }
   else {
-    console.log("NEW NODE INVENTORY", newNode.resourceInventory);
+    client_LogMessage("NEW NODE INVENTORY", newNode.resourceInventory);
   }
 
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
   if (emit) { socket.emit("update-node-c-s", newNode); }  // Flow #10 a - A client adds a node (emit=true)
-  logMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
-  console.log(newNode);
+  client_LogMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
+  client_LogMessage(newNode);
 
   //Update neighbors
   newNode.neighbors = getNeighbors(newNode, gameState.nodes);
@@ -292,7 +292,7 @@ function calculateAndUpdateStoredResources(agentTypeKey = null) {
 }
 
 function subtractFromStoredResources(resCost, agentTypeKey) {
-  if (calculateAndUpdateStoredResources() < resCost) { console.log("/!\\YOU CANT BUY THAT/!\\ It costs " + resCost + " and you have " + gameState.totalStoredResources); return; }
+  if (calculateAndUpdateStoredResources() < resCost) { client_LogMessage("/!\\YOU CANT BUY THAT/!\\ It costs " + resCost + " and you have " + gameState.totalStoredResources); return; }
 
   gameState.nodes.forEach(node => {
     const resourceToSubtract = node.getResourceInInventory(Resource.types.rawMaterials.key);
@@ -301,7 +301,7 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
       if (availableCapacity >= resCost) {  // If can subtract all from node, subtract and set amount to zero.
         resourceToSubtract.amount -= resCost;
         resCost = 0;
-        console.log("Subtracted ", resCost, " from ", node.resourceInventory);
+        client_LogMessage("Subtracted ", resCost, " from ", node.resourceInventory);
       } else {  // If node capacity is less than rsource cost, subtract capacity form resource cost and set node to zero;
         resCost -= availableCapacity;
       }

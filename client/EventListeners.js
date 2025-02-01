@@ -17,7 +17,7 @@ canvas.addEventListener("click", (event) => {
       // Display gameObject info
       updateUnitInfo(gameObject);
       gameState.selectedUnit = gameObject;
-      console.log(gameObject);
+      client_LogMessage(gameObject);
       // IF SELECTED BARRACKS, OPEN MENU TO TRAIN AGENTS
       if (gameObject.type == Node.types.barracks_Node) {
         updateUnitInfo(gameObject);
@@ -90,14 +90,14 @@ canvas.addEventListener("click", (event) => {
   if (gameState.selectedType != null) {
     // Check if the cell is already occupied
     if (isCellOccupied(snappedX, snappedY)) {
-      console.log("Cannot place node: Cell is already occupied.");
+      client_LogMessage("Cannot place node: Cell is already occupied.");
       //alert("/!\\ Cannot place node: Cell is already occupied. /!\\");
       return;
     }
 
     // Subtract resources if can
     if (!subtractFromStoredResources(gameState.selectedType.cost)) {
-      console.log("cannot build unit");
+      client_LogMessage("cannot build unit");
       return;
     }
 
@@ -106,10 +106,10 @@ canvas.addEventListener("click", (event) => {
       addAgent(snappedX, snappedY, gameState.selectedType.key);
     }
     else {
-      //console.log(JSON.parse(gameState.selectedType.initObj));
+      //client_LogMessage(JSON.parse(gameState.selectedType.initObj));
       addNode(snappedX, snappedY, gameState.selectedType.key, true, gameState.selectedType.initObj);
     }
-    console.log(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
+    client_LogMessage(`Placed ${gameState.selectedType} at (${snappedX}, ${snappedY})`);
   }
   else {
     // Selecting a unit?
@@ -177,7 +177,7 @@ document.addEventListener('dragstart', function (event) {
 socket.on("game-state", (state) => {
   gameState.networkState = state;
   gameState.playerSocketId = state.playerSocketId;
-  //console.log(state);
+  //client_LogMessage(state);
   client_LogMessage("Received initial game state");
   initializeGameObjects(state);
   //renderGame();
@@ -199,8 +199,8 @@ socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a p
 });
 
 // Listen for log messages from the server
-socket.on("log-message", (message) => {
-  client_LogMessage(message);
+socket.on("log-message", (...args) => {
+  client_LogMessage(...args);
 });
 
 // Handle connection errors

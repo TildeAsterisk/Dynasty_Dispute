@@ -54,9 +54,9 @@ let gameState = {
 };
 
 function preloadImages() {
-  console.log("PRELOADING GRAPHICAL ASSETS...");
+  client_LogMessage("PRELOADING GRAPHICAL ASSETS...");
   Object.values(Node.types).forEach((nodeType) => {
-    console.log("Preloading image for node type: " + nodeType.imgSrc);
+    client_LogMessage("Preloading image for node type: " + nodeType.imgSrc);
     nodeType.loadedImg = new Image();
     nodeType.loadedImg.src = nodeType.imgSrc;
   });
@@ -76,7 +76,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
   //if (initialNetworkGameState.players.)
-  console.log("NETWORK STATE INIT",initialNetworkGameState);
+  client_LogMessage("NETWORK STATE INIT",initialNetworkGameState);
 
   // Initialize nodes from the network state
   if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
@@ -99,7 +99,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
     const nodeCoords = getGridCoordinates(centerX, centerY);
     let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
     tmpInitObj.symbol = "🌾";
-    //console.log(tmpInitObj);
+    //client_LogMessage(tmpInitObj);
     addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined, tmpInitObj);
     //tmpCustomTypeSymbolNode.type.symbol = "🌾";
 
@@ -170,7 +170,7 @@ function gameLoop() {
 
   updateUnitInfo(gameState.selectedUnit);
 
-  //console.log("Selected Node Type: "+gameState.selectedType);
+  //client_LogMessage("Selected Node Type: "+gameState.selectedType);
 
   gameState.gameTick += 1;
   requestAnimationFrame(gameLoop);
