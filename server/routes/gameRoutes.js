@@ -12,7 +12,7 @@ const gameState = {
 
 // Emit log messages to clients
 function server_LogMessage(...args) {
-  const stamp = "";
+  const stamp = ``;
   if (stamp=="")  { console.log(...args); }
   else            { console.log(stamp,...args); }
   //io.emit("log-message", ...args);

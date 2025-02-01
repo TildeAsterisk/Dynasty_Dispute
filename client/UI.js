@@ -1,5 +1,5 @@
 function client_LogMessage(...args) {
-  const stamp = "";
+  const stamp = ``;
   if (stamp=="")  { console.log(...args); }
   else            { console.log(stamp,...args); }
   //const logEntry = document.createElement("div");

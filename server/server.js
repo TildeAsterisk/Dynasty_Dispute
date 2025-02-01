@@ -28,7 +28,7 @@ server_LogMessage("Waiting for connections...");
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   server_LogMessage(`Server running on port ${PORT}`);
-  server_LogMessage(`Server running on port ${PORT}`);
+  //server_LogMessage(`Server running on port ${PORT}`);
 });
 
 
