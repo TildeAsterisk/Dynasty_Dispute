@@ -162,7 +162,10 @@ function gameLoop() {
   });
 
   for (const cursor in cursors) {
-    //const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
+    //console.log(cursors[cursor]);
+    const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
+    //drawRect(cursorWorldPos.x, cursorWorldPos.y, 5,5,"orange", undefined );
+    //drawText(cursors[cursor].id,cursorWorldPos.x, cursorWorldPos.y);
     drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
     drawText(cursors[cursor].id,cursors[cursor].x, cursors[cursor].y);
   }

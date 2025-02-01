@@ -147,7 +147,8 @@ document.addEventListener("mousemove", (event) => {
         pCursorlastEmitTime = now;
 
         // Send cursor position to the server
-        socket.emit("cursor-move", { x: event.clientX, y: event.clientY });
+        const cursorWorldCoords = screenToWorldCoordinates(event.clientX, event.clientY);
+        socket.emit("cursor-move", { x: cursorWorldCoords.x, y: cursorWorldCoords.y });
     }
 });
 

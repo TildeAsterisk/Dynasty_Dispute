@@ -35,7 +35,7 @@ function drawText(text, x, y, size = 11, colour = "white", outlineColour = "blac
 }
 
 // Draw rect on the canvas
-function drawRect(x, y, width, height, colour, fillPercent) {
+function drawRect(x, y, width, height, colour, fillPercent=100) {
   // Offset the x and y to center the rectangle
   x -= width / 2;
   y -= height / 2;
@@ -113,12 +113,20 @@ function getGridCoordinates(worldX, worldY) {
   return [gridX, gridY]; // Return as a unique key for the cell
 }
 
-function screenToWorldCoordinates(screenX, screenY, offset){
+function screenToWorldCoordinates(screenX, screenY, offset=0){
   const rect = canvas.getBoundingClientRect();
   let worldCoords = {};
   worldCoords.x = ((screenX - rect.left) / camera.scale + camera.x) + offset;
   worldCoords.y = ((screenY - rect.top) / camera.scale + camera.y) + offset;
   return worldCoords;
+}
+
+function worldToScreenCoordinates(worldX, worldY, offset = 0) {
+  const rect = canvas.getBoundingClientRect();
+  let screenCoords = {};
+  screenCoords.x = (worldX - camera.x + offset) * camera.scale + rect.left;
+  screenCoords.y = (worldY - camera.y + offset) * camera.scale + rect.top;
+  return screenCoords;
 }
 
 // Utility function to check if a point is within a rectangle
