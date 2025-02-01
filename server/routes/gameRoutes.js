@@ -33,6 +33,7 @@ function handleSocketConnection(io) {
         gameTick : 0,
         networkState : {nodes: [], agents: [], players: []}
       };
+      gameState.playerSocketId = socket.id;
     }
 
     // Send initial game state to the player

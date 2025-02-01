@@ -249,4 +249,19 @@ function drawCivStatusBarUI() {
 
 }
 
+//#region Player Cursor Functions (Multiplayer)
+function spawnPlayerCursor(){
+  cursor = document.createElement("div");
+  cursor.className = "player-cursor";
+  cursor.dataset.id = data.id;
+  document.body.appendChild(cursor);
+  cursors[data.id] = cursor;
+  return cursor;
+}
 
+function updateCursorPosition(cursor){
+  cursor.style.left = `${data.x}px`;
+  cursor.style.top = `${data.y}px`;
+}
+
+//#endregion

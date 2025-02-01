@@ -126,16 +126,11 @@ socket.on("cursor-update", (data) => {
     let cursor = cursors[data.id];
     if (!cursor) {
         // Create a new cursor for the player if it doesn't exist
-        cursor = document.createElement("div");
-        cursor.className = "player-cursor";
-        cursor.dataset.id = data.id;
-        document.body.appendChild(cursor);
-        cursors[data.id] = cursor;
+        cursor = spawnPlayerCursor();
     }
 
     // Update cursor position
-    cursor.style.left = `${data.x}px`;
-    cursor.style.top = `${data.y}px`;
+    updateCursorPosition(cursor);
 });
 
 // Remove cursor when a player disconnects
@@ -181,8 +176,10 @@ document.addEventListener('dragstart', function (event) {
 //#region WebSocket Event Listeners
 socket.on("game-state", (state) => {
   gameState.networkState = state;
+  gameState.playerSocketId = state.playerSocketId;
+  //console.log(state);
   logMessage("Received initial game state");
-  initializeGameObjects();
+  initializeGameObjects(state);
   //renderGame();
 });
 

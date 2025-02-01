@@ -69,12 +69,14 @@ preloadImages();
 
 //#region Start Game - Entry Point - Initialise Game Objects (Called when socket.on("game-state")) and Game Loop
 
-function initializeGameObjects() {
+function initializeGameObjects(initialNetworkGameState = undefined) {
   // Clear existing game objects
   gameState.nodes = [];
   gameState.agents = [];
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
+  //if (initialNetworkGameState.players.)
+  console.log("NETWORK STATE INIT",initialNetworkGameState);
 
   // Initialize nodes from the network state
   if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
