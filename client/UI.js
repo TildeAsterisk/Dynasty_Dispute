@@ -1,5 +1,5 @@
 function client_LogMessage(...args) {
-  const verboseDebug = false;
+  const verboseDebug = true;
   let stamp = '';
   const stack = new Error().stack.split('\n');
   if(verboseDebug){
@@ -10,7 +10,7 @@ function client_LogMessage(...args) {
     stamp = `Source:\n    ${stamp[1]}\n    ${stamp[0]}`;
   }
   else{
-    stamp = stack[1] ? stack[1].replace(/@.*/, '') : "";
+    //stamp = stack[1] ? stack[1].replace(/@.*/, '') : "";
   }
 
   if (stamp == "") {
