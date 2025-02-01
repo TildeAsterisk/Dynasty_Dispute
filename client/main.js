@@ -12,8 +12,6 @@ import { Idle_State, Roaming_State  , Gathering_State, Deposit_State  , GoingHom
 import * as UI_Functions from "./UI.js";
 import { Idle_State, Roaming_State  , Gathering_State, Deposit_State  , GoingHome_State, AtHome_State   , Combat_State   } from "./State.js";
 */
-
-
 //#region INITIALISING VARIABLES
 
 //Setting up WebSocket
@@ -67,9 +65,21 @@ let cursors = {};
 
 //#endregion
 
-
-
 //#region Start Game - Entry Point - Initialise Game Objects (Called when socket.on("game-state")) and Game Loop
+
+//Get Form data, player username
+client_LogMessage("FORM DATA:");
+const urlSearchParams = new URLSearchParams(window.location.search);
+urlSearchParams.forEach((value, name) => {
+  client_LogMessage(`${name}, ${value}`)
+});
+//SET PLAYER USERNAME
+gameState['playerUsername'] = urlSearchParams.get('username') ? urlSearchParams.get('username'): undefined;
+client_LogMessage("Setting player username:",gameState.playerUsername);
+
+
+client_LogMessage("Game Started");
+updateUnitInfo();
 
 function initializeGameObjects(initialNetworkGameState = undefined) {
   // Clear existing game objects
@@ -93,6 +103,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newNode.regenCooldown = netNode.regenCooldown;
       newNode.lastRegenTime = netNode.lastRegenTime;
       newNode.neighbors = netNode.neighbors;
+
       gameState.nodes.push(newNode);
       client_LogMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
     });
@@ -139,8 +150,6 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
     const secondAgent = addAgent(centerX + 100, centerY + 100);
   }
 }
-
-
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Fill the entire canvas with colour
@@ -188,10 +197,6 @@ function gameLoop() {
 }
 
 //#endregion
-
-client_LogMessage("Game Started");
-
-updateUnitInfo();
 
 
 gameLoop();
