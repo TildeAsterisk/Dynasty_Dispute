@@ -48,12 +48,21 @@ function handleSocketConnection(io) {
     socket.on("disconnect", () => {
       console.log(`Player disconnected: ${socket.id}`);
       delete gameState.players[socket.id];
+
+      // Notify others to remove this player's cursor
+      socket.broadcast.emit("cursor-remove", { id: socket.id });
     });
 
     // Listen for log messages from the client
     socket.on("client-log", (message) => {
       console.log(`Client log [${socket.id}]: ${message}`);
     });
+
+    // Listen for cursor movement from a player
+    socket.on("cursor-move", (data) => {
+      // Broadcast the cursor position to other players
+      socket.broadcast.emit("cursor-update", { id: socket.id, x: data.x, y: data.y });
+  });
   });
 }
 

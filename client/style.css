@@ -118,3 +118,12 @@ canvas {
     right: 10px;
     z-index: 1000;
 }
+
+.player-cursor {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+    pointer-events: none;
+}

@@ -117,6 +117,58 @@ canvas.addEventListener("click", (event) => {
 
 });
 
+
+// Track other players' cursors
+const cursors = {};
+
+// Handle cursor updates from the backend
+socket.on("cursor-update", (data) => {
+    let cursor = cursors[data.id];
+    if (!cursor) {
+        // Create a new cursor for the player if it doesn't exist
+        cursor = document.createElement("div");
+        cursor.className = "player-cursor";
+        cursor.dataset.id = data.id;
+        document.body.appendChild(cursor);
+        cursors[data.id] = cursor;
+    }
+
+    // Update cursor position
+    cursor.style.left = `${data.x}px`;
+    cursor.style.top = `${data.y}px`;
+});
+
+// Remove cursor when a player disconnects
+socket.on("cursor-remove", (data) => {
+    const cursor = cursors[data.id];
+    if (cursor) {
+        cursor.remove();
+        delete cursors[data.id];
+    }
+});
+
+/* Track this player's mouse movements and emit to the backend
+document.addEventListener("mousemove", (event) => {
+    const x = event.clientX;
+    const y = event.clientY;
+
+    // Send cursor position to the server
+    socket.emit("cursor-move", { x, y });
+});
+*/
+let pCursorlastEmitTime = 0;
+const pCursorThrottleInterval = 50; // Emit every 50ms
+//Track this player's mouse movements and emit to the backend
+document.addEventListener("mousemove", (event) => {
+    const now = Date.now();
+    if (now - pCursorlastEmitTime > pCursorThrottleInterval) {
+        pCursorlastEmitTime = now;
+
+        // Send cursor position to the server
+        socket.emit("cursor-move", { x: event.clientX, y: event.clientY });
+    }
+});
+
 /* // HTML UI Event Listeners
 // Prevent right-click context menu
 document.addEventListener('contextmenu', function (event) {
