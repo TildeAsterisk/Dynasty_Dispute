@@ -5,7 +5,7 @@ function drawText(text, x, y, size = 11, colour = "white", outlineColour = "blac
   //Centre text to cell
   x-= size/2;
   y-=size/2;
-  ctx.font = size.toString() + "px Arial";
+  ctx.font = size.toString() + "px 'Roboto Mono', monospace";
   if (textAlign == "center") {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

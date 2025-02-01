@@ -1,7 +1,7 @@
 body {
     margin: 0;
     overflow: hidden;
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto Mono', monospace;
 
     /* Disable text selection */
     -webkit-touch-callout: none;
@@ -126,4 +126,12 @@ canvas {
     background-color: red;
     border-radius: 50%;
     pointer-events: none;
+}
+
+.action-button{
+    margin-left:5px; font-size:30px; background: none; /* Removes the background */
+  border: none; /* Removes the border */
+  padding: 0; /* Removes any padding */
+  cursor: pointer; /* Adds a pointer cursor on hover */
+  color: inherit; /* Inherits the text color from the parent */
 }

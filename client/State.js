@@ -219,7 +219,7 @@ class Roaming_State extends State {
  */
 class Gathering_State extends State {
   constructor() {
-    super(); this.symbol = "⚙"; //📥?
+    super(); this.symbol = "🧺"; //📥?
   }
 
   execute(context) {

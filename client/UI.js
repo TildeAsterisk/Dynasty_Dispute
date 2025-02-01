@@ -91,19 +91,45 @@ function updateUnitInfo(object = null) {
   }
 
   // Set the inner HTML of the div and append the table
-  unitInfoDiv.innerHTML = `<b>${object.id}</b>`;
+  unitInfoDiv.innerHTML = `<b>${object.id}</b><br>`;
+
   // Create a button element
-  const button = document.createElement('button');
+  const upgradeBtn = document.createElement('button');
   // Set the button's properties
-  button.innerText = 'Destroy';
-  button.id = 'myButton';
-  button.style = 'margin-left:5px;';
+  upgradeBtn.innerText = '⬆️';
+  upgradeBtn.id = 'myButton';
+  upgradeBtn.className = `action-button`;
   // Optionally, add event listeners to the button
-  button.addEventListener('click', function() {
-    alert('Button clicked!');
+  upgradeBtn.addEventListener('click', function() {
+    client_LogMessage('Button clicked!');
   });
+
+  // Create a button element
+  const inspectInfoBtn = document.createElement('button');
+  // Set the button's properties
+  inspectInfoBtn.innerText = '🔍';
+  inspectInfoBtn.id = 'myButton';
+  inspectInfoBtn.className = `action-button`;
+  // Optionally, add event listeners to the button
+  inspectInfoBtn.addEventListener('click', function() {
+    client_LogMessage('Button clicked!');
+  });
+
+  // Create a button element
+  const destroyBtn = document.createElement('button');
+  // Set the button's properties
+  destroyBtn.innerText = '🚫';
+  destroyBtn.id = 'myButton';
+  destroyBtn.className = `action-button`;
+  // Optionally, add event listeners to the button
+  destroyBtn.addEventListener('click', function() {
+    client_LogMessage('Button clicked!');
+  });
+
   // Append the button to your div
-  unitInfoDiv.appendChild(button);
+  unitInfoDiv.appendChild(upgradeBtn);
+  unitInfoDiv.appendChild(inspectInfoBtn);
+  unitInfoDiv.appendChild(destroyBtn);
   unitInfoDiv.appendChild(table);
   //unitInfoDiv.innerHTML += `<br>`;
 }
@@ -197,8 +223,8 @@ function drawCivStatusBarUI() {
 
   let civStatusUIText = "📦"; // Initialize the text to be displayed on the UI
   let uiPosX = 10; let uiPosY = 30;
-  const textSize = 20;
-  const statSpacing = 3.5;
+  const textSize = 18;
+  const statSpacing = 4.5;
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   uiPosX += textSize * 1.5;
 
@@ -216,13 +242,13 @@ function drawCivStatusBarUI() {
   // display TOTAL food
   let resource = totalCivResourceArray.find(r => r.type.key === Resource.types.food.key);
   resource = resource ? resource : { type: Resource.types.food, amount: 0 };
-  civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
+  civStatusUIText = `${resource.type.symbol}${Math.round(resource.amount)}  `;
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   uiPosX += textSize * statSpacing;
   // Display STORAED raw materials
   resource = totalCivStoredResourcesArray.find(r => r.type.key === Resource.types.rawMaterials.key);
   resource = resource ? resource : { type: Resource.types.rawMaterials, amount: 0 };
-  civStatusUIText = `${resource.type.symbol} ${Math.round(resource.amount)}  `;
+  civStatusUIText = `${resource.type.symbol}${Math.round(resource.amount)}`;
   drawText(`${civStatusUIText}`, uiPosX, uiPosY, textSize);
   uiPosX += textSize * statSpacing;
   
