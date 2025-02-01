@@ -21,19 +21,20 @@ app.use("/api/game", gameRoutes);
 handleSocketConnection(io);
 
 // Emit log messages to clients
-function logMessage(message) {
-  io.emit("log-message", message);
+function server_LogMessage(...args) {
+  console.log(...args);
+  io.emit("log-message", ...args);
 }
 
 // Example log messages
-logMessage("Server started");
-logMessage("Waiting for connections...");
+server_LogMessage("Server started");
+server_LogMessage("Waiting for connections...");
 
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  logMessage(`Server running on port ${PORT}`);
+  server_LogMessage(`Server running on port ${PORT}`);
 });
 
 

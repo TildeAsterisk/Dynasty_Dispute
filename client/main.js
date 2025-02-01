@@ -92,7 +92,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newNode.lastRegenTime = netNode.lastRegenTime;
       newNode.neighbors = netNode.neighbors;
       gameState.nodes.push(newNode);
-      logMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
+      client_LogMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
     });
   } else {
     // Add a resource node and a storage_Node nearby
@@ -129,7 +129,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newAgent.attackCooldown = netAgent.attackCooldown;
       newAgent.lastAttackTime = netAgent.lastAttackTime;
       gameState.agents.push(newAgent);
-      logMessage(`Agent added from Server at (${newAgent.x}, ${newAgent.y})`);
+      client_LogMessage(`Agent added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
   } else {
     // Add initial setup for testing
@@ -178,7 +178,7 @@ function gameLoop() {
 
 //#endregion
 
-logMessage("Game Started");
+client_LogMessage("Game Started");
 
 updateUnitInfo();
 

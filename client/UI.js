@@ -1,10 +1,12 @@
-function logMessage(message) {
-  const logEntry = document.createElement("div");
-  logEntry.textContent = message;
+function client_LogMessage(...args) {
+  //const logEntry = document.createElement("div");
+  //logEntry.textContent = message;
+
   //log.appendChild(logEntry);
   //log.scrollTop = log.scrollHeight;
-  socket.emit("client-log", message); // Emit log message to the server
-  console.log(message);
+
+  console.log(...args);
+  socket.emit("client-log", ...args ); // Emit log message to the server
 }
 
 function clearLog() {

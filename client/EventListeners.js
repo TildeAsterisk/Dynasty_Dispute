@@ -178,7 +178,7 @@ socket.on("game-state", (state) => {
   gameState.networkState = state;
   gameState.playerSocketId = state.playerSocketId;
   //console.log(state);
-  logMessage("Received initial game state");
+  client_LogMessage("Received initial game state");
   initializeGameObjects(state);
   //renderGame();
 });
@@ -192,7 +192,7 @@ socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a p
   //gameState.nodes.push(buildingData);
   addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
   //io.emit("update-node-s-c", gameState.nodes); // Broadcast to all clients
-  logMessage('Building data updated:', nodeData);
+  client_LogMessage('Building data updated:', nodeData);
   //logMessage("Map updated " + Date.now());
   // Add your map update logic here
   //renderGame();
@@ -200,21 +200,21 @@ socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a p
 
 // Listen for log messages from the server
 socket.on("log-message", (message) => {
-  logMessage(message);
+  client_LogMessage(message);
 });
 
 // Handle connection errors
 socket.on("connect_error", (error) => {
-  logMessage(`Connection error: ${error.message}`);
+  client_LogMessage(`Connection error: ${error.message}`);
 });
 
 // Handle reconnection attempts
 socket.on("reconnect_attempt", () => {
-  logMessage("Attempting to reconnect...");
+  client_LogMessage("Attempting to reconnect...");
 });
 
 socket.on('update-node-c-s', (nodeData) => {
-  logMessage("Received update-node-c-s from server.");
+  client_LogMessage("Received update-node-c-s from server.");
 });
 
 //#endregion

@@ -33,7 +33,7 @@
         const log = document.getElementById("log");
         const socket = io("http://localhost:3000"); // Ensure the correct server URL
 
-        function logMessage(message) {
+        function publicServer_LogMessage(message) {
             const logEntry = document.createElement("div");
             logEntry.textContent = message;
             log.appendChild(logEntry);
@@ -43,22 +43,22 @@
 
         // Listen for log messages from the server
         socket.on("log-message", (message) => {
-            logMessage(message);
+            publicServer_LogMessage(message);
         });
 
         // Handle connection errors
         socket.on("connect_error", (error) => {
-            logMessage(`Connection error: ${error.message}`);
+            publicServer_LogMessage(`Connection error: ${error.message}`);
         });
 
         // Handle reconnection attempts
         socket.on("reconnect_attempt", () => {
-            logMessage("Attempting to reconnect...");
+            publicServer_LogMessage("Attempting to reconnect...");
         });
 
         // Log connection success
         socket.on("connect", () => {
-            logMessage("Connected to server");
+            publicServer_LogMessage("Connected to server");
         });
     </script>
 </body>
