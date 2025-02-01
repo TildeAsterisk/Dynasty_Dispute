@@ -143,7 +143,7 @@ socket.on("game-state", (state) => {
   //renderGame();
 });
 
-socket.on("map-update", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.
+socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.
   //gameState.networkState.nodes = updatedMap;
   // Update the map with the new building data
   //updateMapWithNodeData(nodeData);
@@ -151,7 +151,7 @@ socket.on("map-update", (nodeData) => { // Flow #10 d - Client recieves a player
   // For example, you might update the DOM elements representing the buildings
   //gameState.nodes.push(buildingData);
   addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
-  //io.emit("map-update", gameState.nodes); // Broadcast to all clients
+  //io.emit("update-node-s-c", gameState.nodes); // Broadcast to all clients
   logMessage('Building data updated:', nodeData);
   //logMessage("Map updated " + Date.now());
   // Add your map update logic here
@@ -173,8 +173,8 @@ socket.on("reconnect_attempt", () => {
   logMessage("Attempting to reconnect...");
 });
 
-socket.on('update-node', (nodeData) => {
-  logMessage("Received update-node from server.");
+socket.on('update-node-c-s', (nodeData) => {
+  logMessage("Received update-node-c-s from server.");
 });
 
 //#endregion

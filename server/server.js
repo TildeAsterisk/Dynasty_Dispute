@@ -39,8 +39,8 @@ server.listen(PORT, () => {
 
 
 function handleBuildingUpdate(buildingData) {
-  // Emit the update-node event to all connected clients
-  socket.emit('update-node', buildingData);
+  // Emit the update-node-c-s event to all connected clients
+  socket.emit('update-node-c-s', buildingData);
 }
 
 // Example usage
