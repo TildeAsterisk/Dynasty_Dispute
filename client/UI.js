@@ -16,7 +16,7 @@ function client_LogMessage(...args) {
   if (stamp == "") {
     console.log(...args);
   } else {
-    console.log(...args, `[SOURCE]:${stamp}`);
+    console.log(`[${stamp}]:\n`,...args);
   }
 
   //const logEntry = document.createElement("div");
@@ -271,18 +271,23 @@ function drawCivStatusBarUI() {
 }
 
 //#region Player Cursor Functions (Multiplayer)
-function spawnPlayerCursor(){
-  cursor = document.createElement("div");
+function spawnPlayerCursor(cursorData){
+  /*cursor = document.createElement("div");
   cursor.className = "player-cursor";
   cursor.dataset.id = data.id;
   document.body.appendChild(cursor);
-  cursors[data.id] = cursor;
+  cursors[data.id] = cursor;*/
+  cursor = {id:cursorData.id, x:cursorData.x,y:cursorData.y};
+  cursors[cursor.id] = cursor;
   return cursor;
 }
 
-function updateCursorPosition(cursor){
-  cursor.style.left = `${data.x}px`;
-  cursor.style.top = `${data.y}px`;
+function updateCursorPosition(cursor, networkCursorData){
+  cursor.x = networkCursorData.x;
+  cursor.y = networkCursorData.y;
+  //const cursorWorldPos = screenToWorldCoordinates(cursor.x, cursor.y);
+  //cursor.style.left = `${data.x}px`;
+  //cursor.style.top = `${data.y}px`;
 }
 
 //#endregion

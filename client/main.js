@@ -63,6 +63,8 @@ function preloadImages() {
 }
 preloadImages();
 
+let cursors = {};
+
 //#endregion
 
 
@@ -147,9 +149,6 @@ function gameLoop() {
   // Draw grid
   //drawGrid();
 
-  // Draw Civ Status Bar
-  drawCivStatusBarUI();
-
   // Draw and update nodes
   gameState.nodes.forEach((node) => {
     node.update();
@@ -162,15 +161,24 @@ function gameLoop() {
     agent.draw();
   });
 
+  for (const cursor in cursors) {
+    //const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
+    drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
+    drawText(cursors[cursor].id,cursors[cursor].x, cursors[cursor].y);
+  }
+
   // Draw quest log
   //drawQuestLog();
 
   // Check quests
   //checkQuests();
 
-  updateUnitInfo(gameState.selectedUnit);
+  drawCivStatusBarUI(); // Draw Civ Status Bar
+  updateUnitInfo(gameState.selectedUnit); //update unit info menu
 
   //client_LogMessage("Selected Node Type: "+gameState.selectedType);
+
+
 
   gameState.gameTick += 1;
   requestAnimationFrame(gameLoop);

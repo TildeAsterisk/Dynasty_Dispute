@@ -117,27 +117,23 @@ canvas.addEventListener("click", (event) => {
 
 });
 
-
-// Track other players' cursors
-const cursors = {};
-
 // Handle cursor updates from the backend
 socket.on("cursor-update", (data) => {
     let cursor = cursors[data.id];
     if (!cursor) {
         // Create a new cursor for the player if it doesn't exist
-        cursor = spawnPlayerCursor();
+        cursor = spawnPlayerCursor(data);
     }
 
     // Update cursor position
-    updateCursorPosition(cursor);
+    updateCursorPosition(cursor, data);
 });
 
 // Remove cursor when a player disconnects
 socket.on("cursor-remove", (data) => {
     const cursor = cursors[data.id];
     if (cursor) {
-        cursor.remove();
+        //cursor.remove();
         delete cursors[data.id];
     }
 });
