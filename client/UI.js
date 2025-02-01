@@ -7,7 +7,7 @@ function client_LogMessage(...args) {
     // Process Stack Strings...
     stamp[0] = stamp[0] ? stamp[0].replace(/@.*\//, '@') : "";
     stamp[1] = stamp[1] ? stamp[1].replace(/@.*\//, '@') : "";
-    stamp = `Source:\n    ${stamp[1]}\n    ${stamp[0]}`;
+    stamp = stamp[0];
   }
   else{
     //stamp = stack[1] ? stack[1].replace(/@.*/, '') : "";
@@ -16,7 +16,7 @@ function client_LogMessage(...args) {
   if (stamp == "") {
     console.log(...args);
   } else {
-    console.log(...args, `[SOURCE:${stamp}]`);
+    console.log(...args, `[SOURCE]:${stamp}`);
   }
 
   //const logEntry = document.createElement("div");

@@ -330,17 +330,14 @@ class GoingHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    if(!context.home || context.home.type.key !== Node.types.home.key){
+    if(!context.target || context.target.type.key !== Node.types.home.key){
       context.home = context.findHome(context.searchRadius);
+      context.setNewTarget(context.home);
     }
-    if (context.home) { context.setNewTarget(context.home); }
-    else {
-      context.changeBehaviourState(new Roaming_State());
-      return;
+    else{
+      context.moveToTarget();
     }
 
-
-    context.moveToTarget();
     if (context.reachedTarget()) {
       // If agent reached home and its not full
       if (context.home && context.home.agentCapacity.length < context.home.maxAgentCapacity) {
