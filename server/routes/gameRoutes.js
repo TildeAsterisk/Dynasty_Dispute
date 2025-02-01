@@ -73,7 +73,15 @@ function handleSocketConnection(io) {
     socket.on("cursor-move", (data) => {
       // Broadcast the cursor position to other players
       socket.broadcast.emit("cursor-update", { id: socket.id, x: data.x, y: data.y });
-  });
+    });
+
+    // Listen for player data update
+    socket.on("player-data-update", (data) => {
+      // Broadcast the cursor position to other players
+      gameState.players[socket.id] = data;
+      socket.broadcast.emit("player-data-update", data);
+    });
+
   });
 }
 

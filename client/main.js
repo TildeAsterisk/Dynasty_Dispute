@@ -82,7 +82,10 @@ client_LogMessage("Game Started");
 updateUnitInfo();
 
 function initializeGameObjects(initialNetworkGameState = undefined) {
-  gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
+  gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  
+  // EMIT UPDATED PLAYER DATA WITH USERNAME
+  socket.emit('player-data-update',gameState.playerData);
+
   gameState.networkState = initialNetworkGameState;
   //client_LogMessage("modified initial state",gameState);
 

@@ -173,7 +173,7 @@ document.addEventListener('dragstart', function (event) {
 //#region WebSocket Event Listeners
 socket.on("game-state", (state) => {
   client_LogMessage("Received initial game state",state);
-  gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
+  //gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
   gameState.networkState = state;
   //client_LogMessage("modified initial state",gameState);
   initializeGameObjects(state);
@@ -212,6 +212,14 @@ socket.on("reconnect_attempt", () => {
 
 socket.on('update-node-c-s', (nodeData) => {
   client_LogMessage("Received update-node-c-s from server.");
+});
+
+// Listen for player data update
+socket.on("player-data-update", (data) => {
+  // Update player data
+  client_LogMessage("[SERVER]: Player has connected.",data);
+  //client_LogMessage(gameState.networkState.players[data.sid]);
+  gameState.networkState.players[data.sid] = data;
 });
 
 //#endregion
