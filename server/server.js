@@ -30,17 +30,3 @@ server.listen(PORT, () => {
   server_LogMessage(`Server running on port ${PORT}`);
   //server_LogMessage(`Server running on port ${PORT}`);
 });
-
-
-
-function handleBuildingUpdate(buildingData) {
-  // Emit the update-node-c-s event to all connected clients
-  socket.emit('update-node-c-s', buildingData);
-}
-
-// Example usage
-/*handleSocketConnection(socket => {
-  socket.on('building-updated', (buildingData) => {
-      handleBuildingUpdate(buildingData);
-  });
-});*/

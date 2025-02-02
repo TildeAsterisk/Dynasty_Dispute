@@ -51,7 +51,13 @@ function handleSocketConnection(io) {
 
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
-      gameState.nodes.push(nodeData); // Update server gameState with new node. (Inits from gamestate when page refreshes)
+      if(nodeData.type){
+        gameState.nodes.push(nodeData); // Update server gameState with new node. (Inits from gamestate when page refreshes)
+      }
+      else{
+        // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
+        gameState.nodes = gameState.nodes.filter((n) => (n.id !== nodeData.id));
+      }
       io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });
 

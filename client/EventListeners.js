@@ -1,5 +1,8 @@
 
 //#region Canvas Events
+
+//const { server_LogMessage } = require("../server/routes/gameRoutes");
+
 // Event handler for selecting a unit
 canvas.addEventListener("click", (event) => {
   //const rect = canvas.getBoundingClientRect();
@@ -186,12 +189,22 @@ socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a p
   // Logic to update the map with the new building data
   // For example, you might update the DOM elements representing the buildings
   //gameState.nodes.push(buildingData);
-  addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
+  
   //io.emit("update-node-s-c", gameState.nodes); // Broadcast to all clients
-  client_LogMessage('Building data updated:', nodeData);
   //logMessage("Map updated " + Date.now());
   // Add your map update logic here
   //renderGame();
+
+  if(nodeData.type){
+    addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
+    client_LogMessage(`A player has built ${nodeData.id}.`);
+  }
+  else{
+    // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
+    gameState.nodes = gameState.nodes.filter((n) => (n.id !== nodeData.id));
+    client_LogMessage(`A player has destroyed ${nodeData.id}.`);
+  }
+  client_LogMessage('Building data updated:', nodeData);
 });
 
 // Listen for log messages from the server
@@ -210,6 +223,13 @@ socket.on("reconnect_attempt", () => {
 });
 
 socket.on('update-node-c-s', (nodeData) => {
+  /**if(nodeData.type){
+    addNode(nodeData.x, nodeData.y, nodeData.type.key, false, nodeData);
+  }
+  else{
+    // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
+    gameState.nodes = gameState.nodes.filter((n) => (n.id !== nodeData.id));
+  }*/
   client_LogMessage("Received update-node-c-s from server.");
 });
 

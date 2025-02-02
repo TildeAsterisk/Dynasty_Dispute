@@ -52,6 +52,7 @@ function updateUnitInfo(object = null) {
   table.style.borderSpacing = 0;
   table.style.width = "100%";
   table.style.display='none';
+  table.style.textAlign = 'left';
   //table.style = "border-collapse = collapse; border-spacing: 0;";
 
   // Add table header
@@ -96,6 +97,7 @@ function updateUnitInfo(object = null) {
   }
 
   // Set the inner HTML of the div and append the table
+  unitInfoDiv.style.textAlign = 'right';
   unitInfoDiv.innerHTML = `<b>${object.id}</b><br>`;
 
   // Create a button element
@@ -134,17 +136,25 @@ function updateUnitInfo(object = null) {
   destroyBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
   destroyBtn.onclick = function() {
-    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id));
-    gameState.nodes = gameState.nodes.filter((n) => (n !== sNode));
+    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id)); //Get node to destroy by id
+    gameState.nodes = gameState.nodes.filter((n) => (n.id !== sNode.id)); // delete from array in gamestate
+    sNode.type=undefined;
+    socket.emit("update-node-c-s", sNode);  // emit with no type so it gets deleted
     //delete sNode;  // Does this even do anything???
-    client_LogMessage("[ACTION_BTN]:",sNode.id,"was destroyed.\n/!\\NEED TO EMIT THIS TO UPDATE NETWORKSTATE ON REFERSH");
+    client_LogMessage("[ACTION_BTN]:",sNode.id,"was destroyed.\n");
     //alert("DESTROYED");
   };
 
+  //Create action buttons div
+  const actionBtnContainer = document.createElement("div");
+  actionBtnContainer.style.textAlign = "right";
   // Append the button to your div
-  unitInfoDiv.appendChild(upgradeBtn);
-  unitInfoDiv.appendChild(inspectInfoBtn);
-  unitInfoDiv.appendChild(destroyBtn);
+  actionBtnContainer.appendChild(upgradeBtn);
+  actionBtnContainer.appendChild(inspectInfoBtn);
+  actionBtnContainer.appendChild(destroyBtn);
+  //append btn container to menu
+  unitInfoDiv.appendChild(actionBtnContainer);
+
   unitInfoDiv.appendChild(table);
   //unitInfoDiv.innerHTML += `<br>`;
 }

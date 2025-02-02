@@ -139,3 +139,9 @@ canvas {
 .action-button:disabled {
     opacity: 0.5;
 }
+
+table {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    text-align:left;
+}
