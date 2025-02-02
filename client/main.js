@@ -15,7 +15,7 @@ import { Idle_State, Roaming_State  , Gathering_State, Deposit_State  , GoingHom
 //#region INITIALISING VARIABLES
 
 //Setting up WebSocket
-const socket = io("http://localhost:3000");
+const socket = io("https://dynasty-dispute-tilde-asterisk.onrender.com"); //("http://localhost:3000");
 
 // Initialising Game Screen Canvas
 const canvas = document.getElementById("gameCanvas");
