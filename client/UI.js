@@ -99,10 +99,11 @@ function updateUnitInfo(object = null) {
   upgradeBtn.innerText = '⬆️';
   upgradeBtn.id = 'myButton';
   upgradeBtn.className = `action-button`;
+  upgradeBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
-  upgradeBtn.addEventListener('click', function() {
-    client_LogMessage('Button clicked!');
-  });
+  upgradeBtn.onclick = function() {
+    client_LogMessage("[ACTION_BTN]:",'Upgrade Button clicked!', this.dataset.id);
+  };
 
   // Create a button element
   const inspectInfoBtn = document.createElement('button');
@@ -110,10 +111,11 @@ function updateUnitInfo(object = null) {
   inspectInfoBtn.innerText = '🔍';
   inspectInfoBtn.id = 'myButton';
   inspectInfoBtn.className = `action-button`;
+  inspectInfoBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
-  inspectInfoBtn.addEventListener('click', function() {
-    client_LogMessage('Button clicked!');
-  });
+  inspectInfoBtn.onclick = function() {
+    client_LogMessage("[ACTION_BTN]:",'Inspect Button clicked!', this.dataset.id);
+  };
 
   // Create a button element
   const destroyBtn = document.createElement('button');
@@ -121,10 +123,15 @@ function updateUnitInfo(object = null) {
   destroyBtn.innerText = '🚫';
   destroyBtn.id = 'myButton';
   destroyBtn.className = `action-button`;
+  destroyBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
-  destroyBtn.addEventListener('click', function() {
-    client_LogMessage('Button clicked!');
-  });
+  destroyBtn.onclick = function() {
+    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id));
+    gameState.nodes = gameState.nodes.filter((n) => (n !== sNode));
+    //delete sNode;  // Does this even do anything???
+    client_LogMessage("[ACTION_BTN]:",sNode.id,"was destroyed.\n/!\\NEED TO EMIT THIS TO UPDATE NETWORKSTATE ON REFERSH");
+    //alert("DESTROYED");
+  };
 
   // Append the button to your div
   unitInfoDiv.appendChild(upgradeBtn);

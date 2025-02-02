@@ -196,7 +196,7 @@ function gameLoop() {
   //checkQuests();
 
   drawCivStatusBarUI(); // Draw Civ Status Bar
-  updateUnitInfo(gameState.selectedUnit); //update unit info menu
+  //updateUnitInfo(gameState.selectedUnit); //update unit info menu
 
   //client_LogMessage("Selected Node Type: "+gameState.selectedType);
 

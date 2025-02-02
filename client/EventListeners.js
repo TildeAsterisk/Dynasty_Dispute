@@ -28,7 +28,6 @@ canvas.addEventListener("click", (event) => {
 
   // Clear unit info if no unit is clicked
   updateUnitInfo(null);
-  updateUnitInfo(null);
   gameState.selectedUnit = null;
 });
 
