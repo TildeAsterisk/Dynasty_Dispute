@@ -9,7 +9,7 @@ class Node {
       description: "A repository for resources. Cost: 50",
       cost: 50,
       symbol: "📦",
-      imgSrc: "Graphics/storage_node.png",
+      imgSrc: "Graphics/buildings-rooms/storage_node2.png",
       loadedImg: null
     },
     home:
@@ -20,7 +20,7 @@ class Node {
       colour: "grey",
       cost: 50,
       symbol: "🏠",
-      imgSrc: "Graphics/home.png",
+      imgSrc: "Graphics/buildings-rooms/home3.png",
       loadedImg: null
     },
     resource_Node:
@@ -31,7 +31,7 @@ class Node {
       description: "Contains resources to be extracted.  Cost: 100",
       cost: 100,
       symbol: "🏭",
-      imgSrc: "Graphics/resource_node.png",
+      imgSrc: "Graphics/buildings-rooms/resource_node1.png",
       loadedImg: null
     },
     barracks_Node:
@@ -42,7 +42,7 @@ class Node {
       description: "Houses and trains Agents for defence.  Cost: 1000",
       cost: 50,
       symbol: "🏰",
-      imgSrc: "Graphics/barracks_node.png",
+      imgSrc: "Graphics/buildings-rooms/barracks_node.png",
       loadedImg: null
 
     },
@@ -53,7 +53,7 @@ class Node {
       description: "A path for agents to travel on. Cost: 10",
       cost: 10,
       symbol: "🛤️",
-      imgSrc: "Graphics/path_node.png",
+      imgSrc: "Graphics/paths/path_node.png",
       loadedImg: null
     }
   }
@@ -114,14 +114,7 @@ class Node {
     // Draw node so its origin is in centre
     const screenX = ((this.x - camera.x) * camera.scale);// - GRID_SIZE / 2;
     const screenY = ((this.y - camera.y) * camera.scale);// - GRID_SIZE / 2;
-    //calculate percentage of fill
-    let totalResInvFillPct = 0;
-    this.resourceInventory.forEach(invResource => {
-      const rFillPct = (invResource.amount / this.maxCapacity);
-      totalResInvFillPct = totalResInvFillPct + rFillPct;
-    }); //calculate fill percentage for each resource and add them up
-    totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
-
+    
     //Determine nodeImg to draw
     let loadedUnitImg = Node.types[this.type.key].loadedImg;
     if (this.type.key == Node.types.path_Node.key) {
@@ -134,25 +127,25 @@ class Node {
         this.neighbors[1] && this.neighbors[1].id &&
         this.neighbors[3] && this.neighbors[3].id) || connectedNodes.length == 3) {  // If connected to North East and West
         loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
+        loadedUnitImg.src = "Graphics/paths/path_Node-N_E_W.png";
       }
       else */if (connectedNodes.length == 2 && this.neighbors[1] && this.neighbors[1].id &&
         this.neighbors[3] && this.neighbors[3].id) {  // If connected to East and West
         loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/path_Node-E_W.png";
+        loadedUnitImg.src = "Graphics/paths/path_Node-E_W1.png";
       }
       /*else if(connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[1] && this.neighbors[1].id) {  // If connected to North and East
         loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/path_Node-N_E.png";
+        loadedUnitImg.src = "Graphics/paths/path_Node-N_E.png";
       }*/
       else if (connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
         loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/path_Node-N_S.png";
+        loadedUnitImg.src = "Graphics/paths/path_Node-N_S1.png";
         //Rotate 90 degrees
       }
       else {
         loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/path_Node-All.png";
+        loadedUnitImg.src = "Graphics/paths/path_Node-All1.png";
       }
 
 
@@ -161,18 +154,18 @@ class Node {
         case 2:
           // Straight path
           loadedUnitImg = new Image();
-          loadedUnitImg.src = "Graphics/path_Node-E_W.png";
+          loadedUnitImg.src = "Graphics/paths/path_Node-E_W.png";
           break;
         case 3:
           // T junction
           loadedUnitImg = new Image();
-          loadedUnitImg.src = "Graphics/path_Node-N_E_W.png";
+          loadedUnitImg.src = "Graphics/paths/path_Node-N_E_W.png";
           break;
         default:
           client_LogMessage("4 way junction",connectedNodes.length);
           // 4 way junction
           loadedUnitImg = new Image();
-          loadedUnitImg.src = "Graphics/path_Node-All.png";
+          loadedUnitImg.src = "Graphics/paths/path_Node-All.png";
           break;
       }*/
     }
@@ -182,6 +175,13 @@ class Node {
       drawSprite(screenX, screenY, GRID_SIZE * camera.scale, GRID_SIZE * camera.scale, loadedUnitImg);
     }
     else {
+      //calculate percentage of fill
+    let totalResInvFillPct = 0;
+    this.resourceInventory.forEach(invResource => {
+      const rFillPct = (invResource.amount / this.maxCapacity);
+      totalResInvFillPct = totalResInvFillPct + rFillPct;
+    }); //calculate fill percentage for each resource and add them up
+    totalResInvFillPct = totalResInvFillPct / (this.resourceInventory.length > 0 ? this.resourceInventory.length : 1); // Divide by the number of resources to caluclate Average fill percentage
       drawRect(
         screenX,
         screenY,

@@ -66,11 +66,11 @@ function updateUnitInfo(object = null) {
     /*
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round*/
     //let tmpSymbol = value.symbol ? value.symbol : value.type.symbol;
-    if (value) {
+    if (value && key != 'neighbors') {
       //client_LogMessage("OBJECT ATTRIBNUTE", key, value);
       if (typeof value == 'object' && value.symbol) { roundedValue = value.symbol; }
       else if (typeof value.type == 'object' && value.type.symbol) { roundedValue = value.type.symbol; }
-      else if (typeof value.type == 'object') {
+      else if (Array.isArray(value)) {
         //client_LogMessage(Object.entries(value));
         for (const [skey, stat] of Object.entries(value)) {
           let newStat = stat.type ? stat.type : stat;
@@ -83,14 +83,12 @@ function updateUnitInfo(object = null) {
       }
       else{
           roundedValue = value;
+          const row = table.insertRow();
+          row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
+          row.innerHTML = `<td style="border: none; ">${key}</td>
+                          <td style="border: none;">: ${roundedValue}</td>`;
       }
 
-      if (key != "resourceInventory" && key != 'neighbors') {
-        const row = table.insertRow();
-        row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
-        row.innerHTML = `<td style="border: none; ">${key}</td>
-                        <td style="border: none;">: ${roundedValue}</td>`;
-      }
 
     }
     //if (key == "type") { roundedValue = value.name; }

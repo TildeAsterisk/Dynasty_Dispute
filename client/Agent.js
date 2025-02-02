@@ -5,9 +5,11 @@ class Agent {
       key: "generic_Agent",
       name: "Generic Agent",
       description: "A general-purpose agent. Cost: 100",
-      colour: "black",
+      colour: "rgb(120,50,0)",
       cost: 100,
-      symbol: "👤"
+      symbol: "👤",
+      imgSrc: "Graphics/characters/generic_Agent.png",
+      loadedImg: null
     },
     raider_Agent: {
       key: "raider_Agent",
@@ -15,7 +17,9 @@ class Agent {
       description: "An aggressive agent.",
       colour: "red",
       cost: 0,
-      symbol: "🤺"
+      symbol: "🤺",
+      imgSrc: "Graphics/characters/raider_Agent.png",
+      loadedImg: null
     }
   }
 
@@ -56,14 +60,21 @@ class Agent {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
     const agentScreenSize = (GRID_SIZE / 5) * camera.scale;
-    drawRect(
-      screenX,
-      screenY,
-      agentScreenSize,
-      agentScreenSize,
-      this.colour,
-      undefined
-    );
+    let loadedUnitImg = null;//Agent.types[this.type.key].loadedImg;
+    // Try to draw sprite, if not draw rectangle
+    if (loadedUnitImg && loadedUnitImg.src && loadedUnitImg.width > 0) {
+      drawSprite(screenX, screenY, agentScreenSize, agentScreenSize, loadedUnitImg);
+    }
+    else {
+      drawRect(
+        screenX,
+        screenY,
+        agentScreenSize,
+        agentScreenSize,
+        this.colour,
+        undefined
+      );
+    }
     drawText(this.behaviourState.symbol, screenX + (agentScreenSize / 2), screenY - agentScreenSize, undefined, undefined, undefined, 'center');
   }
 

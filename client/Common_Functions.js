@@ -65,10 +65,11 @@ function drawSprite(x, y, width, height, loadedUnitImg) {
   if (!loadedUnitImg || loadedUnitImg.width == 0) {
     return false;
   }
+  ctx.imageSmoothingEnabled = false;
   // Offset the x and y to center the rectangle
   x -= width / 2;
   y -= height / 2;
-  ctx.drawImage(loadedUnitImg, x, y, width, height);
+  ctx.drawImage(loadedUnitImg, x, y, width , height);
   return true;
 }
 
@@ -160,7 +161,7 @@ function drawGrid() {
 
   const gridWidth = Math.ceil(canvas.width / (GRID_SIZE * camera.scale));
   const gridHeight = Math.ceil(canvas.height / (GRID_SIZE * camera.scale));
-  // Draw grid
+  // DRAW GRID
   ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
   ctx.lineWidth = 1;
 
@@ -179,6 +180,7 @@ function drawGrid() {
     ctx.lineTo(canvas.width, y);
     ctx.stroke();
   }
+  
 }
 
 function heuristic(nodeA, nodeB) {

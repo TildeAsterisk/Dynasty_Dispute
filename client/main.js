@@ -51,6 +51,9 @@ let gameState = {
   networkState: { nodes: [], agents: [], players: [] }
 };
 
+let cursors = {};
+let cursorImage=null;
+
 function preloadImages() {
   client_LogMessage("PRELOADING GRAPHICAL ASSETS...");
   Object.values(Node.types).forEach((nodeType) => {
@@ -58,10 +61,16 @@ function preloadImages() {
     nodeType.loadedImg = new Image();
     nodeType.loadedImg.src = nodeType.imgSrc;
   });
+  Object.values(Agent.types).forEach((agentType) => {
+    client_LogMessage("Preloading image for node type: " + agentType.imgSrc);
+    agentType.loadedImg = new Image();
+    agentType.loadedImg.src = agentType.imgSrc;
+  });
+
+  cursorImage = new Image();
+  cursorImage.src = "Graphics/mouse-pointer.png";
 }
 preloadImages();
-
-let cursors = {};
 
 //#endregion
 
@@ -162,7 +171,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Fill the entire canvas with colour
-  ctx.fillStyle = "rgb(51, 51, 51)";
+  ctx.fillStyle = "rgb(51, 51, 51)";//"rgb(60, 130, 50)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   // Draw grid
   //drawGrid();
@@ -180,13 +189,16 @@ function gameLoop() {
   });
 
   for (const cursor in cursors) {
-    //console.log(cursors[cursor]);
-    const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
-    //drawRect(cursorWorldPos.x, cursorWorldPos.y, 5,5,"orange", undefined );
-    //drawText(cursors[cursor].id,cursorWorldPos.x, cursorWorldPos.y);
-    drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
+    //const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
+    //Draw cursor image
+    if (cursorImage && cursorImage.src && cursorImage.width > 0) {
+      drawSprite(cursors[cursor].x, cursors[cursor].y, cursorImage.width*1.5, cursorImage.height*1.5, cursorImage);
+    }
+    else {
+      drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
+    }
     const playerCursorText = gameState.networkState.players[cursors[cursor].id] ? gameState.networkState.players[cursors[cursor].id].username : cursors[cursor].id ;
-    drawText(playerCursorText,cursors[cursor].x, cursors[cursor].y);
+    drawText(playerCursorText,cursors[cursor].x+(cursorImage.width/3), cursors[cursor].y);
   }
 
   // Draw quest log
