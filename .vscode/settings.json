@@ -1,5 +1,5 @@
 {
-  "livePreview.defaultPreviewPath": "/client/index.html",
+  "livePreview.defaultPreviewPath": "/client/game.html",
   "editor.minimap.showSlider": "always",
   "task.autoDetect": "on"
 }

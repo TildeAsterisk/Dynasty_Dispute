@@ -1,55 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Civilization Sim</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Login Page</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #f2f2f2;
+      padding:0;
+      margin:0;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #loginBoxContainer{
+      display: flex;
+      flex-direction: column;
+      flex-grow: 2;
+    }
+    #loginBox{
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    
+    .container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 10px;
+      width:100%;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .form-group input {
+      /*width: 100%;*/
+      display:block;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    
+    #playButton {
+      display:block;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .title-container {
+      font-size:4px;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 0.75;
+      width: 100%;
+      white-space: pre;
+    }
+
+
+    footer {
+      font-size:large;
+      position: absolute;
+      bottom:0;
+      right:0;
+      text-align: center;
+      padding: 5px 10px;
+      color: rgb(58, 58, 58);
+    }
+  </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-
-  <div id="menu">
-    <div id="unitActionsMenu">  </div>
-
-    <div id="unitInfoContainer">
-      <div id="unitInfo"></div>
+  <div class="container">
+    <div class="title-container">
+      <h1>
+  ##### ##                                                                                   ##### ##                                                              
+  /#####  /##                                                                                /#####  /##      #                                                      
+//    /  / ###                                                    #                        //    /  / ###    ###                                          #          
+/     /  /   ###                                                  ##                       /     /  /   ###    #                                          ##          
+    /  /     ###                                                 ##                            /  /     ###                                              ##           
+    ## ##      ## ##   ####    ###  /###     /###      /###     ######## ##   ####             ## ##      ## ###        /###      /###   ##   ####      ######## /##   
+    ## ##      ##  ##    ###  / ###/ #### / / ###  /  / #### / ########   ##    ###  /         ## ##      ##  ###      / #### /  / ###  / ##    ###  / ######## / ###  
+    ## ##      ##  ##     ###/   ##   ###/ /   ###/  ##  ###/     ##      ##     ###/          ## ##      ##   ##     ##  ###/  /   ###/  ##     ###/     ##   /   ### 
+    ## ##      ##  ##      ##    ##    ## ##    ##  ####          ##      ##      ##           ## ##      ##   ##    ####      ##    ##   ##      ##      ##  ##    ###
+    ## ##      ##  ##      ##    ##    ## ##    ##    ###         ##      ##      ##           ## ##      ##   ##      ###     ##    ##   ##      ##      ##  ######## 
+    #  ##      ##  ##      ##    ##    ## ##    ##      ###       ##      ##      ##           #  ##      ##   ##        ###   ##    ##   ##      ##      ##  #######  
+       /       /   ##      ##    ##    ## ##    ##        ###     ##      ##      ##              /       /    ##          ### ##    ##   ##      ##      ##  ##        
+  /###/       /    ##      ##    ##    ## ##    /#   /###  ##     ##      ##      ##         /###/       /     ##     /###  ## ##    ##   ##      /#      ##  ####    /
+ /   ########/      #########    ###   ### ####/ ## / #### /      ##       #########        /   ########/      ### / / #### /  #######     ######/ ##     ##   ######/  
+/       ####          #### ###    ###   ### ###   ##   ###/        ##        #### ###      /       ####         ##/     ###/   ######       #####   ##     ##   #####  
+#                           ###                                                    ###     #                                   ##                                      
+##                  #####   ###                                            #####   ###     ##                                 ##                                       
+                  /#######  /#                                           /#######  /#                                         ##                                       
+                  /      ###/                                            /      ###/                                            ##                                     
+</h1>
     </div>
-
-    <!--div id="questContainer">
-      <h3>Quests:</h3>
-      !-- Quests will be dynamically added here 웃 --
-    </div-->
+    <div id="loginBoxContainer">
+      <div id="loginBox">
+        <form action="game.html" method="get">
+          <div class="form-group">
+            <!--label for="username">Name</label-->
+            <input type="text" id="username" name="username" placeholder="Enter your name" required>
+          </div>
+          <!--div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password">
+          </div-->
+          <center>
+            <!--input type="submit" value="Login"></input> or --><input type="submit" value="Play" id="playButton"></input>
+          </center>
+        </form>
+      </div>
+    </div>
   </div>
 
-  <div class="grid-panel" id="gridPanel">
-    <button class="toggle-button" onclick="togglePanel()">±</button>
-    <div id="selectedBuildItemInfo">
-    </div>
-    <div class="grid-container">
-      <div class="grid-item" data-value=""              >👆</div>
-      <div class="grid-item" data-value="storage_Node"  >🗃️</div>
-      <div class="grid-item" data-value="home"          >🏠</div>
-      <div class="grid-item" data-value="resource_Node" data-initobj='{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow", "symbol":"🌾"},"amount":100} ] }'>🌾</div>
-      <div class="grid-item" data-value="resource_Node" >🏭</div>
-      <div class="grid-item" data-value="barracks_Node"  >🏰</div>
-      <div class="grid-item" data-value="path_Node"  >📉</div>
-      <!--div class="grid-item" data-value="generic_Agent" >👤</div>
-      <div class="grid-item" data-value="raider_Agent"  >🤺</div-->
-    </div>
-  </div>
-  
-
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  
-  <script src="Agent.js">     </script>
-  <script src="Node.js">      </script>
-  <script src="Resource.js">  </script>
-  <script src="State.js">     </script>
-  <script src="UI.js">        </script>
-  <script src="Common_Functions.js"></script>
-  
-  <script src="main.js"></script>
-  <script src="EventListeners.js"></script>
+  <footer>
+    <span><a href="https://TildeAsterisk.BlogSpot.com" target="_blank" rel="noopener noreferrer">Tilde Asterisk ~*</a></span>
+  </footer>
 </body>
 </html>
