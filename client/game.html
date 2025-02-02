@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civilization Sim</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="menu">
+    <div id="unitActionsMenu">  </div>
+
+    <div id="unitInfoContainer">
+      <div id="unitInfo"></div>
+    </div>
+
+    <!--div id="questContainer">
+      <h3>Quests:</h3>
+      !-- Quests will be dynamically added here 웃 --
+    </div-->
+  </div>
+
+  <div class="grid-panel" id="gridPanel">
+    <button class="toggle-button" onclick="togglePanel()">±</button>
+    <div id="selectedBuildItemInfo">
+    </div>
+    <div class="grid-container">
+      <div class="grid-item" data-value=""              >👆</div>
+      <div class="grid-item" data-value="storage_Node"  >🗃️</div>
+      <div class="grid-item" data-value="home"          >🏠</div>
+      <div class="grid-item" data-value="resource_Node" data-initobj='{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow", "symbol":"🌾"},"amount":100} ] }'>🌾</div>
+      <div class="grid-item" data-value="resource_Node" >🏭</div>
+      <div class="grid-item" data-value="barracks_Node"  >🏰</div>
+      <div class="grid-item" data-value="path_Node"  >📉</div>
+      <!--div class="grid-item" data-value="generic_Agent" >👤</div>
+      <div class="grid-item" data-value="raider_Agent"  >🤺</div-->
+    </div>
+  </div>
+  
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  
+  <script src="Agent.js">     </script>
+  <script src="Node.js">      </script>
+  <script src="Resource.js">  </script>
+  <script src="State.js">     </script>
+  <script src="UI.js">        </script>
+  <script src="Common_Functions.js"></script>
+  
+  <script src="main.js"></script>
+  <script src="EventListeners.js"></script>
+</body>
+</html>
