@@ -7,10 +7,7 @@ assignees: TildeAsterisk
 
 ---
 
-**Description:**
+**Deacription of the Change Proposed:**
 
 
-**Change Proposed:**
-
-
-**How and where?:***
+**How and where?:**
