@@ -135,3 +135,7 @@ canvas {
   cursor: pointer; /* Adds a pointer cursor on hover */
   color: inherit; /* Inherits the text color from the parent */
 }
+
+.action-button:disabled {
+    opacity: 0.5;
+}

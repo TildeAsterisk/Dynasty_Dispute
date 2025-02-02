@@ -51,6 +51,7 @@ function updateUnitInfo(object = null) {
   table.style.borderCollapse = "collapse";
   table.style.borderSpacing = 0;
   table.style.width = "100%";
+  table.style.display='none';
   //table.style = "border-collapse = collapse; border-spacing: 0;";
 
   // Add table header
@@ -64,11 +65,11 @@ function updateUnitInfo(object = null) {
     /*
     if (typeof value == 'number'){ roundedValue = value.toFixed(2); }  // If attribute is a number then round*/
     //let tmpSymbol = value.symbol ? value.symbol : value.type.symbol;
-    if (value && typeof value == 'object') {
+    if (value) {
       //client_LogMessage("OBJECT ATTRIBNUTE", key, value);
-      if (value.symbol) { roundedValue = value.symbol; }
+      if (typeof value == 'object' && value.symbol) { roundedValue = value.symbol; }
       else if (typeof value.type == 'object' && value.type.symbol) { roundedValue = value.type.symbol; }
-      else {
+      else if (typeof value.type == 'object') {
         //client_LogMessage(Object.entries(value));
         for (const [skey, stat] of Object.entries(value)) {
           let newStat = stat.type ? stat.type : stat;
@@ -79,7 +80,11 @@ function updateUnitInfo(object = null) {
                             <td style="border: none;">: ${(Math.round(value[skey].amount * 100) / 100).toFixed(2)}</td>`;
         }
       }
-      if (key != "resourceInventory") {
+      else{
+          roundedValue = value;
+      }
+
+      if (key != "resourceInventory" && key != 'neighbors') {
         const row = table.insertRow();
         row.style = "border: 1px solid #cccccc6d; border-radius: 10px;"
         row.innerHTML = `<td style="border: none; ">${key}</td>
@@ -100,6 +105,8 @@ function updateUnitInfo(object = null) {
   upgradeBtn.id = 'myButton';
   upgradeBtn.className = `action-button`;
   upgradeBtn.dataset.id = object.id;
+  upgradeBtn.disabled = true;
+  //upgradeBtn.style;
   // Optionally, add event listeners to the button
   upgradeBtn.onclick = function() {
     client_LogMessage("[ACTION_BTN]:",'Upgrade Button clicked!', this.dataset.id);
@@ -114,7 +121,8 @@ function updateUnitInfo(object = null) {
   inspectInfoBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
   inspectInfoBtn.onclick = function() {
-    client_LogMessage("[ACTION_BTN]:",'Inspect Button clicked!', this.dataset.id);
+    client_LogMessage("[ACTION_BTN]:",'Inspect Button clicked!', this.dataset.id, table.style.display);
+    table.style = table.style.display == '' ? 'display:none;' : 'display:default';
   };
 
   // Create a button element
