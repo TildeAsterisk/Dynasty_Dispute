@@ -9,7 +9,7 @@ class Node {
       description: "A repository for resources. Cost: 50",
       cost: 50,
       symbol: "📦",
-      imgSrc: "Graphics/buildings-rooms/storage_node2.png",
+      imgSrc: "Graphics/buildings-rooms/storage_Node2.png",
       loadedImg: null
     },
     home:
@@ -31,7 +31,7 @@ class Node {
       description: "Contains resources to be extracted.  Cost: 100",
       cost: 100,
       symbol: "🏭",
-      imgSrc: "Graphics/buildings-rooms/resource_node1.png",
+      imgSrc: "Graphics/buildings-rooms/resource_Node1.png",
       loadedImg: null
     },
     barracks_Node:
@@ -42,7 +42,7 @@ class Node {
       description: "Houses and trains Agents for defence.  Cost: 1000",
       cost: 50,
       symbol: "🏰",
-      imgSrc: "Graphics/buildings-rooms/barracks_node.png",
+      imgSrc: "Graphics/buildings-rooms/barracks_Node.png",
       loadedImg: null
 
     },
@@ -53,7 +53,7 @@ class Node {
       description: "A path for agents to travel on. Cost: 10",
       cost: 10,
       symbol: "🛤️",
-      imgSrc: "Graphics/paths/path_node.png",
+      imgSrc: "Graphics/paths/path_Node.png",
       loadedImg: null
     }
   }
