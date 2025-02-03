@@ -188,6 +188,7 @@ function gameLoop() {
     agent.draw();
   });
 
+  // Draw Cursors
   for (const cursor in cursors) {
     //const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
     //Draw cursor image

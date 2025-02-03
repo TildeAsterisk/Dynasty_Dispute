@@ -331,9 +331,9 @@ function spawnPlayerCursor(cursorData){
   return cursor;
 }
 
-function updateCursorPosition(cursor, networkCursorData){
-  cursor.x = networkCursorData.x;
-  cursor.y = networkCursorData.y;
+function updateCursorPosition(cursor, netCursorData){
+  cursor.x = netCursorData.x;
+  cursor.y = netCursorData.y;
   //const cursorWorldPos = screenToWorldCoordinates(cursor.x, cursor.y);
   //cursor.style.left = `${data.x}px`;
   //cursor.style.top = `${data.y}px`;

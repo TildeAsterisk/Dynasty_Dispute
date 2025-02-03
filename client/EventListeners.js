@@ -120,15 +120,15 @@ canvas.addEventListener("click", (event) => {
 });
 
 // Handle cursor updates from the backend
-socket.on("cursor-update", (data) => {
-    let cursor = cursors[data.id];
+socket.on("cursor-update", (netCursorData) => {
+    let cursor = cursors[netCursorData.id];
     if (!cursor) {
         // Create a new cursor for the player if it doesn't exist
-        cursor = spawnPlayerCursor(data);
+        cursor = spawnPlayerCursor(netCursorData);
     }
 
-    // Update cursor position
-    updateCursorPosition(cursor, data);
+    // Update cursor position with world position
+    updateCursorPosition(cursor, netCursorData);
 });
 
 // Remove cursor when a player disconnects
