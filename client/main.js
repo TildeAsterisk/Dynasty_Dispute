@@ -190,16 +190,16 @@ function gameLoop() {
 
   // Draw Cursors
   for (const cursor in cursors) {
-    //const cursorWorldPos = screenToWorldCoordinates(cursors[cursor].x, cursors[cursor].y);
+    const cursorScreenPos = worldToScreenCoordinates(cursors[cursor].x, cursors[cursor].y);
     //Draw cursor image
     if (cursorImage && cursorImage.src && cursorImage.width > 0) {
-      drawSprite(cursors[cursor].x, cursors[cursor].y, cursorImage.width*1.5, cursorImage.height*1.5, cursorImage);
+      drawSprite(cursorScreenPos.x, cursorScreenPos.y, cursorImage.width*1.5, cursorImage.height*1.5, cursorImage);
     }
     else {
-      drawRect(cursors[cursor].x, cursors[cursor].y, 5,5,"orange", undefined );
+      drawRect(cursorScreenPos.x, cursorScreenPos.y, 5,5,"orange", undefined );
     }
     const playerCursorText = gameState.networkState.players[cursors[cursor].id] ? gameState.networkState.players[cursors[cursor].id].username : cursors[cursor].id ;
-    drawText(playerCursorText,cursors[cursor].x+(cursorImage.width/3), cursors[cursor].y);
+    drawText(playerCursorText,cursorScreenPos.x+(cursorImage.width/3), cursorScreenPos.y);
   }
 
   // Draw quest log
