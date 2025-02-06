@@ -114,7 +114,6 @@ class Node {
     //Determine nodeImg to draw
     //console.log(GraphicsManager.GameGraphics, this.type.key);
     let nodeGraphicFromGM = GraphicsManager.GameGraphics[this.graphicKey];
-    if(!nodeGraphicFromGM){console.log(this.graphicKey,"INVALID");}
     let loadedUnitImg = nodeGraphicFromGM ? nodeGraphicFromGM.loadedImg : null; //Node.types[this.type.key].loadedImg;
     if (this.type.key == Node.types.path_Node.key) {
       // Get load unit img based on connections
@@ -130,21 +129,18 @@ class Node {
       }
       else */if (connectedNodes.length == 2 && this.neighbors[1] && this.neighbors[1].id &&
         this.neighbors[3] && this.neighbors[3].id) {  // If connected to East and West
-        loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/paths/path_Node-E_W1.png";
+        loadedUnitImg = GraphicsManager.GameGraphics.path_node_E_W.loadedImg;
       }
       /*else if(connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[1] && this.neighbors[1].id) {  // If connected to North and East
         loadedUnitImg = new Image();
         loadedUnitImg.src = "Graphics/paths/path_Node-N_E.png";
       }*/
       else if (connectedNodes.length == 2 && this.neighbors[0] && this.neighbors[0].id && this.neighbors[2] && this.neighbors[2].id) {  // If connected to North and South
-        loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/paths/path_Node-N_S1.png";
+        loadedUnitImg = GraphicsManager.GameGraphics.path_node_N_S.loadedImg;
         //Rotate 90 degrees
       }
       else {
-        loadedUnitImg = new Image();
-        loadedUnitImg.src = "Graphics/paths/path_Node-All1.png";
+        loadedUnitImg = GraphicsManager.GameGraphics.path_node_ALL.loadedImg;
       }
 
 
