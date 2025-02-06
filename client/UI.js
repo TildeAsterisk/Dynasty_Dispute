@@ -16,7 +16,7 @@ function client_LogMessage(...args) {
   if (stamp == "") {
     console.log(...args);
   } else {
-    console.log(`[${stamp}]:`,...args);
+    console.log(`[${stamp}]:\n`,...args);
   }
 
   //const logEntry = document.createElement("div");
