@@ -105,6 +105,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newNode.regenCooldown = netNode.regenCooldown;
       newNode.lastRegenTime = netNode.lastRegenTime;
       newNode.neighbors = netNode.neighbors;
+      newNode.graphicKey = netNode.graphicKey;
 
       gameState.nodes.push(newNode);
       client_LogMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
@@ -112,7 +113,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
   } else {
     // Add a resource node and a storage_Node nearby
     const nodeCoords = getGridCoordinates(centerX, centerY);
-    let tmpInitObj = JSON.parse('{"resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
+    let tmpInitObj = JSON.parse('{"graphicKey":"resource_Node_food","resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
     tmpInitObj.symbol = "🌾";
     //client_LogMessage(tmpInitObj);
     addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined, tmpInitObj);

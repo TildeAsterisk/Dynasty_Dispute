@@ -60,7 +60,7 @@ class Agent {
     const screenX = (this.x - camera.x) * camera.scale;
     const screenY = (this.y - camera.y) * camera.scale;
     const agentScreenSize = (GRID_SIZE / 5) * camera.scale;
-    let loadedUnitImg = null;//Agent.types[this.type.key].loadedImg;
+    let loadedUnitImg = null;//let loadedUnitImg = GraphicsManager.GameGraphics[this.type.key].loadedImg;
     // Try to draw sprite, if not draw rectangle
     if (loadedUnitImg && loadedUnitImg.src && loadedUnitImg.width > 0) {
       drawSprite(screenX, screenY, agentScreenSize, agentScreenSize, loadedUnitImg);

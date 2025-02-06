@@ -9,8 +9,7 @@ class Node {
       description: "A repository for resources. Cost: 50",
       cost: 50,
       symbol: "📦",
-      imgSrc: "Graphics/buildings-rooms/storage_Node2.png",
-      loadedImg: null
+      graphicKey : "storage_Node"
     },
     home:
     {
@@ -20,8 +19,7 @@ class Node {
       colour: "grey",
       cost: 50,
       symbol: "🏠",
-      imgSrc: "Graphics/buildings-rooms/home3.png",
-      loadedImg: null
+      graphicKey : "home"
     },
     resource_Node:
     {
@@ -31,8 +29,7 @@ class Node {
       description: "Contains resources to be extracted.  Cost: 100",
       cost: 100,
       symbol: "🏭",
-      imgSrc: "Graphics/buildings-rooms/resource_Node1.png",
-      loadedImg: null
+      graphicKey : "resource_Node_rawMaterials"
     },
     barracks_Node:
     {
@@ -42,8 +39,7 @@ class Node {
       description: "Houses and trains Agents for defence.  Cost: 1000",
       cost: 50,
       symbol: "🏰",
-      imgSrc: "Graphics/buildings-rooms/barracks_Node.png",
-      loadedImg: null
+      graphicKey : "barracks_Node"
 
     },
     path_Node: {
@@ -53,8 +49,7 @@ class Node {
       description: "A path for agents to travel on. Cost: 10",
       cost: 10,
       symbol: "🛤️",
-      imgSrc: "Graphics/paths/path_Node.png",
-      loadedImg: null
+      graphicKey : "path_Node"
     }
   }
 
@@ -64,6 +59,7 @@ class Node {
     this.y = y;
     this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
     this.colour = this.type.colour;
+    this.graphicKey = this.type.graphicKey;
 
     this.maxCapacity = 100; // max capacity for each resource in the inventory
     this.resourceInventory = (Node.types.resource_Node.key === typeKey) ? [new Resource(Resource.types.rawMaterials.key, this.maxCapacity)] : []; //If resource node give default inventory
@@ -116,7 +112,10 @@ class Node {
     const screenY = ((this.y - camera.y) * camera.scale);// - GRID_SIZE / 2;
     
     //Determine nodeImg to draw
-    let loadedUnitImg = Node.types[this.type.key].loadedImg;
+    //console.log(GraphicsManager.GameGraphics, this.type.key);
+    let nodeGraphicFromGM = GraphicsManager.GameGraphics[this.graphicKey];
+    if(!nodeGraphicFromGM){console.log(this.graphicKey,"INVALID");}
+    let loadedUnitImg = nodeGraphicFromGM ? nodeGraphicFromGM.loadedImg : null; //Node.types[this.type.key].loadedImg;
     if (this.type.key == Node.types.path_Node.key) {
       // Get load unit img based on connections
       //client_LogMessage(this,this.neighbors);
