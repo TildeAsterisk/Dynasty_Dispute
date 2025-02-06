@@ -15,7 +15,7 @@ import { Idle_State, Roaming_State  , Gathering_State, Deposit_State  , GoingHom
 //#region INITIALISING VARIABLES
 
 //Setting up WebSocket
-const socket = io("https://dynasty-dispute-tilde-asterisk.onrender.com"); //("http://localhost:3000");
+const socket = io(SOCKET_URL);
 
 // Initialising Game Screen Canvas
 const canvas = document.getElementById("gameCanvas");
@@ -54,23 +54,7 @@ let gameState = {
 let cursors = {};
 let cursorImage=null;
 
-function preloadImages() {
-  client_LogMessage("PRELOADING GRAPHICAL ASSETS...");
-  Object.values(Node.types).forEach((nodeType) => {
-    client_LogMessage("Preloading image for node type: " + nodeType.imgSrc);
-    nodeType.loadedImg = new Image();
-    nodeType.loadedImg.src = nodeType.imgSrc;
-  });
-  Object.values(Agent.types).forEach((agentType) => {
-    client_LogMessage("Preloading image for node type: " + agentType.imgSrc);
-    agentType.loadedImg = new Image();
-    agentType.loadedImg.src = agentType.imgSrc;
-  });
-
-  cursorImage = new Image();
-  cursorImage.src = "Graphics/mouse-pointer.png";
-}
-preloadImages();
+GraphicsManager.preloadImages();
 
 //#endregion
 
