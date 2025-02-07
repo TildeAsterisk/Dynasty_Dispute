@@ -126,11 +126,17 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
 
   // Initialize agents from the network state
   if (gameState.networkState.agents && gameState.networkState.agents.length > 0) {
-    gameState.networkState.agents.forEach(netAgent => {
+    gameState.networkState.agents.forEach((netAgent) => {
       const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
+      for ( const property in netAgent){
+        if(property == "id"){ return; }
+        newAgent.property = netAgent[property];
+        console.log(`Initialising ${property} with ${netAgent[property]}`);
+      }
+      /*
       newAgent.id = netAgent.id;
       newAgent.colour = netAgent.colour;
-      newAgent.behaviourState = new Idle_State(); // Assuming agents start in Idle_State
+      newAgent.behaviourState = netAgent.behaviourState;
       newAgent.target = netAgent.target;
       newAgent.previousUnitTarget = netAgent.previousUnitTarget;
       newAgent.carrying = netAgent.carrying;
@@ -144,8 +150,10 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newAgent.attackRange = netAgent.attackRange;
       newAgent.attackCooldown = netAgent.attackCooldown;
       newAgent.lastAttackTime = netAgent.lastAttackTime;
-      gameState.agents.push(newAgent);
-      client_LogMessage(`Agent added from Server at (${newAgent.x}, ${newAgent.y})`);
+      newAgent.resourceInventory = netAgent.resourceInventory;
+      gameState.agents.push(newAgent);*/
+      //addAgent(centerX, centerY);
+      client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
   } else {
     // Add initial setup for testing

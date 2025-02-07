@@ -6,14 +6,14 @@ class Resource {
       name: "Raw Materials",
       description: "Resources for construction and crafting.",
       colour: "gray",
-      symbol: "🪨"
+      symbol: "🧱"
     },
     food: {
       key: "food",
       name: "Food",
       description: "Resources for consumption.",
       colour: "yellow",
-      symbol: "🥩"
+      symbol: "🌾" //🥩
     },
     agricultural: {
       key: "agricultural",

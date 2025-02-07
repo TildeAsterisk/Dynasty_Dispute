@@ -7,7 +7,8 @@ module.exports = router;
 // Game state
 const gameState = {
   players: {},
-  nodes: [],
+  nodes : [],
+  agents : []
 };
 
 // Emit log messages to clients
@@ -48,6 +49,13 @@ function handleSocketConnection(io) {
 
     // Send initial game state to the player
     socket.emit("game-state", gameState);
+
+    /*socket.on("game-state", (state) => {
+      //Update nodes from gameState
+      gameState["agents"] = state.agents;
+      
+      server_LogMessage("Server recieved game state from client ",gameState.agents);
+    });*/
 
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
