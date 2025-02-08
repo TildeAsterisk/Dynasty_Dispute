@@ -178,12 +178,13 @@ function GenerateUnitInfoMenu(object = null) {
 
 function updateUnitInfoMenu(object = null){
   const unitInfoElem = document.getElementById("basicUnitInfoUI");
+  unitInfoElem.innerHTML = '';
   for (resource in object.resourceInventory) {
     let newStat = object.resourceInventory[resource].type ? object.resourceInventory[resource].type : object.resourceInventory[resource];
     roundedValue = newStat.key ? newStat.key : undefined;
     const resAmntDisplay = (Math.round(object.resourceInventory[resource].amount * 100) / 100).toFixed(2);
     const resDisplayColor = object.resourceInventory[resource].type.colour ? object.resourceInventory[resource].type.colour : null;
-    unitInfoElem.innerHTML = `${newStat.symbol} <progress value="${resAmntDisplay}" max="100" style="accent-color:${resDisplayColor};"></progress><br>`;
+    unitInfoElem.innerHTML += `${newStat.symbol} <progress value="${resAmntDisplay}" max="100" style="accent-color:${resDisplayColor};"></progress><br>`;
   }
 }
 
