@@ -54,6 +54,7 @@ function handleSocketConnection(io) {
       //Update nodes from gameState
       gameState.nodes = state.nodes;
       gameState.agents = state.agents;
+      gameState.spawnedUnitsCount = state.spawnedUnitsCount;
       
       server_LogMessage("Server recieved game state from client ");
     });
