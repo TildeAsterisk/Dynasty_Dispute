@@ -5,14 +5,14 @@ class Resource {
       key: "rawMaterials",
       name: "Raw Materials",
       description: "Resources for construction and crafting.",
-      colour: "gray",
+      colour: "brown",
       symbol: "🧱"
     },
     food: {
       key: "food",
       name: "Food",
       description: "Resources for consumption.",
-      colour: "yellow",
+      colour: "rgb(84, 255, 42)",
       symbol: "🌾" //🥩
     },
     agricultural: {

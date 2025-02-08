@@ -39,21 +39,38 @@ function clearLog() {
 */
 
 // Function to update the #unitInfo div
-function updateUnitInfo(object = null) {
+function GenerateUnitInfoMenu(object = null) {
   const unitInfoDiv = document.getElementById("unitInfo");
   if (!object) {
     unitInfoDiv.innerHTML = ``;
     return;
   }
 
-  // Create table element
+  // create basic unit info template
+  const basicUnitInfoElement = document.createElement("div");
+  basicUnitInfoElement.id = "basicUnitInfoUI";
+
+  for (resource in object.resourceInventory) {
+    let newStat = object.resourceInventory[resource].type ? object.resourceInventory[resource].type : object.resourceInventory[resource];
+    roundedValue = newStat.key ? newStat.key : undefined;
+    const resAmntDisplay = (Math.round(object.resourceInventory[resource].amount * 100) / 100).toFixed(2);
+    const resDisplayColor = object.resourceInventory[resource].type.colour ? object.resourceInventory[resource].type.colour : null;
+
+    basicUnitInfoElement.innerHTML += `${newStat.symbol} <progress value="${resAmntDisplay}" max="100" style="accent-color:${resDisplayColor};"></progress><br>`;
+
+    /*row.innerHTML += `<td style="border: none; ">${newStat.symbol}</td>
+                      <td style="border: none;">: ${(Math.round(object.resourceInventory[resource].amount * 100) / 100).toFixed(2)}</td>`;*/
+  }
+
+
+
+  // Create verbose unit info table element
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
   table.style.borderSpacing = 0;
   table.style.width = "100%";
   table.style.display='none';
   table.style.textAlign = 'left';
-  //table.style = "border-collapse = collapse; border-spacing: 0;";
 
   // Add table header
   /*const headerRow = table.insertRow();
@@ -89,7 +106,6 @@ function updateUnitInfo(object = null) {
                           <td style="border: none;">: ${roundedValue}</td>`;
       }
 
-
     }
     //if (key == "type") { roundedValue = value.name; }
   }
@@ -121,7 +137,7 @@ function updateUnitInfo(object = null) {
   inspectInfoBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
   inspectInfoBtn.onclick = function() {
-    client_LogMessage("[ACTION_BTN]:",'Inspect Button clicked!', this.dataset.id, table.style.display);
+    console.log("[ACTION_BTN]:",'Inspect Button clicked!', this.dataset.id, table.style.display);
     table.style = table.style.display == '' ? 'display:none;' : 'display:default';
   };
 
@@ -153,8 +169,22 @@ function updateUnitInfo(object = null) {
   //append btn container to menu
   unitInfoDiv.appendChild(actionBtnContainer);
 
+  //append the unit template
+  unitInfoDiv.appendChild(basicUnitInfoElement);
+
   unitInfoDiv.appendChild(table);
   //unitInfoDiv.innerHTML += `<br>`;
+}
+
+function updateUnitInfoMenu(object = null){
+  const unitInfoElem = document.getElementById("basicUnitInfoUI");
+  for (resource in object.resourceInventory) {
+    let newStat = object.resourceInventory[resource].type ? object.resourceInventory[resource].type : object.resourceInventory[resource];
+    roundedValue = newStat.key ? newStat.key : undefined;
+    const resAmntDisplay = (Math.round(object.resourceInventory[resource].amount * 100) / 100).toFixed(2);
+    const resDisplayColor = object.resourceInventory[resource].type.colour ? object.resourceInventory[resource].type.colour : null;
+    unitInfoElem.innerHTML = `${newStat.symbol} <progress value="${resAmntDisplay}" max="100" style="accent-color:${resDisplayColor};"></progress><br>`;
+  }
 }
 
 //#region BUILD MENU

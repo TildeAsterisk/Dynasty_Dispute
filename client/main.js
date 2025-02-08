@@ -72,7 +72,7 @@ client_LogMessage("Setting player username:",gameState.playerUsername);
 
 
 client_LogMessage("Game Started");
-updateUnitInfo();
+GenerateUnitInfoMenu();
 
 function initializeGameObjects(initialNetworkGameState = undefined) {
   gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  
@@ -113,7 +113,8 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
   } else {
     // Add a resource node and a storage_Node nearby
     const nodeCoords = getGridCoordinates(centerX, centerY);
-    let tmpInitObj = JSON.parse('{"graphicKey":"resource_Node_food","resourceInventory" : [ {"type":{"key":"food","name":"Food","description":"Resources for consumption.","colour":"yellow","symbol":"🌾"},"amount":100} ] }');
+    let tmpInitObj = JSON.parse('{"graphicKey":"resource_Node_food","resourceInventory" : [ {"type":null,"amount":100} ] }');
+    tmpInitObj.resourceInventory[0].type = Resource.types.food;
     tmpInitObj.symbol = "🌾";
     //client_LogMessage(tmpInitObj);
     addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined, tmpInitObj);
@@ -202,7 +203,9 @@ function gameLoop() {
   //checkQuests();
 
   drawCivStatusBarUI(); // Draw Civ Status Bar
-  //updateUnitInfo(gameState.selectedUnit); //update unit info menu
+  
+  // RE ENABLE WHEN I CAN JUST UPDATE THE TABLE INFO NOT THE WHOLE WINDOW
+  if(gameState.selectedUnit){updateUnitInfoMenu(gameState.selectedUnit);} //update unit info menu
 
   //client_LogMessage("Selected Node Type: "+gameState.selectedType);
 

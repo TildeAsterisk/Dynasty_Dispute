@@ -130,7 +130,7 @@ canvas {
 }
 
 .action-button{
-    margin-left:5px; font-size:30px; background: none; /* Removes the background */
+  margin-left: 5px; font-size:30px; background: none; /* Removes the background */
   border: none; /* Removes the border */
   padding: 0; /* Removes any padding */
   cursor: pointer; /* Adds a pointer cursor on hover */
@@ -145,4 +145,16 @@ table {
     font-family: 'Roboto Mono', monospace;
     font-size: 10px;
     text-align:left;
+    /*
+    width:100%;
+    border-spacing: 0;
+    border-collapse: collapse;*/
 }
+
+table tr {
+    border: 1px solid #cccccc6d; 
+}
+
+/*progress {
+    accent-color: ;
+}*/

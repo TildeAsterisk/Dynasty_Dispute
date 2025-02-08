@@ -18,19 +18,19 @@ canvas.addEventListener("click", (event) => {
 
     if (isPointInRect(mouseToWorldCoords.x, mouseToWorldCoords.y, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
       // Display gameObject info
-      updateUnitInfo(gameObject);
+      GenerateUnitInfoMenu(gameObject);
       gameState.selectedUnit = gameObject;
       client_LogMessage(gameObject);
       // IF SELECTED BARRACKS, OPEN MENU TO TRAIN AGENTS
       if (gameObject.type == Node.types.barracks_Node) {
-        updateUnitInfo(gameObject);
+        GenerateUnitInfoMenu(gameObject);
       }
       return;
     }
   }
 
   // Clear unit info if no unit is clicked
-  updateUnitInfo(null);
+  GenerateUnitInfoMenu(null);
   gameState.selectedUnit = null;
 });
 
