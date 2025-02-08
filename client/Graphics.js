@@ -7,7 +7,7 @@ const resource_Node_rawMaterials_GraphicsKey = Node.types.resource_Node.key+"_ra
 
 class GraphicsManager {
   static preloadImages() {
-    client_LogMessage("PRELOADING GRAPHICAL ASSETS...");
+    client_LogMessage("Loading Game Graphics: ...");
     /*Object.values(Node.types).forEach((nodeType) => {
       client_LogMessage("Preloading image for node type: " + nodeType.imgSrc);
       nodeType.loadedImg = new Image();
@@ -23,11 +23,13 @@ class GraphicsManager {
     Object.values(this.GameGraphics).forEach((graphic) => {
       //graphic.loadedImg = new Image();
       graphic.loadedImg.src = graphic.imgSrc
-      client_LogMessage("Preloading image for node type: " + graphic.imgSrc);
+      //client_LogMessage("Preloading image for node type: " + graphic.imgSrc);
     });
 
     cursorImage = new Image();
     cursorImage.src = "Graphics/mouse-pointer.png";
+
+    client_LogMessage("Loading Game Graphics: Complete.");
   }
 
   static GameGraphics = {

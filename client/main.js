@@ -48,7 +48,8 @@ let gameState = {
   selectedUnit: null,
   totalStoredResources: 0,
   gameTick: 0,
-  networkState: { nodes: [], agents: [], players: [] }
+  players : []
+  //networkState: { nodes: [], agents: [], players: [] }
 };
 
 let cursors = {};
@@ -61,7 +62,7 @@ GraphicsManager.preloadImages();
 //#region Start Game - Entry Point - Initialise Game Objects (Called when socket.on("game-state")) and Game Loop
 
 //Get Form data, player username
-client_LogMessage("FORM DATA:");
+client_LogMessage("Getting form data: ...");
 const urlSearchParams = new URLSearchParams(window.location.search);
 urlSearchParams.forEach((value, name) => {
   client_LogMessage(`${name}, ${value}`)
@@ -71,15 +72,15 @@ gameState['playerUsername'] = urlSearchParams.get('username') ? urlSearchParams.
 client_LogMessage("Setting player username:",gameState.playerUsername);
 
 
-client_LogMessage("Game Started");
-GenerateUnitInfoMenu();
+//client_LogMessage("Game Started");
+//GenerateUnitInfoMenu();
 
-function initializeGameObjects(initialNetworkGameState = undefined) {
+function InitialiseGameObjects(initialNetworkGameState = undefined) {
   gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  
   // EMIT UPDATED PLAYER DATA WITH USERNAME
   socket.emit('player-data-update',gameState.playerData);
 
-  gameState.networkState = initialNetworkGameState;
+  //initialNetworkGameState = initialNetworkGameState;
   //client_LogMessage("modified initial state",gameState);
 
   // Clear existing game objects
@@ -87,14 +88,13 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
   gameState.agents = [];
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
-  //if (initialNetworkGameState.players.)
-  initialNetworkGameState.playerData = {sid:gameState.playerData.sid, username:gameState.playerUsername};
+  initialNetworkGameState.playerData = gameState.playerData;
   client_LogMessage("Updated network game state with username");
-  client_LogMessage("NETWORK STATE INIT",initialNetworkGameState);
 
   // Initialize nodes from the network state
-  if (gameState.networkState.nodes && gameState.networkState.nodes.length > 0) {
-    gameState.networkState.nodes.forEach(netNode => {
+  if (initialNetworkGameState.nodes && initialNetworkGameState.nodes.length > 0) {
+    client_LogMessage("~* INITIALISING GAME STATE FROM SERVER. *~");
+    initialNetworkGameState.nodes.forEach(netNode => {
       const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
       newNode.id = netNode.id;
       newNode.type = netNode.type;
@@ -108,26 +108,27 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newNode.graphicKey = netNode.graphicKey;
 
       gameState.nodes.push(newNode);
-      client_LogMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
     });
+    client_LogMessage(`Nodes added from Server.`);
   } else {
+    client_LogMessage("~* INITIALISING GAME STATE AS CLIENT. *~");
     // Add a resource node and a storage_Node nearby
     const nodeCoords = getGridCoordinates(centerX, centerY);
     let tmpInitObj = JSON.parse('{"graphicKey":"resource_Node_food","resourceInventory" : [ {"type":null,"amount":100} ] }');
     tmpInitObj.resourceInventory[0].type = Resource.types.food;
     tmpInitObj.symbol = "🌾";
     //client_LogMessage(tmpInitObj);
-    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, undefined, tmpInitObj);
+    addNode(nodeCoords[0], nodeCoords[1] + (GRID_SIZE * 2), Node.types.resource_Node.key, false, tmpInitObj);
     //tmpCustomTypeSymbolNode.type.symbol = "🌾";
 
-    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key);
-    addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key);
+    addNode(nodeCoords[0], nodeCoords[1] - (GRID_SIZE * 2), Node.types.resource_Node.key, false);
+    addNode(nodeCoords[0] + (GRID_SIZE * 2), nodeCoords[1], Node.types.storage_Node.key, false);
     //addNode(nodeCoords[0], nodeCoords[1], "home");
   }
 
   // Initialize agents from the network state
-  if (gameState.networkState.agents && gameState.networkState.agents.length > 0) {
-    gameState.networkState.agents.forEach((netAgent) => {
+  if (initialNetworkGameState.agents && initialNetworkGameState.agents.length > 0) {
+    initialNetworkGameState.agents.forEach((netAgent) => {
       const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
       for ( const property in netAgent){
         if(property == "id"){ return; }
@@ -154,14 +155,17 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newAgent.resourceInventory = netAgent.resourceInventory;
       gameState.agents.push(newAgent);*/
       //addAgent(centerX, centerY);
-      client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
+      //client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
   } else {
     // Add initial setup for testing
     const firstAgent = addAgent(centerX, centerY);
     const secondAgent = addAgent(centerX + 100, centerY + 100);
+    client_LogMessage("Initialising agents.");
   }
 }
+
+
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Fill the entire canvas with colour
@@ -192,7 +196,7 @@ function gameLoop() {
     else {
       drawRect(cursorScreenPos.x, cursorScreenPos.y, 5,5,"orange", undefined );
     }
-    const playerCursorText = gameState.networkState.players[cursors[cursor].id] ? gameState.networkState.players[cursors[cursor].id].username : cursors[cursor].id ;
+    const playerCursorText = gameState.players[cursors[cursor].id] ? gameState.players[cursors[cursor].id].username : cursors[cursor].id ;
     drawText(playerCursorText,cursorScreenPos.x+(cursorImage.width/3), cursorScreenPos.y);
   }
 

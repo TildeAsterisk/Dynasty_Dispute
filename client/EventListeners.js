@@ -17,6 +17,7 @@ canvas.addEventListener("click", (event) => {
   for (const gameObject of gameObjectsArray) {
 
     if (isPointInRect(mouseToWorldCoords.x, mouseToWorldCoords.y, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
+      syncWithServerState();
       // Display gameObject info
       GenerateUnitInfoMenu(gameObject);
       gameState.selectedUnit = gameObject;
@@ -176,9 +177,11 @@ document.addEventListener('dragstart', function (event) {
 socket.on("game-state", (state) => {
   client_LogMessage("Received initial game state",state);
   //gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
-  gameState.networkState = state;
+  //gameState.networkState = state;
   //client_LogMessage("modified initial state",gameState);
-  initializeGameObjects(state);
+  InitialiseGameObjects(state);
+  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE.");
+  client_LogMessage(gameState);
   //renderGame();
 });
 
@@ -238,7 +241,7 @@ socket.on("player-data-update", (data) => {
   // Update player data
   client_LogMessage("[SERVER]: Player has connected.",data);
   //client_LogMessage(gameState.networkState.players[data.sid]);
-  gameState.networkState.players[data.sid] = data;
+  gameState.players[data.sid] = data;
 });
 
 //#endregion

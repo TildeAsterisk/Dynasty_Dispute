@@ -50,12 +50,13 @@ function handleSocketConnection(io) {
     // Send initial game state to the player
     socket.emit("game-state", gameState);
 
-    /*socket.on("game-state", (state) => {
+    socket.on("game-state", (state) => {
       //Update nodes from gameState
-      gameState["agents"] = state.agents;
+      gameState.nodes = state.nodes;
+      gameState.agents = state.agents;
       
-      server_LogMessage("Server recieved game state from client ",gameState.agents);
-    });*/
+      server_LogMessage("Server recieved game state from client ");
+    });
 
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.

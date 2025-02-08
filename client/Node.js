@@ -227,22 +227,22 @@ function addNode(x, y, typeKey, emit = true, initObj) {
 
   // If initObj is given, initialise the new node with the given attributes
   if (initObj) {
-    client_LogMessage("INitialising : ", initObj);
+    //client_LogMessage("INitialising : ", initObj);
     for (let key in initObj) {
       //client_LogMessage(attribute.key, attribute.value);
       newNode[key] = initObj[key];   // Set initial attributes
     }
   }
   else {
-    client_LogMessage("NEW NODE INVENTORY", newNode.resourceInventory);
+    //client_LogMessage("NEW NODE INVENTORY", newNode.resourceInventory);
   }
 
   gameState.nodes.push(newNode);
   gameState.spawnedUnitsCount += 1;
   
-  if (emit) { socket.emit("update-node-c-s", newNode); /*socket.emit("game-state", gameState);*/ }  // Flow #10 a - A client adds a node (emit=true)
-  client_LogMessage(`Spawned a new ${typeKey} Node at ${x}, ${y}.`);
-  client_LogMessage(newNode);
+  if (emit) {socket.emit("update-node-c-s", newNode); /*socket.emit("game-state", gameState);*/ }  // Flow #10 a - A client adds a node (emit=true)
+  client_LogMessage(`Spawned ${newNode.id} at ${x}, ${y}.`);
+  //client_LogMessage(newNode);
 
   //Update neighbors
   newNode.neighbors = getNeighbors(newNode, gameState.nodes);
