@@ -6,8 +6,8 @@ class Node {
       key: "storage_Node",
       name: "Storage Node",
       colour: "brown",
-      description: "A repository for resources. Cost: 50",
-      cost: 50,
+      description: "A repository for resources. Cost: 95",
+      cost: 95,
       symbol: "📦",
       graphicKey : "storage_Node"
     },
