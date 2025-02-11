@@ -143,7 +143,7 @@ function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
 function getRandomPositionInRange(obj, range) {
   const randomX = obj.x + Math.random() * range * 2 - range;
   const randomY = obj.y + Math.random() * range * 2 - range;
-  const randomPos = { x: randomX, y: randomY };
+  const randomPos = {x: randomX, y: randomY };
   return randomPos;
 }
 
@@ -195,7 +195,7 @@ function heuristic(nodeA, nodeB) {
  * @param   {*}     gridNodes 
  * @returns {Array} path
  */
-function findPath(startNode, endNode, gridNodes = gameState.nodes) {
+function findPath(startNode, endNode, gridNodes = Array.from(gameState.nodes.values())) {
   // Initialize the open set with the start node
   let openSet = new Set([startNode]);
   // Map to keep track of the most efficient previous step to reach each node
@@ -256,7 +256,7 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
 }
 
 
-function getNeighbors(node = this, grid = gameState.nodes) {
+function getNeighbors(node = this, grid = Array.from(gameState.nodes.values()) ) {
   const neighbors = [];
   const directions = [
       { x: 0, y: -1 }, // up
@@ -272,10 +272,10 @@ function getNeighbors(node = this, grid = gameState.nodes) {
     // Find a node in the grid that matches the neighbor's coordinates
     const neighborNode = grid.find(node => node.x === neighborX && node.y === neighborY);
     if (neighborNode && !neighborNode.isWall) { // If a node is found and it is not a wall, add it to the neighbors array TODO: node.isWall?
-      neighbors.push(neighborNode);
+      neighbors.push({x:neighborNode.x, y:neighborNode.y, pathfindingScore : neighborNode.pathfindingScore, id:neighborNode.id});
     }
     else{
-      neighbors.push({x: neighborX, y: neighborY, pathfindingScore:defaultPathfindingCost}); // Add the coordinates of the neighbor node
+      neighbors.push({x : neighborX, y : neighborY, pathfindingScore : defaultPathfindingCost}); // Add the coordinates of the neighbor node
     }
   }
 

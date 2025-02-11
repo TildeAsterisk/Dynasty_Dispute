@@ -69,7 +69,7 @@ class Idle_State extends State {
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
         if (newTargetQuery) {
-          //client_LogMessage(context.id, "is retrieving food from storage", context.target.id);
+          //client_LogMessage(context.id, "is retrieving food from storage", gameState.nodes.get(context.targetId).id);
           context.setNewTarget(newTargetQuery);
           context.changeBehaviourState(new Gathering_State());
           return;
@@ -170,7 +170,7 @@ class Roaming_State extends State {
         // try to find storage node to take from
         newTargetQuery = context.findStorageNode_NotEmptyInRange(context.searchRadius * 2, Resource.types.food.key);
         if (newTargetQuery) {
-          //client_LogMessage(context.id, "is retrieving food from storage", context.target.id);
+          //client_LogMessage(context.id, "is retrieving food from storage", gameState.nodes.get(context.targetId).id);
           context.setNewTarget(newTargetQuery);
           context.changeBehaviourState(new Gathering_State());
           return;
@@ -183,8 +183,8 @@ class Roaming_State extends State {
       }
     }
     else { // Can consume food.
-      // Roam around randomly
-      if (context.target) { // has target, move to it
+      // Roam around randomly(
+      if (gameState.nodes.get(context.targetId) || context.targetId.x ) { // has target, move to it
         context.moveToTarget();
         if (context.reachedTarget()) { // Has target and reached it.
           context.setRandomRoamPosition();  // set new random target
@@ -230,18 +230,18 @@ class Gathering_State extends State {
     }
 
     if (context.reachedTarget()) {  // Reached Resource?
-      //client_LogMessage("REACHED",context.target);
+      //client_LogMessage("REACHED",gameState.nodes.get(context.targetId));
       if (context.gatherResources(context.targetResourceTypeKey)) { // If Target reached and resources gathered
-        //client_LogMessage(context.id, "Gathering resources ",context.target.id);
+        //client_LogMessage(context.id, "Gathering resources ",gameState.nodes.get(context.targetId).id);
         // Set Node typealliance 
-        context.target.agentTypeAllianceKey = context.type.key;
+        gameState.nodes.get(context.targetId).agentTypeAllianceKey = context.type.key;
         return;
       }
       else { // If cannot gather anymore
         // iff gathered from resource, then store it. If gathered from stroage then go home
-        client_LogMessage(context.id, "Cannot gather " + context.targetResourceTypeKey + " from ", context.target.id);
+        client_LogMessage(context.id, "Cannot gather " + context.targetResourceTypeKey + " from ", gameState.nodes.get(context.targetId).id);
 
-        if (context.target.id && context.target.type.key == Node.types.resource_Node.key) {
+        if (gameState.nodes.get(context.targetId).id && gameState.nodes.get(context.targetId).type.key == Node.types.resource_Node.key) {
           const storageFound = context.findStorageNode_LowestInRange(context.searchRadius); // go and store gathered resources
           if (storageFound) {
             // finished gathering from resource node.
@@ -256,7 +256,7 @@ class Gathering_State extends State {
           }
         }
 
-        else if (context.target.id && context.target.type.key == Node.types.storage_Node.key) {
+        else if (gameState.nodes.get(context.targetId).id && gameState.nodes.get(context.targetId).type.key == Node.types.storage_Node.key) {
           // Finished gathering from storage. Idle, look for some work
           client_LogMessage(context.id, "finished taking from storage. Idle, going to look for some work");
           context.changeBehaviourState(new Idle_State());
@@ -292,7 +292,7 @@ class Depositing_State extends State {
     this.checkForEnemy(context);
     //Dont eat when depositing resources, theres no point. Inventory will likely be empty right after. Don't get high on your own supply.
 
-    //if(context.target.getResourceInInventory(Resource.types.food.key).amount < context.resourceHunger){
+    //if(gameState.nodes.get(context.targetId).getResourceInInventory(Resource.types.food.key).amount < context.resourceHunger){
       //client_LogMessage(context.id,"has food to consume");
       //context.consumeResources(Resource.types.food.key); // Consume food
     //}
@@ -300,7 +300,7 @@ class Depositing_State extends State {
     context.moveToTarget();
     if (context.reachedTarget()) {
       if (context.depositResources(context.targetNodeResource)) { // If can deposit
-        context.target.agentTypeAllianceKey = context.type.key; // Change Node alliance key
+        gameState.nodes.get(context.targetId).agentTypeAllianceKey = context.type.key; // Change Node alliance key
         context.changeBehaviourState(new Idle_State());  // Go look for work
       }
       else {
@@ -333,11 +333,11 @@ class GoingHome_State extends State {
     // Check if there is no target or target is not home. Find and set a home.
     
     context.home = context.findHome(context.searchRadius);
-    if (context.home && context.target !== context.home){ //If home is found and target is not home.
+    if (context.home && gameState.nodes.get(context.targetId) !== context.home){ //If home is found and target is not home.
       context.setNewTarget(context.home);
       context.moveToTarget();
     }
-    else if (context.home && context.target == context.home){
+    else if (context.home && gameState.nodes.get(context.targetId) == context.home){
       context.moveToTarget();
     }
     else{
@@ -349,7 +349,7 @@ class GoingHome_State extends State {
     
     
     /* If there is no target ir tg
-    if(!context.target || context.target.type.key !== Node.types.home.key) {
+    if(!gameState.nodes.get(context.targetId) || gameState.nodes.get(context.targetId).type.key !== Node.types.home.key) {
       context.home = context.findHome(context.searchRadius);
       context.setNewTarget(context.home);
     }*/
@@ -391,7 +391,7 @@ class AtHome_State extends State {
   execute(context) {
     this.checkForEnemy(context);
     //execute
-    if (context.target != context.home) { console.error("At home but target is not home."); }
+    if (gameState.nodes.get(context.targetId) != context.home) { console.error("At home but target is not home."); }
 
     let newTargetQuery;
     if (!context.consumeResources(Resource.types.food.key)) { // Each food, if cannot...
@@ -446,15 +446,15 @@ class Combat_State extends State {
   }
 
   execute(agent) {
-    if (!agent.target || agent.target.health <= 0) {
+    if (!gameState.nodes.get(agent.targetId) || gameState.nodes.get(agent.targetId).health <= 0) {
       client_LogMessage(`${agent.id} has no valid target.`);
       agent.changeBehaviourState(new Roaming_State());
       return;
     }
 
-    const distance = calculateDistance(agent, agent.target);
+    const distance = calculateDistance(agent, gameState.nodes.get(agent.targetId));
     if (distance > agent.attackRange) {
-      //client_LogMessage(`${agent.id} is chasing ${agent.target.id}.`);
+      //client_LogMessage(`${agent.id} is chasing ${gameState.nodes.get(agent.targetId).id}.`);
       agent.moveToTarget(); // Move closer to the target
     } else {
       agent.attackTarget();

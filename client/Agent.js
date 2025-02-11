@@ -24,13 +24,13 @@ class Agent {
   }
 
   constructor(x, y, type = Agent.types.generic_Agent) {
-    this.id = "Agent" + gameState.spawnedUnitsCount;
+    this.id = gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
     this.colour = type.colour;
     this.behaviourState = new Idle_State(); // Possible behaviourStates: idle, gathering, depositing
-    this.target = null; // Current target (node or position)
-    this.previousUnitTarget = this.target;  //Stores the previous valid target (non position)
+    this.targetId = null; // Current target (node or position)
+    this.previousUnitTargetId = null;  //Stores the previous valid target (non position)
     this.carrying = 0; // Resources being carried
     this.resourceInventory = [];
     this.maxCarry = 5; // Max resources agent can carry
@@ -127,7 +127,14 @@ class Agent {
    * @param {*} path - Path to target
    * @returns 
    */
-  moveToTarget(bsTarget = this.target, path = this.path) {
+  moveToTarget(bsTarget = this.targetId, path = this.path) {
+    if(gameState.nodes.get(this.targetId)){
+      bsTarget = gameState.nodes.get(this.targetId);
+    }
+    else{
+      // target is probably random position
+    }
+
     if (!bsTarget) { console.error("Theres no target to move to"); return; }
     //const bsTargetCentre = { x: bsTarget.x + GRID_SIZE / 2, y: bsTarget.y + GRID_SIZE / 2 };
     // Instead of changing target to centre, draw cells with offset
@@ -189,7 +196,8 @@ class Agent {
    * @param {*} target - The target to reach. Defaults to Agent.target.
    * @returns 
    */
-  reachedTarget(target = this.target) {
+  reachedTarget(target = gameState.nodes.get(this.targetId)) {
+    target = (target ? target : this.targetId )
     const dx = target.x - this.x;
     const dy = target.y - this.y;
     return Math.abs(dx) <= this.speed && Math.abs(dy) <= this.speed;
@@ -198,13 +206,13 @@ class Agent {
   addResourceToInventory(resourceTypeKey, amount) {
 
     // Take the resource from the target's resource storage
-    let targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+    let targetNodeResource = gameState.nodes.get(this.targetId).resourceInventory.find(resource => resource.type.key === resourceTypeKey);
     if (resourceTypeKey && targetNodeResource && targetNodeResource.amount > 0) {
       targetNodeResource.amount -= amount;
     }
     else {
       // Find any available resource in the target's resource storage
-      targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
+      targetNodeResource = gameState.nodes.get(this.targetId).resourceInventory.find(resource => resource.amount > 0);
       targetNodeResource.amount -= amount;
     }
 
@@ -228,7 +236,7 @@ class Agent {
     /* Gather resources and return bool if successful */
     // NEEDS UPDATING SO THAT RESOURCE AMOUNT IS UPDATED. NOT PUSHED
 
-    if (this.getResourceInInventory(resourceTypeKey).amount >= this.maxCarry || this.target.getResourceInInventory(resourceTypeKey).amount <= 0) { // If there is NO space to carry or target is empty
+    if (this.getResourceInInventory(resourceTypeKey).amount >= this.maxCarry || gameState.nodes.get(this.targetId).getResourceInInventory(resourceTypeKey).amount <= 0) { // If there is NO space to carry or target is empty
       return false;
     }
     else {
@@ -236,11 +244,11 @@ class Agent {
 
       if (resourceTypeKey) {
         // Find the specified resource type in the target's resource storage
-        targetNodeResource = this.target.resourceInventory.find(resource => resource.type.key === resourceTypeKey);
+        targetNodeResource = gameState.nodes.get(this.targetId).resourceInventory.find(resource => resource.type.key === resourceTypeKey);
       }
       else {
         // Find any available resource in the target's resource storage
-        targetNodeResource = this.target.resourceInventory.find(resource => resource.amount > 0);
+        targetNodeResource = gameState.nodes.get(this.targetId).resourceInventory.find(resource => resource.amount > 0);
       }
 
       if (targetNodeResource && targetNodeResource.amount > 0) {
@@ -250,12 +258,12 @@ class Agent {
 
         //resourceToGather.amount--;
         //Subtract from target inventory
-        client_LogMessage(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", this.target.id);
+        client_LogMessage(this.id, " gathered   ", 1, targetNodeResource.type.key, "from", gameState.nodes.get(this.targetId).id);
         //client_LogMessage(this.resourceInventory);
         return true;
       }
       else {
-        client_LogMessage(this.id, " could not gather", resourceTypeKey, "from", this.target.id);
+        client_LogMessage(this.id, " could not gather", resourceTypeKey, "from", gameState.nodes.get(this.targetId).id);
         return false;
       }
     }
@@ -340,8 +348,8 @@ class Agent {
         this.resourceInventory.push(resource);
       }*/
 
-      const totalResourceAmount = this.target.getResourceInInventory(resourceTypeKey).amount;
-      const wouldOverflow = ((totalResourceAmount + resourceInAgentInv.amount) >= this.target.maxCapacity);
+      const totalResourceAmount = gameState.nodes.get(this.targetId).getResourceInInventory(resourceTypeKey).amount;
+      const wouldOverflow = ((totalResourceAmount + resourceInAgentInv.amount) >= gameState.nodes.get(this.targetId).maxCapacity);
       //check if would overflow
       if (wouldOverflow) {
         //client_LogMessage("Cannot deposit resources ", this.target.getResourceInInventory(Resource.types.food.key).amount, "/", this.target.maxCapacity, this.getResourceInInventory(Resource.types.food.key).amount);
@@ -350,7 +358,7 @@ class Agent {
       }
 
       if (resourceInAgentInv) {
-        let resourceInTargetInv = this.target.resourceInventory.find(r => r.type === resourceInAgentInv.type);
+        let resourceInTargetInv = gameState.nodes.get(this.targetId).resourceInventory.find(r => r.type === resourceInAgentInv.type);
         if (resourceInTargetInv) {
           resourceInTargetInv.amount += resourceInAgentInv.amount;
           resourceInAgentInv.amount = 0;
@@ -358,7 +366,7 @@ class Agent {
         else {
           // Add Empty resource to Agent inventory
           resourceInTargetInv = new Resource(resourceInAgentInv.type.key, resourceInAgentInv.amount);
-          this.target.resourceInventory.push(resourceInTargetInv);
+          gameState.nodes.get(this.targetId).resourceInventory.push(resourceInTargetInv);
           // Add Empty resource to Node INventory
           resourceInAgentInv = new Resource(resourceInAgentInv.type.key, 0);
           //this.resourceInventory = this.resourceInventory.filter(r => r.type !== resourceTypeKey);
@@ -369,13 +377,13 @@ class Agent {
     else {
       client_LogMessage(this, "depositing all resources");
       this.resourceInventory.forEach(resource => {
-        let targetResource = this.target.resourceInventory.find(r => r.type === resource.type);
+        let targetResource = gameState.nodes.get(this.targetId).resourceInventory.find(r => r.type === resource.type);
         if (targetResource) {
           targetResource.amount += resource.amount;
         }
         else {
           targetResource = new Resource(resource.type.key, resource.amount);
-          this.target.resourceInventory.push(targetResource);
+          gameState.nodes.get(this.targetId).resourceInventory.push(targetResource);
         }
         //client_LogMessage(this, " deposited  ", resource.amount, targetResource.type.key, "to  ", this.target.id);
       });
@@ -436,11 +444,11 @@ class Agent {
 
   die() {
     client_LogMessage(`${this.id} has died.`);
-    gameState.agents = gameState.agents.filter((agent) => agent !== this);
+    gameState.agents.delete(this.id);
 
     //if is at home then remove from home capacity
     if (this.behaviourState.constructor.name == AtHome_State.constructor.name && this.home.agentCapacity.length > 0) {
-      this.home = this.home.agentCapacity.filter((agent) => agent !== this);
+      this.home = this.home.agentCapacity.filter((agentId) => agentId !== this.id);
     }
 
     delete this;
@@ -471,13 +479,13 @@ class Agent {
   attackTarget() {
     const now = gameState.gameTick;
     if (now - this.lastAttackTime >= this.attackCooldown * 60) {
-      if (this.target && this.target.health > 0) {
-        client_LogMessage(`${this.id} attacks ${this.target.id} for ${this.attackPower} damage.`);
-        this.target.health -= this.attackPower;
+      if (gameState.nodes.get(this.targetId) && gameState.nodes.get(this.targetId).health > 0) {
+        client_LogMessage(`${this.id} attacks ${gameState.nodes.get(this.targetId).id} for ${this.attackPower} damage.`);
+        gameState.nodes.get(this.targetId).health -= this.attackPower;
 
-        if (this.target.health <= 0) {
-          client_LogMessage(`${this.target.id} has been defeated.`);
-          this.target.die();
+        if (gameState.nodes.get(this.targetId).health <= 0) {
+          client_LogMessage(`${gameState.nodes.get(this.targetId).id} has been defeated.`);
+          gameState.nodes.get(this.targetId).die();
           this.setNewTarget(null); // Reset target after defeat
           this.changeBehaviourState(new GoingHome_State());
         }
@@ -500,22 +508,20 @@ class Agent {
     let thisGridCoords = getGridCoordinates(this.x, this.y);
     thisGridCoords = { x: thisGridCoords[0], y: thisGridCoords[1] };
     this.path = findPath(thisGridCoords, newTarget);  //Find a path to the new target.
-    client_LogMessage(this.id, " is setting new target ", newTarget.id, " with path ", this.path);
-    if (this.target) {
-      this.previousUnitTarget = this.target.id ? this.target : this.previousUnitTarget;
-    }
-    this.target = newTarget;
+    client_LogMessage(this.id, " is setting new target ", (newTarget.id ? newTarget.id : newTarget), " with path ", this.path);
+    this.previousUnitTargetId = gameState.nodes.get(this.targetId) ? gameState.nodes.get(this.targetId).id : this.previousUnitTargetId;
+    this.targetId = newTarget.id ? newTarget.id : newTarget;
   }
 
   setRandomRoamPosition() {
     let focus;
     const roamingRange = this.searchRadius;//*1.5;  // Sets a roaming range 1 and a half times default range
-    if (this.target && this.target.id) {   // If target has ID (not random position)
+    if (gameState.nodes.get(this.targetId)) {   // If target has ID (not random position)
       //client_LogMessage("TARGET HAS ID");
-      focus = this.target;  // Set focus for random position range
+      focus = gameState.nodes.get(this.targetId);  // Set focus for random position range
     }
-    else if (this.previousUnitTarget) {  // Target doesnt have ID
-      focus = this.previousUnitTarget;
+    else if (this.previousUnitTargetId) {  // Target doesnt have ID
+      focus = gameState.nodes.get(this.previousUnitTargetId);
     }
     else {
       client_LogMessage("no target or id or prev");
@@ -526,17 +532,17 @@ class Agent {
   }
 
   enterTargetNode() {
-    if (this.target.agentCapacity.length == 0) {
-      this.target.agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
+    if (gameState.nodes.get(this.targetId).agentCapacity.length == 0) {
+      gameState.nodes.get(this.targetId).agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
     }
-    this.target.agentCapacity.push(this);
+    gameState.nodes.get(this.targetId).agentCapacity.push(this.id);
     client_LogMessage(this.id, " is entering node ", this.home.id);
   }
 
   exitNode() {
-    this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
-    if (this.target.agentCapacity.length == 0) {
-      this.target.agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
+    this.home.agentCapacity = this.home.agentCapacity.filter((agentId) => agentId !== this.id);
+    if (gameState.nodes.get(this.targetId).agentCapacity.length == 0) {
+      gameState.nodes.get(this.targetId).agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
     }
     client_LogMessage(this.id, " is leaving node ", this.home.id);
   }
@@ -546,13 +552,13 @@ class Agent {
 function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
   const newAgent = new Agent(x, y, Agent.types[typeKey]);
   //newAgent.type = ;  // if type is given set type if not then leave default
-  gameState.agents.push(newAgent);
+  gameState.agents.set(newAgent.id, newAgent);
   gameState.spawnedUnitsCount += 1;
   return newAgent;
 }
 
 function calculateTotalLiveAgents() {
-  return gameState.agents.length;
+  return gameState.agents.size;
 }
 
 // Function to train agents
