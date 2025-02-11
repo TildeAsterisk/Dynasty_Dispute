@@ -11,7 +11,7 @@ canvas.addEventListener("click", (event) => {
   //const mouseX = (event.clientX - rect.left) / camera.scale + camera.x;
   //const mouseY = (event.clientY - rect.top) / camera.scale + camera.y;
 
-  const gameObjectsArray = gameState.nodes.concat(gameState.agents);
+  const gameObjectsArray = Array.from(gameState.nodes.values()).concat(Array.from(gameState.agents.values()));  //Convert both maps into arrays and concat them to iterate all units.
 
   // Check for clicked node
   for (const gameObject of gameObjectsArray) {
@@ -204,7 +204,7 @@ socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a p
   }
   else{
     // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
-    gameState.nodes = gameState.nodes.filter((n) => (n.id !== nodeData.id));
+    gameState.nodes.delete(nodeData.id);
     client_LogMessage(`A player has destroyed ${nodeData.id}.`);
   }
   client_LogMessage('Building data updated:', nodeData);

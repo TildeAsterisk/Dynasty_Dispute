@@ -150,8 +150,8 @@ function GenerateUnitInfoMenu(object = null) {
   destroyBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
   destroyBtn.onclick = function() {
-    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id)); //Get node to destroy by id
-    gameState.nodes = gameState.nodes.filter((n) => (n.id !== sNode.id)); // delete from array in gamestate
+    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id)); //Get node to destroy by id TO DO:!! FIX THIS AND ALL OF THEM
+    gameState.nodes.delete(sNode.id); // delete from array in gamestate
     sNode.type=undefined;
     socket.emit("update-node-c-s", sNode);  // emit with no type so it gets deleted
     //delete sNode;  // Does this even do anything???
@@ -189,7 +189,7 @@ function updateUnitInfoMenu(object = null){
 
   for (agentIndex in object.agentCapacity) {
 
-    unitInfoElem.innerHTML += `${object.agentCapacity[agentIndex].type ? object.agentCapacity[agentIndex].type.symbol : "👤"}`;
+    unitInfoElem.innerHTML += `${gameState.agents.get(agentIndex) ? gameState.agents.get(agentIndex).type.symbol : "👤"}`;
   }
 }
 
@@ -263,7 +263,7 @@ function drawCivStatusBarUI() {
   });
 
   // Calculate total amount of each STORED resource
-  let totalCivStorageNodesArray = gameState.nodes.filter(n => n.type.key === Node.types.storage_Node.key);
+  let totalCivStorageNodesArray = Array.from(gameState.nodes.values()).filter(n => n.type.key === 'storage_Node');
   let totalCivStoredResourcesArray = [];
   totalCivStorageNodesArray.forEach(sNode => {
     sNode.resourceInventory.forEach(resource => {
@@ -277,6 +277,9 @@ function drawCivStatusBarUI() {
       else {  // If the resource is not in the array, add it to the array
         totalCivStoredResourcesArray.push({ type: resource.type, amount: resource.amount });
       }
+
+
+      //console.log("STORAGE NOGES:",totalCivStorageNodesArray,existingResource);
     });
 });
 
@@ -339,7 +342,7 @@ function drawCivStatusBarUI() {
   drawText(civStatusUIText, uiPosX, uiPosY, textSize, surplusColour);
   uiPosX += textSize * statSpacing;
 
-  let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+  let numHomes = (Array.from(gameState.nodes.values()).filter(b => b.type.key === Node.types.home.key).length);
   const civHomeReqSurplus = numHomes - totalLiveAgents;
   if (civHomeReqSurplus < 0) {
     surplusColour = 'red';

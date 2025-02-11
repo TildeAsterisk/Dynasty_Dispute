@@ -54,7 +54,7 @@ class Node {
   }
 
   constructor(x, y, typeKey) {
-    this.id = typeKey + gameState.spawnedUnitsCount;
+    this.id = gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
     this.type = Node.types[typeKey]; // If type object is given, inherit initial  from type object dict.
@@ -81,12 +81,12 @@ class Node {
   update() {
     // Random chance to spawn agent
     // check if number of homes is enough for new agent
-    let numHomes = (gameState.nodes.filter(b => b.type.key === Node.types.home.key).length);
+    let numHomes = (Array.from(gameState.nodes.values()).filter(b => b.type.key === Node.types.home.key).length);
     let numAgents = calculateTotalLiveAgents();
     const enoughHomes = (numAgents < (numHomes * 2) + 1);
     if (this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance) == 1 && enoughHomes) {
       //Random change to give birth to a new agent
-      addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2), this.agentCapacity[0].type.key);
+      addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2));
       client_LogMessage("New Agent Spawned!!!"); //newborn
     }
 
@@ -237,7 +237,7 @@ function addNode(x, y, typeKey, emit = true, initObj) {
     //client_LogMessage("NEW NODE INVENTORY", newNode.resourceInventory);
   }
 
-  gameState.nodes.push(newNode);
+  gameState.nodes.set(newNode.id, newNode)
   gameState.spawnedUnitsCount += 1;
   
   if (emit) {socket.emit("update-node-c-s", newNode); /*socket.emit("game-state", gameState);*/ }  // Flow #10 a - A client adds a node (emit=true)
@@ -245,9 +245,9 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   //client_LogMessage(newNode);
 
   //Update neighbors
-  newNode.neighbors = getNeighbors(newNode, gameState.nodes);
+  newNode.neighbors = getNeighbors(newNode);
   gameState.nodes.forEach(node => {
-    node.neighbors = getNeighbors(node, gameState.nodes);
+    node.neighbors = getNeighbors(node);
   });
 
   return newNode;
@@ -311,7 +311,7 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
 
 // Function to check if a node exists at the given position
 function isCellOccupied(x, y) {
-  return gameState.nodes.some((node) => {
+  return Array.from(gameState.nodes.values()).some((node) => {
     return node.x === x && node.y === y;
   });
 }
