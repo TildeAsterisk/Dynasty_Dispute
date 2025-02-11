@@ -7,8 +7,8 @@ module.exports = router;
 // Game state
 const gameState = {
   players: {},
-  nodes : [],
-  agents : []
+  nodes : new Map(),
+  agents : new Map()
 };
 
 // Emit log messages to clients
@@ -27,22 +27,8 @@ function handleSocketConnection(io) {
     // Initialize player data if not already present
     if (!gameState.players[socket.id]) {
       gameState.players[socket.id] = {
-        /*resources: {
-          wood: 0,
-          stone: 0,
-          food: 0,
-        },
-        nodes: [],
-        agents: [],
-        selectedType : null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
-        spawnedUnitsCount : 0,
-        agentBirthChance : 3000,  //1 out of <agentBirthChance> chance to give birth
-        selectedUnit : null,
-        totalStoredResources : 0,
-        gameTick : 0,
-        networkState : {nodes: [], agents: [], players: []},
-        playerData : {sid:socket.id, username:undefined}*/
-        sid:socket.id, username:"Anonymous Guest"
+        sid : socket.id, 
+        username : "Anonymous Guest"
       };
       gameState.playerData = {sid:socket.id, username:undefined};
     }
@@ -60,11 +46,11 @@ function handleSocketConnection(io) {
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
       if(nodeData.type){
-        gameState.nodes.push(nodeData); // Update server gameState with new node. (Inits from gamestate when page refreshes)
+        gameState.nodes.set(nodeData.id,nodeData); // Update server gameState with new node. (Inits from gamestate when page refreshes)
       }
       else{
         // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
-        gameState.nodes = gameState.nodes.filter((n) => (n.id !== nodeData.id));
+        gameState.nodes.delete(nodeData.id);
       }
       io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });

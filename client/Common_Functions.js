@@ -195,7 +195,7 @@ function heuristic(nodeA, nodeB) {
  * @param   {*}     gridNodes 
  * @returns {Array} path
  */
-function findPath(startNode, endNode, gridNodes = gameState.nodes) {
+function findPath(startNode, endNode, gridNodes = Array.from(gameState.nodes.values())) {
   // Initialize the open set with the start node
   let openSet = new Set([startNode]);
   // Map to keep track of the most efficient previous step to reach each node
@@ -256,7 +256,7 @@ function findPath(startNode, endNode, gridNodes = gameState.nodes) {
 }
 
 
-function getNeighbors(node = this, grid = gameState.nodes) {
+function getNeighbors(node = this, grid = Array.from(gameState.nodes.values()) ) {
   const neighbors = [];
   const directions = [
       { x: 0, y: -1 }, // up

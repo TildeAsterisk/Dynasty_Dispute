@@ -24,7 +24,7 @@ class Agent {
   }
 
   constructor(x, y, type = Agent.types.generic_Agent) {
-    this.id = "Agent" + gameState.spawnedUnitsCount;
+    this.id = gameState.spawnedUnitsCount;
     this.x = x;
     this.y = y;
     this.colour = type.colour;
@@ -436,7 +436,7 @@ class Agent {
 
   die() {
     client_LogMessage(`${this.id} has died.`);
-    gameState.agents = gameState.agents.filter((agent) => agent !== this);
+    gameState.agents.delete(this.id);
 
     //if is at home then remove from home capacity
     if (this.behaviourState.constructor.name == AtHome_State.constructor.name && this.home.agentCapacity.length > 0) {
@@ -546,7 +546,7 @@ class Agent {
 function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
   const newAgent = new Agent(x, y, Agent.types[typeKey]);
   //newAgent.type = ;  // if type is given set type if not then leave default
-  gameState.agents.push(newAgent);
+  gameState.agents.set(newAgent.id, newAgent);
   gameState.spawnedUnitsCount += 1;
   return newAgent;
 }

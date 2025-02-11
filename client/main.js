@@ -40,8 +40,8 @@ const defaultPathfindingCost = 5;
 
 // Initialise Game State
 let gameState = {
-  nodes: [],
-  agents: [],
+  nodes: new Map(),
+  agents: new Map(),
   selectedType: null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
   spawnedUnitsCount: 0,
   agentBirthChance: 2000,  //1 out of <agentBirthChance> chance to give birth
@@ -83,8 +83,8 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
   //client_LogMessage("modified initial state",gameState);
 
   // Clear existing game objects
-  gameState.nodes = [];
-  gameState.agents = [];
+  gameState.nodes = new Map();
+  gameState.agents = new Map();
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
   //if (initialNetworkGameState.players.)
@@ -107,7 +107,7 @@ function initializeGameObjects(initialNetworkGameState = undefined) {
       newNode.neighbors = netNode.neighbors;
       newNode.graphicKey = netNode.graphicKey;
 
-      gameState.nodes.push(newNode);
+      gameState.nodes.set(newNode.id, newNode);
       client_LogMessage(`Node added from Server at (${newNode.x}, ${newNode.y})`);
     });
   } else {
