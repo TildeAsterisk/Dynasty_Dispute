@@ -43,7 +43,7 @@ let gameState = {
   nodes: new Map(),
   agents: new Map(),
   selectedType: null, // Tracks the currently selected type (e.g., "storage_Node", "farm")
-  spawnedUnitsCount: 0,
+  spawnedUnitsCount: 1,
   agentBirthChance: 2000,  //1 out of <agentBirthChance> chance to give birth
   selectedUnit: null,
   totalStoredResources: 0,

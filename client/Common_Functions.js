@@ -143,7 +143,7 @@ function isPointInRect(px, py, rectX, rectY, rectWidth, rectHeight) {
 function getRandomPositionInRange(obj, range) {
   const randomX = obj.x + Math.random() * range * 2 - range;
   const randomY = obj.y + Math.random() * range * 2 - range;
-  const randomPos = { x: randomX, y: randomY };
+  const randomPos = {x: randomX, y: randomY };
   return randomPos;
 }
 
