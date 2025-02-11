@@ -189,7 +189,7 @@ function updateUnitInfoMenu(object = null){
 
   for (agentIndex in object.agentCapacity) {
 
-    unitInfoElem.innerHTML += `${object.agentCapacity[agentIndex].type ? object.agentCapacity[agentIndex].type.symbol : "👤"}`;
+    unitInfoElem.innerHTML += `${gameState.agents.get(agentIndex) ? gameState.agents.get(agentIndex).type.symbol : "👤"}`;
   }
 }
 
@@ -263,7 +263,7 @@ function drawCivStatusBarUI() {
   });
 
   // Calculate total amount of each STORED resource
-  let totalCivStorageNodesArray = Array.from(gameState.nodes.values()).filter(n => n.type === 'Storage_Node');
+  let totalCivStorageNodesArray = Array.from(gameState.nodes.values()).filter(n => n.type.key === 'storage_Node');
   let totalCivStoredResourcesArray = [];
   totalCivStorageNodesArray.forEach(sNode => {
     sNode.resourceInventory.forEach(resource => {
@@ -277,6 +277,9 @@ function drawCivStatusBarUI() {
       else {  // If the resource is not in the array, add it to the array
         totalCivStoredResourcesArray.push({ type: resource.type, amount: resource.amount });
       }
+
+
+      //console.log("STORAGE NOGES:",totalCivStorageNodesArray,existingResource);
     });
 });
 

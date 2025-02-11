@@ -448,7 +448,7 @@ class Agent {
 
     //if is at home then remove from home capacity
     if (this.behaviourState.constructor.name == AtHome_State.constructor.name && this.home.agentCapacity.length > 0) {
-      this.home = this.home.agentCapacity.filter((agent) => agent !== this);
+      this.home = this.home.agentCapacity.filter((agentId) => agentId !== this.id);
     }
 
     delete this;
@@ -535,12 +535,12 @@ class Agent {
     if (gameState.nodes.get(this.targetId).agentCapacity.length == 0) {
       gameState.nodes.get(this.targetId).agentTypeAllianceKey = this.type.key; // If node it empty, Update Node Agent Alliance.
     }
-    gameState.nodes.get(this.targetId).agentCapacity.push(this);
+    gameState.nodes.get(this.targetId).agentCapacity.push(this.id);
     client_LogMessage(this.id, " is entering node ", this.home.id);
   }
 
   exitNode() {
-    this.home.agentCapacity = this.home.agentCapacity.filter((agent) => agent !== this);
+    this.home.agentCapacity = this.home.agentCapacity.filter((agentId) => agentId !== this.id);
     if (gameState.nodes.get(this.targetId).agentCapacity.length == 0) {
       gameState.nodes.get(this.targetId).agentTypeAllianceKey = null; // If node it empty, Update Node Agent Alliance to null.
     }

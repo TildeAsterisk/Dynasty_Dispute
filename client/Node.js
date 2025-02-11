@@ -86,7 +86,7 @@ class Node {
     const enoughHomes = (numAgents < (numHomes * 2) + 1);
     if (this.agentCapacity.length >= 2 && Math.floor(Math.random() * gameState.agentBirthChance) == 1 && enoughHomes) {
       //Random change to give birth to a new agent
-      addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2), this.agentCapacity[0].type.key);
+      addAgent(this.x + (GRID_SIZE / 2), this.y + (GRID_SIZE / 2));
       client_LogMessage("New Agent Spawned!!!"); //newborn
     }
 
