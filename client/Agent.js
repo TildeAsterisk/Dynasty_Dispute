@@ -558,7 +558,7 @@ function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
 }
 
 function calculateTotalLiveAgents() {
-  return gameState.agents.length;
+  return gameState.agents.size;
 }
 
 // Function to train agents

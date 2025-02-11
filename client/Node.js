@@ -311,7 +311,7 @@ function subtractFromStoredResources(resCost, agentTypeKey) {
 
 // Function to check if a node exists at the given position
 function isCellOccupied(x, y) {
-  return gameState.nodes.some((node) => {
+  return Array.from(gameState.nodes.values()).some((node) => {
     return node.x === x && node.y === y;
   });
 }
