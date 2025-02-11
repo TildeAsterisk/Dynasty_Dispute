@@ -302,8 +302,11 @@ function getNodePathfindingScore(node){
 }
 
 function syncWithServerState() {
+  const emitState = gameState;
+  emitState.agents = Array.from(gameState.agents.entries());
+  emitState.nodes = Array.from(gameState.nodes.entries());
   client_LogMessage("[SYNC] Emit game state to server", gameState);
-  socket.emit("game-state",gameState);
+  socket.emit("sync-game-state",gameState);
 }
 
 //#endregion

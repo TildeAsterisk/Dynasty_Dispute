@@ -37,13 +37,13 @@ function handleSocketConnection(io) {
     // Send initial game state to the player
     socket.emit("game-state", gameState );
 
-    socket.on("game-state", (state) => {
+    socket.on("sync-game-state", (state) => {
       //Update nodes from gameState
-      gameState.nodes = state.nodes;
-      gameState.agents = state.agents;
+      //gameState.nodes = state.nodes;
+      //gameState.agents = state.agents;
       gameState.spawnedUnitsCount = state.spawnedUnitsCount;
       
-      server_LogMessage("[SYNC] Server recieved game state from client ",state);
+      server_LogMessage("[SYNC] Server recieved game state from client ",state.nodes);
       // Now emit the state to every other player
     });
 
