@@ -10,6 +10,7 @@ const gameState = {
   nodes : new Map(),
   agents : new Map()
 };
+let playerData = undefined;
 
 // Emit log messages to clients
 function server_LogMessage(...args) {
@@ -30,11 +31,11 @@ function handleSocketConnection(io) {
         sid : socket.id, 
         username : "Anonymous Guest"
       };
-      gameState.playerData = {sid:socket.id, username:undefined};
+      playerData = {sid:socket.id, username:undefined};
     }
 
     // Send initial game state to the player
-    socket.emit("game-state", gameState);
+    socket.emit("game-state", gameState );
 
     socket.on("game-state", (state) => {
       //Update nodes from gameState
@@ -42,7 +43,8 @@ function handleSocketConnection(io) {
       gameState.agents = state.agents;
       gameState.spawnedUnitsCount = state.spawnedUnitsCount;
       
-      server_LogMessage("Server recieved game state from client ");
+      server_LogMessage("[SYNC] Server recieved game state from client ",state);
+      // Now emit the state to every other player
     });
 
     // Handle building updates

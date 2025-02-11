@@ -52,6 +52,9 @@ let gameState = {
   //networkState: { nodes: [], agents: [], players: [] }
 };
 
+let playerData = undefined;
+let playerUsername = undefined;
+
 let cursors = {};
 let cursorImage=null;
 
@@ -68,17 +71,17 @@ urlSearchParams.forEach((value, name) => {
   client_LogMessage(`${name}, ${value}`)
 });
 //SET PLAYER USERNAME
-gameState['playerUsername'] = urlSearchParams.get('username') ? urlSearchParams.get('username'): undefined;
-client_LogMessage("Setting player username:",gameState.playerUsername);
+playerUsername = urlSearchParams.get('username') ? urlSearchParams.get('username'): undefined;
+client_LogMessage("Setting player username:",playerUsername);
 
 
 //client_LogMessage("Game Started");
 //GenerateUnitInfoMenu();
 
 function InitialiseGameObjects(initialNetworkGameState = undefined) {
-  gameState.playerData = { sid:initialNetworkGameState.playerData.sid, username:gameState.playerUsername};  
+  playerData = { sid:socket.id, username:playerUsername};  
   // EMIT UPDATED PLAYER DATA WITH USERNAME
-  socket.emit('player-data-update',gameState.playerData);
+  socket.emit('player-data-update',playerData);
 
   //initialNetworkGameState = initialNetworkGameState;
   //client_LogMessage("modified initial state",gameState);
@@ -88,7 +91,7 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
   gameState.agents = new Map();
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
-  initialNetworkGameState.playerData = gameState.playerData;
+  initialNetworkGameState.playerData = playerData;
   client_LogMessage("Updated network game state with username");
 
   // Initialize nodes from the network state
