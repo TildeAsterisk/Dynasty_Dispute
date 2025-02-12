@@ -130,11 +130,13 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
   // Initialize agents from the network state
   if (initialNetworkGameState.agents && initialNetworkGameState.agents.size > 0) {
     initialNetworkGameState.agents.forEach((netAgent) => {
+      console.log("Initialising agent",netAgent.id);
       const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
-      for ( const property in netAgent){
-        if(property == "id"){ return; }
-        newAgent.property = netAgent[property];
-        console.log(`Initialising ${property} with ${netAgent[property]}`);
+      for (const property in netAgent) {
+        if (property === "id") { continue; }
+        if (property === "behaviourState") { netAgent[property] = getBehaviourStateFromSymbol(netAgent[property].symbol); continue; }
+        newAgent[property] = netAgent[property];
+        //console.log(`Initialising ${property} with ${netAgent[property]}`);
       }
       /*
       newAgent.id = netAgent.id;
@@ -156,7 +158,8 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
       newAgent.resourceInventory = netAgent.resourceInventory;
       gameState.agents.push(newAgent);*/
       //addAgent(centerX, centerY);
-      //client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
+      gameState.agents.set(newAgent.id, newAgent);
+      client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
   } else {
     // Add initial setup for testing

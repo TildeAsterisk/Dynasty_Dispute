@@ -240,7 +240,10 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   gameState.nodes.set(newNode.id, newNode)
   gameState.spawnedUnitsCount += 1;
   
-  if (emit) {socket.emit("update-node-c-s", newNode); /*socket.emit("game-state", gameState);*/ }  // Flow #10 a - A client adds a node (emit=true)
+  if (emit) { // Flow #10 a - A client adds a node (emit=true)
+    socket.emit("update-node-c-s", newNode);
+    syncWithServerState();
+  }
   client_LogMessage(`Spawned ${newNode.id} at ${x}, ${y}.`);
   //client_LogMessage(newNode);
 

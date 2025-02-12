@@ -25,7 +25,6 @@ canvas.addEventListener("click", (event) => {
       if (gameObject.type == Node.types.barracks_Node) {
         GenerateUnitInfoMenu(gameObject);
       }
-      syncWithServerState();
       return;
     }
   }
