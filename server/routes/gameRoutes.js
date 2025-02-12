@@ -1,4 +1,5 @@
 const express = require("express");
+const { emit } = require("nodemon");
 const router = express.Router();
 
 // Define your game-related routes here
@@ -24,6 +25,11 @@ function server_LogMessage(...args) {
 function handleSocketConnection(io) {
   io.on("connection", (socket) => {
     server_LogMessage(`Player connected: ${socket.id}`);
+    // Send initial game state to the player
+    const emitState = {};
+    emitState.agents = Array.from(gameState.agents.entries());
+    emitState.nodes = Array.from(gameState.nodes.entries());
+    socket.emit("init-game-state", emitState );
 
     // Initialize player data if not already present
     if (!gameState.players[socket.id]) {
@@ -34,16 +40,14 @@ function handleSocketConnection(io) {
       playerData = {sid:socket.id, username:undefined};
     }
 
-    // Send initial game state to the player
-    socket.emit("game-state", gameState );
-
+    // Update server state from client state
     socket.on("sync-game-state", (state) => {
       //Update nodes from gameState
-      //gameState.nodes = state.nodes;
-      //gameState.agents = state.agents;
+      gameState.nodes = new Map(state.nodes);
+      gameState.agents = new Map(state.agents);
       gameState.spawnedUnitsCount = state.spawnedUnitsCount;
       
-      server_LogMessage("[SYNC] Server recieved game state from client ",state.nodes);
+      server_LogMessage("[SYNC] Server recieved game state from client new state:",gameState);
       // Now emit the state to every other player
     });
 
@@ -84,6 +88,7 @@ function handleSocketConnection(io) {
       // Broadcast the cursor position to other players
       gameState.players[socket.id] = data;
       socket.broadcast.emit("player-data-update", data);
+      server_LogMessage("Updating player username:",data.username);
     });
 
   });

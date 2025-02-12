@@ -17,7 +17,6 @@ canvas.addEventListener("click", (event) => {
   for (const gameObject of gameObjectsArray) {
 
     if (isPointInRect(mouseToWorldCoords.x, mouseToWorldCoords.y, gameObject.x, gameObject.y, GRID_SIZE, GRID_SIZE)) {
-      syncWithServerState();
       // Display gameObject info
       GenerateUnitInfoMenu(gameObject);
       gameState.selectedUnit = gameObject;
@@ -26,6 +25,7 @@ canvas.addEventListener("click", (event) => {
       if (gameObject.type == Node.types.barracks_Node) {
         GenerateUnitInfoMenu(gameObject);
       }
+      syncWithServerState();
       return;
     }
   }
@@ -174,15 +174,20 @@ document.addEventListener('dragstart', function (event) {
 
 
 //#region WebSocket Event Listeners
-socket.on("game-state", (state) => {
-  client_LogMessage("Received initial game state",state);
-  //gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
-  //gameState.networkState = state;
-  //client_LogMessage("modified initial state",gameState);
+
+// When the Client recieves an 'init-game-state' socket event with the game state of the Server (state)
+socket.on("init-game-state", (state) => {
+  client_LogMessage("Received initial game state from server",state);
+  // Convert arrays back into maps
+  state.nodes = new Map(state.nodes);
+  state.agents = new Map(state.agents);
+  // Update client side playerData with socket ID and Username and emit to the server to update.
+  playerData = { sid:socket.id, username:playerUsername};
+  socket.emit('player-data-update',playerData);
+  // Initialise all game objects from server game state
   InitialiseGameObjects(state);
-  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE.");
-  client_LogMessage(gameState);
-  //renderGame();
+
+  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE."); client_LogMessage(gameState);
 });
 
 socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.

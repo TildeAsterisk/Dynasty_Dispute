@@ -79,9 +79,6 @@ client_LogMessage("Setting player username:",playerUsername);
 //GenerateUnitInfoMenu();
 
 function InitialiseGameObjects(initialNetworkGameState = undefined) {
-  playerData = { sid:socket.id, username:playerUsername};  
-  // EMIT UPDATED PLAYER DATA WITH USERNAME
-  socket.emit('player-data-update',playerData);
 
   //initialNetworkGameState = initialNetworkGameState;
   //client_LogMessage("modified initial state",gameState);
@@ -95,8 +92,8 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
   client_LogMessage("Updated network game state with username");
 
   // Initialize nodes from the network state
-  if (initialNetworkGameState.nodes && initialNetworkGameState.nodes.length > 0) {
-    client_LogMessage("~* INITIALISING GAME STATE FROM SERVER. *~");
+  if (initialNetworkGameState.nodes && initialNetworkGameState.nodes.size > 0) {
+    client_LogMessage("~* INITIALISING GAME STATE FROM SERVER. *~", initialNetworkGameState);
     initialNetworkGameState.nodes.forEach(netNode => {
       const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
       newNode.id = netNode.id;
@@ -131,7 +128,7 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
   }
 
   // Initialize agents from the network state
-  if (initialNetworkGameState.agents && initialNetworkGameState.agents.length > 0) {
+  if (initialNetworkGameState.agents && initialNetworkGameState.agents.size > 0) {
     initialNetworkGameState.agents.forEach((netAgent) => {
       const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
       for ( const property in netAgent){
