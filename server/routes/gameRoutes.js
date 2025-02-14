@@ -66,7 +66,7 @@ function handleSocketConnection(io) {
         // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
         gameState.nodes.delete(nodeData.id);
       }
-      io.broadcast.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
+      io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });
 
     // Handle disconnection
