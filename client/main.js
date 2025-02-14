@@ -88,8 +88,7 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
   gameState.agents = new Map();
   let centerX = canvas.width / 2;
   let centerY = canvas.height / 2;
-  initialNetworkGameState.playerData = playerData;
-  client_LogMessage("Updated network game state with username");
+  
 
   // Initialize nodes from the network state
   if (initialNetworkGameState.nodes && initialNetworkGameState.nodes.size > 0) {
@@ -138,26 +137,6 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
         newAgent[property] = netAgent[property];
         //console.log(`Initialising ${property} with ${netAgent[property]}`);
       }
-      /*
-      newAgent.id = netAgent.id;
-      newAgent.colour = netAgent.colour;
-      newAgent.behaviourState = netAgent.behaviourState;
-      newAgent.target = netAgent.target;
-      newAgent.previousUnitTarget = netAgent.previousUnitTarget;
-      newAgent.carrying = netAgent.carrying;
-      newAgent.maxCarry = netAgent.maxCarry;
-      newAgent.speed = netAgent.speed;
-      newAgent.home = netAgent.home;
-      newAgent.resourceHunger = netAgent.resourceHunger;
-      newAgent.searchRadius = netAgent.searchRadius;
-      newAgent.health = netAgent.health;
-      newAgent.attackPower = netAgent.attackPower;
-      newAgent.attackRange = netAgent.attackRange;
-      newAgent.attackCooldown = netAgent.attackCooldown;
-      newAgent.lastAttackTime = netAgent.lastAttackTime;
-      newAgent.resourceInventory = netAgent.resourceInventory;
-      gameState.agents.push(newAgent);*/
-      //addAgent(centerX, centerY);
       gameState.agents.set(newAgent.id, newAgent);
       client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
@@ -201,6 +180,9 @@ function gameLoop() {
       drawRect(cursorScreenPos.x, cursorScreenPos.y, 5,5,"orange", undefined );
     }
     const playerCursorText = gameState.players[cursors[cursor].id] ? gameState.players[cursors[cursor].id].username : cursors[cursor].id ;
+    if(!gameState.players[cursors[cursor].id]){
+      //console.log("cant find",cursors[cursor].id,gameState.players);
+    }
     drawText(playerCursorText,cursorScreenPos.x+(cursorImage.width/3), cursorScreenPos.y);
   }
 

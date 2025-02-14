@@ -25,11 +25,6 @@ function server_LogMessage(...args) {
 function handleSocketConnection(io) {
   io.on("connection", (socket) => {
     server_LogMessage(`Player connected: ${socket.id}`);
-    // Send initial game state to the player
-    const emitState = {};
-    emitState.agents = Array.from(gameState.agents.entries());
-    emitState.nodes = Array.from(gameState.nodes.entries());
-    socket.emit("init-game-state", emitState );
 
     // Initialize player data if not already present
     if (!gameState.players[socket.id]) {
@@ -37,8 +32,19 @@ function handleSocketConnection(io) {
         sid : socket.id, 
         username : "Anonymous Guest"
       };
-      playerData = {sid:socket.id, username:undefined};
+      //playerData = {sid:socket.id, username:undefined};
     }
+    else{
+    console.log(gameState.players);
+    }
+
+    // Send initial game state to the player
+    // CHOOSE WHAT IS SENT TO THE PLAYER FROM GAME STATE
+    const emitState = {};
+    emitState.agents = Array.from(gameState.agents.entries());
+    emitState.nodes = Array.from(gameState.nodes.entries());
+    emitState.players = gameState.players;
+    socket.emit("init-game-state", emitState );
 
     // Update server state from client state
     socket.on("sync-game-state", (state) => {
@@ -46,7 +52,6 @@ function handleSocketConnection(io) {
       gameState.nodes = new Map(state.nodes);
       gameState.agents = new Map(state.agents);
       gameState.spawnedUnitsCount = state.spawnedUnitsCount;
-      
       server_LogMessage("[SYNC] Server recieved game state from client new state:",gameState);
       // Now emit the state to every other player
     });
@@ -60,7 +65,7 @@ function handleSocketConnection(io) {
         // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
         gameState.nodes.delete(nodeData.id);
       }
-      io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
+      io.broadcast.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });
 
     // Handle disconnection
@@ -84,11 +89,16 @@ function handleSocketConnection(io) {
     });
 
     // Listen for player data update
-    socket.on("player-data-update", (data) => {
-      // Broadcast the cursor position to other players
-      gameState.players[socket.id] = data;
-      socket.broadcast.emit("player-data-update", data);
-      server_LogMessage("Updating player username:",data.username);
+    socket.on("player-data-update-c-s", (clientPlayerData) => {
+      // Update player username recieved from server
+      server_LogMessage("Updating players:",gameState.players);
+      if (gameState.players[clientPlayerData.sid] !== clientPlayerData){  //if client player data is not already updated in players list.
+        gameState.players[clientPlayerData.sid] = clientPlayerData;
+        socket.broadcast.emit("player-data-update-s-c", gameState.players);
+      }
+      else{ //if client is already updated, emit playersupdate to syn everyone else
+    
+      }
     });
 
   });
