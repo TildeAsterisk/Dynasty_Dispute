@@ -44,6 +44,7 @@ function handleSocketConnection(io) {
     emitState.agents = Array.from(gameState.agents.entries());
     emitState.nodes = Array.from(gameState.nodes.entries());
     emitState.players = gameState.players;
+    emitState.spawnedUnitsCount = gameState.spawnedUnitsCount;
     socket.emit("init-game-state", emitState );
 
     // Update server state from client state

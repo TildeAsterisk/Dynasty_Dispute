@@ -305,6 +305,7 @@ function syncWithServerState() {
   const emitState = {};
   emitState.agents = Array.from(gameState.agents.entries());
   emitState.nodes = Array.from(gameState.nodes.entries());
+  emitState.spawnedUnitsCount = gameState.spawnedUnitsCount;
   client_LogMessage("[SYNC] Emit game state to server", emitState);
   socket.emit("sync-game-state",emitState);
 }
