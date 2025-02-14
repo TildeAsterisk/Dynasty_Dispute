@@ -177,6 +177,7 @@ document.addEventListener('dragstart', function (event) {
 // When the Client recieves an 'init-game-state' socket event with the game state of the Server (state)
 socket.on("init-game-state", (netState) => {
   client_LogMessage("[INIT]: Received initial game state from server",netState);
+  gameState.spawnedUnitsCount = netState.spawnedUnitsCount;
   // Convert arrays back into maps
   netState.nodes = new Map(netState.nodes);
   netState.agents = new Map(netState.agents);
