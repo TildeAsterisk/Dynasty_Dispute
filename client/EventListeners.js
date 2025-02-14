@@ -173,13 +173,24 @@ document.addEventListener('dragstart', function (event) {
 
 
 //#region WebSocket Event Listeners
-socket.on("game-state", (state) => {
-  client_LogMessage("Received initial game state",state);
-  //gameState.playerData = { sid:state.playerData.sid, username:gameState.playerUsername};  // EMIT UPDATED PLAYER DATA WITH USERNAME
-  gameState.networkState = state;
-  //client_LogMessage("modified initial state",gameState);
-  initializeGameObjects(state);
-  //renderGame();
+
+// When the Client recieves an 'init-game-state' socket event with the game state of the Server (state)
+socket.on("init-game-state", (netState) => {
+  client_LogMessage("[INIT]: Received initial game state from server",netState);
+  // Convert arrays back into maps
+  netState.nodes = new Map(netState.nodes);
+  netState.agents = new Map(netState.agents);
+  //set client gameState players to server players list
+  gameState.players = netState.players;
+  //update playerdata in gameState with player username
+  playerData = { sid:socket.id, username:playerUsername};
+  gameState.players[socket.id] = playerData;
+  client_LogMessage("[INIT]: Initialised players list from server with updated username", gameState.players);
+  socket.emit('player-data-update-c-s',playerData);
+  // Initialise all game objects from server game state
+  InitialiseGameObjects(netState);
+
+  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE."); client_LogMessage(gameState);
 });
 
 socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.
@@ -234,11 +245,11 @@ socket.on('update-node-c-s', (nodeData) => {
 });
 
 // Listen for player data update
-socket.on("player-data-update", (data) => {
+socket.on("player-data-update-s-c", (pDataFromServer) => {
   // Update player data
-  client_LogMessage("[SERVER]: Player has connected.",data);
-  //client_LogMessage(gameState.networkState.players[data.sid]);
-  gameState.networkState.players[data.sid] = data;
+  client_LogMessage("[PDU]: Player updated in server.",pDataFromServer);
+  gameState.players = pDataFromServer;
+  
 });
 
 //#endregion

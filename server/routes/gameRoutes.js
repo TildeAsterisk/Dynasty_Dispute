@@ -1,4 +1,5 @@
 const express = require("express");
+const { emit } = require("nodemon");
 const router = express.Router();
 
 // Define your game-related routes here
@@ -10,6 +11,7 @@ const gameState = {
   nodes : new Map(),
   agents : new Map()
 };
+let playerData = undefined;
 
 // Emit log messages to clients
 function server_LogMessage(...args) {
@@ -30,18 +32,29 @@ function handleSocketConnection(io) {
         sid : socket.id, 
         username : "Anonymous Guest"
       };
-      gameState.playerData = {sid:socket.id, username:undefined};
+      //playerData = {sid:socket.id, username:undefined};
+    }
+    else{
+    console.log(gameState.players);
     }
 
     // Send initial game state to the player
-    socket.emit("game-state", gameState);
+    // CHOOSE WHAT IS SENT TO THE PLAYER FROM GAME STATE
+    const emitState = {};
+    emitState.agents = Array.from(gameState.agents.entries());
+    emitState.nodes = Array.from(gameState.nodes.entries());
+    emitState.players = gameState.players;
+    socket.emit("init-game-state", emitState );
 
-    /*socket.on("game-state", (state) => {
+    // Update server state from client state
+    socket.on("sync-game-state", (state) => {
       //Update nodes from gameState
-      gameState["agents"] = state.agents;
-      
-      server_LogMessage("Server recieved game state from client ",gameState.agents);
-    });*/
+      gameState.nodes = new Map(state.nodes);
+      gameState.agents = new Map(state.agents);
+      gameState.spawnedUnitsCount = state.spawnedUnitsCount;
+      server_LogMessage("[SYNC] Server recieved game state from client new state:",gameState);
+      // Now emit the state to every other player
+    });
 
     // Handle building updates
     socket.on("update-node-c-s", (nodeData) => {  // Flow #10 b - Server recieves node update from client.
@@ -52,7 +65,7 @@ function handleSocketConnection(io) {
         // ANOTHER PLAYER DELETED NODE. REMOVE FROM GAMESTATE NODE ARRAY
         gameState.nodes.delete(nodeData.id);
       }
-      io.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
+      io.broadcast.emit("update-node-s-c", nodeData); // Flow #10 c - Broadcast to all clients
     });
 
     // Handle disconnection
@@ -76,10 +89,16 @@ function handleSocketConnection(io) {
     });
 
     // Listen for player data update
-    socket.on("player-data-update", (data) => {
-      // Broadcast the cursor position to other players
-      gameState.players[socket.id] = data;
-      socket.broadcast.emit("player-data-update", data);
+    socket.on("player-data-update-c-s", (clientPlayerData) => {
+      // Update player username recieved from server
+      server_LogMessage("Updating players:",gameState.players);
+      if (gameState.players[clientPlayerData.sid] !== clientPlayerData){  //if client player data is not already updated in players list.
+        gameState.players[clientPlayerData.sid] = clientPlayerData;
+        socket.broadcast.emit("player-data-update-s-c", gameState.players);
+      }
+      else{ //if client is already updated, emit playersupdate to syn everyone else
+    
+      }
     });
 
   });

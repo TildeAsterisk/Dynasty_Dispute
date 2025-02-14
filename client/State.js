@@ -468,3 +468,18 @@ class Combat_State extends State {
 
 
 //#endregion
+
+// Create a Map of all behaviour states and their symbols to lookup
+const stateSymbolMap = new Map();
+stateSymbolMap.set( (new State).symbol           , new State            );
+stateSymbolMap.set( (new Idle_State).symbol      , new Idle_State       );
+stateSymbolMap.set( (new Roaming_State).symbol   , new Roaming_State    );
+stateSymbolMap.set( (new Gathering_State).symbol , new Gathering_State  );
+stateSymbolMap.set( (new Depositing_State).symbol, new Depositing_State );
+stateSymbolMap.set( (new GoingHome_State).symbol , new GoingHome_State  );
+stateSymbolMap.set( (new AtHome_State).symbol    , new AtHome_State     );
+stateSymbolMap.set( (new Combat_State).symbol    , new Combat_State     );
+function getBehaviourStateFromSymbol(symbol){
+  client_LogMessage("Initialising agent behaviour state. ",symbol);
+  return stateSymbolMap.get(symbol);
+}
