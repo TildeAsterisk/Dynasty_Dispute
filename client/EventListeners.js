@@ -190,7 +190,11 @@ socket.on("init-game-state", (netState) => {
   // Initialise all game objects from server game state
   InitialiseGameObjects(netState);
 
-  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE."); client_LogMessage(gameState);
+  //gameState.spawnedUnitsCount = netState.spawnedUnitsCount; //init spawned unitcount form server AFTER init gameonbjects
+  client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE.",gameState);
+  
+  // Now sync with clients
+  syncWithServerState();
 });
 
 socket.on("update-node-s-c", (nodeData) => { // Flow #10 d - Client recieves a player initiated node update from the Server.

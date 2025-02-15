@@ -9,7 +9,8 @@ module.exports = router;
 const gameState = {
   players: {},
   nodes : new Map(),
-  agents : new Map()
+  agents : new Map(),
+  spawnedUnitsCount : 0
 };
 let playerData = undefined;
 
@@ -44,7 +45,7 @@ function handleSocketConnection(io) {
     emitState.agents = Array.from(gameState.agents.entries());
     emitState.nodes = Array.from(gameState.nodes.entries());
     emitState.players = gameState.players;
-    emitState.spawnedUnitsCount = gameState.spawnedUnitsCount;
+    //emitState.spawnedUnitsCount = gameState.spawnedUnitsCount ? gameState.spawnedUnitsCount : 0;
     socket.emit("init-game-state", emitState );
 
     // Update server state from client state
