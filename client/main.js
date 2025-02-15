@@ -97,7 +97,7 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
       const newNode = new Node(netNode.x, netNode.y, netNode.type.key, false);
       newNode.id = netNode.id;
       newNode.type = netNode.type;
-      newNode.resourceInventory = netNode.resourceInventory;
+      newNode.resourceInventory = convertNetObjects_ToResourceInventory(netNode.resourceInventory);
       newNode.agentCapacity = netNode.agentCapacity;
       newNode.maxAgentCapacity = netNode.maxAgentCapacity;
       newNode.agentTypeAllianceKey = netNode.agentTypeAllianceKey;
@@ -134,6 +134,7 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
       for (const property in netAgent) {
         //if (property === "id") { continue; }
         if (property === "behaviourState") { netAgent[property] = getBehaviourStateFromSymbol(netAgent[property].symbol); continue; }
+        if (property === "resourceInventory") { convertNetObjects_ToResourceInventory(netAgent[property]); continue; }
         newAgent[property] = netAgent[property];
         //console.log(`Initialising ${property} with ${netAgent[property]}`);
       }

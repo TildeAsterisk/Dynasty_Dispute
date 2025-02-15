@@ -310,4 +310,12 @@ function syncWithServerState() {
   socket.emit("sync-game-state",emitState);
 }
 
+function convertNetObjects_ToResourceInventory(netObjList){
+  netObjList = netObjList.map(netObj => {
+    return new Resource(netObj.type.key, netObj.amount);
+  });
+  
+  console.log("CONVERTED NET OBJECTS TO RESOURCE INVENTORY", netObjList);
+  return netObjList;  
+}
 //#endregion
