@@ -76,6 +76,8 @@ class Node {
 
     this.pathfindingScore = typeKey == Node.types.path_Node.key ? 1 : defaultPathfindingCost;
 
+
+    gameState.spawnedUnitsCount += 1; //Update spawend units count
   }
 
   update() {
@@ -238,11 +240,10 @@ function addNode(x, y, typeKey, emit = true, initObj) {
   }
 
   gameState.nodes.set(newNode.id, newNode)
-  gameState.spawnedUnitsCount += 1;
   
   if (emit) { // Flow #10 a - A client adds a node (emit=true)
-    socket.emit("update-node-c-s", newNode);
     syncWithServerState();
+    socket.emit("update-node-c-s", newNode);
   }
   client_LogMessage(`Spawned ${newNode.id} at ${x}, ${y}.`);
   //client_LogMessage(newNode);

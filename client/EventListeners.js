@@ -99,7 +99,7 @@ canvas.addEventListener("click", (event) => {
 
     // Subtract resources if can
     if (!subtractFromStoredResources(gameState.selectedType.cost)) {
-      client_LogMessage("cannot build unit");
+      client_LogMessage("cannot build unit", gameState.totalStoredResources);
       return;
     }
 
@@ -177,6 +177,7 @@ document.addEventListener('dragstart', function (event) {
 // When the Client recieves an 'init-game-state' socket event with the game state of the Server (state)
 socket.on("init-game-state", (netState) => {
   client_LogMessage("[INIT]: Received initial game state from server", netState);
+  gameState.spawnedUnitsCount = netState.spawnedUnitsCount; //init spawned unitcount form server BEFORE init gameonbjects
   // Convert arrays back into maps
   netState.nodes = new Map(netState.nodes);
   netState.agents = new Map(netState.agents);
@@ -190,7 +191,6 @@ socket.on("init-game-state", (netState) => {
   // Initialise all game objects from server game state
   InitialiseGameObjects(netState);
 
-  gameState.spawnedUnitsCount = netState.spawnedUnitsCount; //init spawned unitcount form server AFTER init gameonbjects
   client_LogMessage("CLIENT INITIALISING GAMESTATE COMPLETE.",gameState);
   
   // Now sync with clients
