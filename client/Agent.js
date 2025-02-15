@@ -508,7 +508,7 @@ class Agent {
     let thisGridCoords = getGridCoordinates(this.x, this.y);
     thisGridCoords = { x: thisGridCoords[0], y: thisGridCoords[1] };
     this.path = findPath(thisGridCoords, newTarget);  //Find a path to the new target.
-    client_LogMessage(this.id, " is setting new target ", (newTarget.id ? newTarget.id : newTarget), " with path ", this.path);
+    client_LogMessage(this.id, " is setting new target ", (/*newTarget.id ? newTarget.id : */newTarget), " with path ", this.path);
     this.previousUnitTargetId = gameState.nodes.get(this.targetId) ? gameState.nodes.get(this.targetId).id : this.previousUnitTargetId;
     this.targetId = newTarget.id ? newTarget.id : newTarget;
   }
