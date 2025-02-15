@@ -132,13 +132,13 @@ function InitialiseGameObjects(initialNetworkGameState = undefined) {
       console.log("Initialising agent",netAgent.id);
       const newAgent = new Agent(netAgent.x, netAgent.y, netAgent.type.key);
       for (const property in netAgent) {
-        if (property === "id") { continue; }
+        //if (property === "id") { continue; }
         if (property === "behaviourState") { netAgent[property] = getBehaviourStateFromSymbol(netAgent[property].symbol); continue; }
         newAgent[property] = netAgent[property];
         //console.log(`Initialising ${property} with ${netAgent[property]}`);
       }
       gameState.agents.set(newAgent.id, newAgent);
-      client_LogMessage(`${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
+      client_LogMessage(`Agent ${newAgent.id} added from Server at (${newAgent.x}, ${newAgent.y})`);
     });
   } else {
     // Add initial setup for testing
