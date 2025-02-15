@@ -47,6 +47,8 @@ class Agent {
     this.attackRange = 10; // Range of attack
     this.attackCooldown = 1; // Seconds between attacks
     this.lastAttackTime = 0; // Time of the last attack
+
+    gameState.spawnedUnitsCount += 1; //Increment spawned units count
   }
 
   update() {
@@ -553,7 +555,6 @@ function addAgent(x, y, typeKey = Agent.types.generic_Agent.key) {
   const newAgent = new Agent(x, y, Agent.types[typeKey]);
   //newAgent.type = ;  // if type is given set type if not then leave default
   gameState.agents.set(newAgent.id, newAgent);
-  gameState.spawnedUnitsCount += 1;
   return newAgent;
 }
 
