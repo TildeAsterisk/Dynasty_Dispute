@@ -150,7 +150,7 @@ function GenerateUnitInfoMenu(object = null) {
   destroyBtn.dataset.id = object.id;
   // Optionally, add event listeners to the button
   destroyBtn.onclick = function() {
-    const sNode = gameState.nodes.find((node) => (node.id == this.dataset.id)); //Get node to destroy by id TO DO:!! FIX THIS AND ALL OF THEM
+    const sNode = Array.from(gameState.nodes.values()).find((node) => (node.id == this.dataset.id)); //Get node to destroy by id TO DO:!! FIX THIS AND ALL OF THEM
     gameState.nodes.delete(sNode.id); // delete from array in gamestate
     sNode.type=undefined;
     socket.emit("update-node-c-s", sNode);  // emit with no type so it gets deleted
